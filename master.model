@@ -32,14 +32,14 @@ UNIVERSE {
             Dim Direction(0, 0) As Double = (0.0);
             Dim RouteArray(0, 0) As String = ("");
             Dim RouteCount(0, 0) As Integer = (0);
-            Dim Color(0, 0) As Integer = ();
+            Dim Color(0, 0) As Integer = (0);
         }
         AgtType Block(0, 0)[0] {
-            Dim ID(0, 0) As Integer = ();
-            Dim X(0, 0) As Double = ();
-            Dim Y(0, 0) As Double = ();
-            Dim Layer(0, 0) As Integer = ();
-            Dim Direction(0, 0) As Double = ();
+            Dim ID(0, 0) As Integer = (0);
+            Dim X(0, 0) As Double = (0.0);
+            Dim Y(0, 0) As Double = (0.0);
+            Dim Layer(0, 0) As Integer = (0);
+            Dim Direction(0, 0) As Double = (0.0);
         }
     }
     AgtType Link(0, 0)[282] {
@@ -118,10 +118,6 @@ initialize_dijkstra()
 }
 
 Univ_Step_Begin{
-	Create_block(50,44,103,10000)
-	create_block(150,45,109,10000)
-	create_block(200,46,100,10000)
-	create_block(250,51,97,10000)
 }
 
 Univ_Step_End{
@@ -159,19 +155,18 @@ end if
 //-------------------------------------------------------
 #begin_rule UNIVERSE.MAP.POINT
 Agt_Init{
-
-}
-
-Agt_Step{
 dim personAgt as agt
 
-If My.ID == 8 And GetCountStep() Mod 10 == 0 Then
+If My.ID <= 20  Then
 	personAgt = createagt(universe.Map.Person)
 	personAgt.x = my.X
 	personAgt.y = my.Y
 	personAgt.RouteArray = @dijkstra(my.ID, "63")
 	personAgt.RouteCount = 1
 end if
+}
+
+Agt_Step{
 }
 #end_rule UNIVERSE.MAP.POINT
 
@@ -183,76 +178,102 @@ end if
 //-------------------------------------------------------
 #begin_rule UNIVERSE.MAP.PERSON
 Agt_Init{
-
+my.Color = COLOR_BLUE
 }
 
 Agt_Step{
 	Dim targetPointAgt As Agt
 	Dim distance As Double
-	dim lasttargetpointagt as agt
+	Dim lastTargetPointAgt As Agt
+	Dim streetAgt As Agt
 	
-	If My.RouteCount < CountToken(My.RouteArray) Then
+	lastTargetPointAgt = Universe.Map.Point(CInt(GetToken(My.RouteArray, My.RouteCount-1)))
+	targetPointAgt = Universe.Map.Point(CInt(GetToken(My.RouteArray, My.RouteCount)))
+	streetAgt = @get_street_from_points(lastTargetPointAgt.ID, targetPointAgt.ID)
+	If streetAgt.Cost == 10000 Then
+		// 立ち止まる
+		My.Color = COLOR_GREEN
+	ElseIf My.RouteCount < CountToken(My.RouteArray) Then
 		// 経路に沿って進む
 		targetPointAgt = Universe.Map.Point(CInt(GetToken(My.RouteArray, My.RouteCount)))
 		distance = Pursue(targetPointAgt, 1)
 		
 		If distance > 0 Then
-			// Pointに到着したとき
-			lasttargetpointagt = universe.Map.Point(CInt(GetToken(my.RouteArray, my.RouteCount)))
+			// 次のPointに到着したとき
+			lastTargetPointAgt = Universe.Map.Point(CInt(GetToken(My.RouteArray, My.RouteCount)))
 			My.RouteCount = My.RouteCount + 1
 			If CountToken(My.RouteArray) > My.RouteCount Then
-				// 余剰分、次のPointへ向かう
 				targetPointAgt = Universe.Map.Point(CInt(GetToken(My.RouteArray, My.RouteCount)))
-				streetagt = @get_street_from_points(lasttargetpointagt.id, targetpointagt.id)
-				if streetAgt.Cost ==10000 then
-					reroute(targetpointagt)
-				else
+				streetAgt = @get_street_from_points(lastTargetPointAgt.ID, targetPointAgt.ID)
+				If streetAgt.Cost == 10000 Then
+					// StreetのCostが10000の場合は経路を再探索する
+					reroute(targetPointAgt)
+				Else
+					// 余剰分、次のPointへ向かう
 					Pursue(targetPointAgt, distance)
-				end if
+				End If
 			Else
-				// 目的地に到着したので、終了する
-				TerminateAgt(My.UniqueID)
+				homeroute(targetpointagt)
 			End If
 		End If
-	Else
-		// 新しい経路を設定する
-		targetPointAgt = Universe.Map.Point(CInt(GetToken(My.RouteArray, My.RouteCount-1)))
-		add_new_route(targetPointAgt)
 	End If
 }
 
-// 新しい経路を追加する
-Sub add_new_route(targetPointAgt As Agt)
+// 経路を再探索する
+Sub reroute(targetPointAgt As Agt)
 {
-	Dim newTargetPointAgt As Agt
-	Dim newTargetPointAgt2 As Agt
+	Dim startPointAgt As Agt
+	Dim goalPointID As Integer
 	Dim newRoute As String
+	Dim lastRouteArray As String
+	Dim i As Integer
 	
-	newRoute = ""
+	// 現在地点から経路を再探索する
+	startPointAgt = Universe.Map.Point(CInt(GetToken(My.RouteArray, My.RouteCount - 1)))
+	goalPointID = CInt(gettoken(my.RouteArray,counttoken(my.RouteArray)-1))
+	newRoute = @dijkstra(startPointAgt.ID, CStr(goalPointID))
+		
+	lastRouteArray = My.RouteArray
+	My.RouteArray = ""
 	
-	// 2箇所の候補地をランダムに選択する
-	newTargetPointAgt = Universe.Map.Point(CInt(Rnd() * CountAgt(Universe.Map.Point)))
-	newTargetPointAgt2 = Universe.Map.Point(CInt(Rnd() * CountAgt(Universe.Map.Point)))
-	If ((targetPointAgt.ID <> newTargetPointAgt.ID) And (targetPointAgt.ID <> newTargetPointAgt2.ID)) And (newTargetPointAgt.ID <> newTargetPointAgt2.ID) Then
-		newRoute = @dijkstra(targetPointAgt.ID, CStr(newTargetPointAgt.ID) & "," & CStr(newTargetPointAgt2.ID))
-	End If
+	// これまでに通った経路を格納する
+	For i=0 To My.RouteCount - 2
+		My.RouteArray = My.RouteArray & GetToken(lastRouteArray, i) & ","
+	Next i
 	
-	// 新しい経路が有効であれば追加
-	If Len(newRoute) > 0 Then
-		My.RouteArray = My.RouteArray & "," & newRoute
-	End If
+	// 新しい経路を追加する
+	My.RouteArray = My.RouteArray & newRoute
+	
+	// エージェントの色を変更する
+	My.Color = COLOR_YELLOW
 }
 
-sub reroute(targetpointagt as agt)
+Sub homeroute(targetPointAgt As Agt)
 {
-dim startpointagt as agt
-dim goalpointid as integer
-dim newroute as string
-dim lastroutearray as string
-dim i as integer
-
-startpointagt = universe.Map.Point(CInt(gettoken(my.RouteArray,my.routecount-1)))
-goalpointid
+	Dim startPointAgt As Agt
+	Dim goalPointID As Integer
+	Dim newRoute As String
+	Dim lastRouteArray As String
+	Dim i As Integer
+	
+	// 現在地点から経路を再探索する
+	startPointAgt = Universe.Map.Point(CInt(GetToken(My.RouteArray, My.RouteCount - 1)))
+	goalPointID = my.ID
+	newRoute = @dijkstra(startPointAgt.ID, CStr(goalPointID))
+		
+	lastRouteArray = My.RouteArray
+	My.RouteArray = ""
+	
+	// これまでに通った経路を格納する
+	For i=0 To My.RouteCount - 2
+		My.RouteArray = My.RouteArray & GetToken(lastRouteArray, i) & ","
+	Next i
+	
+	// 新しい経路を追加する
+	My.RouteArray = My.RouteArray & newRoute
+	
+	// エージェントの色を変更する
+	My.Color = COLOR_YELLOW
 }
 #end_rule UNIVERSE.MAP.PERSON
 
@@ -392,12 +413,12 @@ Map_Output {
     Title = "Map";
     Disable = No;
     Background_Color = 255, 255, 255;
-    Position_x = 76;
+    Position_x = 174;
     Position_y = 24;
-    Size_x = 691;
+    Size_x = 778;
     Size_y = 677;
     Remarks = Yes;
-    Map_Cell_Size = 4;
+    Map_Cell_Size = 10;
     Legend_Pos = Top;
     Font_Name = "Dialog";
     Font_Char_Set = 81;
@@ -565,7 +586,7 @@ Others_Data {
     Console_DisplayLines_Max = 500;
     Font_Name = "Dialog";
     Font_Char_Set = 0;
-    Font_Size = 12.0;
+    Font_Size = 18.0;
     Font_Style = 0;
     Font_Color = 0, 0, 0;
     Font_Background_Color = 0, 0, 0;
@@ -687,7 +708,7 @@ Space_Map_Initial_Value {
 // Window Location Definition Division
 //-------------------------------------------------------
 Window_Rectangle {
-    Window_Name = Main_Window, 1012, 34, 800, 562;
+    Window_Name = Main_Window, 50, 51, 1008, 909;
     Window_Name = Output_Setting_Window, 160, 271, 480, 290;
 }
 
