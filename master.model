@@ -23,6 +23,8 @@ UNIVERSE {
             Dim ChoiceAgt(0, 0) As Agt = (0);
             Dim NearAgtSet(0, 0) As AgtSet = ();
             Dim StreetAgt(0, 0) As Agt = (0);
+            Dim site(0, 0) As Integer = (0);
+            Dim color(0, 0) As Integer = (0);
         }
         AgtType Person(0, 0)[0] {
             Dim ID(0, 0) As Integer = (0);
@@ -33,6 +35,7 @@ UNIVERSE {
             Dim RouteArray(0, 0) As String = ("");
             Dim RouteCount(0, 0) As Integer = (0);
             Dim Color(0, 0) As Integer = (0);
+            Dim action(0, 0) As Integer = (0);
         }
         AgtType Block(0, 0)[0] {
             Dim ID(0, 0) As Integer = (0);
@@ -104,6 +107,9 @@ Initial_Value {
 , 39.98211091234347, 43.38103756708408, 45.974955277280856, 46.779964221824685, 48.56887298747764, 1.699463327370303, 4.203935599284435, 9.212880143112699, 13.506261180679786, 18.783542039355993
 , 23.076923076923077, 28.08586762075134, 31.3953488372093, 34.704830053667266, 37.29874776386404, 41.50268336314848, 44.5438282647585, 46.601073345259394, 47.94275491949911);
     UNIVERSE.MAP.POINT.LAYER = 110(110*0);
+    UNIVERSE.MAP.POINT.DIRECTION = 110(110*0.0);
+    UNIVERSE.MAP.POINT.DIJKSTRAVALUE = 110(110*0.0);
+    UNIVERSE.MAP.POINT.SITE = 110(20*1, 36*0, 2*2, 0, 2, 3*0, 2*3, 2*0, 2*3, 41*0);
 }
 
 
@@ -164,6 +170,17 @@ If My.ID <= 20  Then
 	personAgt.RouteArray = @dijkstra(my.ID, "63")
 	personAgt.RouteCount = 1
 end if
+
+// siteが1なら家、2ならオフィス、3なら店
+if my.site == 0 then
+	my.color = COLOR_RED
+elseif my.site == 1 then
+	my.color = COLOR_BLUE
+elseif my.site == 2 then
+	my.color = COLOR_GREEN
+elseif my.site == 3 then
+	my.color = COLOR_CYAN
+end if
 }
 
 Agt_Step{
@@ -179,6 +196,7 @@ Agt_Step{
 #begin_rule UNIVERSE.MAP.PERSON
 Agt_Init{
 my.Color = COLOR_BLUE
+my.action = 1
 }
 
 Agt_Step{
@@ -213,7 +231,15 @@ Agt_Step{
 					Pursue(targetPointAgt, distance)
 				End If
 			Else
-				homeroute(targetpointagt)
+				// 経済活動を終えたならば家に帰る
+				if my.action == 1 then
+					my.action = 0
+					homeroute(targetpointagt)
+				// 経済活動をしていないなら対岸に向かう
+				elseif my.action == 0 then
+					my.action = 1
+					jobroute(targetpointagt)
+				end if
 			End If
 		End If
 	End If
@@ -274,6 +300,42 @@ Sub homeroute(targetPointAgt As Agt)
 	
 	// エージェントの色を変更する
 	My.Color = COLOR_YELLOW
+}
+
+Sub jobroute(targetPointAgt As Agt)
+{
+	Dim startPointID As Integer
+	Dim goalPointID As Integer
+	Dim newRoute As String
+	Dim lastRouteArray As String
+	Dim i As Integer
+	
+	// 現在地点から経路を再探索する
+	startPointid = my.ID
+	if rnd() < 0.25 then
+		goalPointID = 63
+	elseif rnd() < 0.5 then
+		goalPointID = 64
+	elseif rnd() < 0.75 then
+		goalPointID = 67
+	else
+		goalPointID = 68
+	end if
+	newRoute = @dijkstra(startPointID, CStr(goalPointID))
+		
+	lastRouteArray = My.RouteArray
+	My.RouteArray = ""
+	
+	// これまでに通った経路を格納する
+	For i=0 To My.RouteCount - 2
+		My.RouteArray = My.RouteArray & GetToken(lastRouteArray, i) & ","
+	Next i
+	
+	// 新しい経路を追加する
+	My.RouteArray = My.RouteArray & newRoute
+	
+	// エージェントの色を変更する
+	My.Color = COLOR_BLUE
 }
 #end_rule UNIVERSE.MAP.PERSON
 
@@ -459,7 +521,7 @@ Map_Output {
         Line_Arrow_Variable = "";
         Line_Width_Variable = "";
         Line_Color_Variable = "";
-        Agent_Color = 255,0,0;
+        Agent_Color = "Universe.Map.Point.color";
         Marker_Id = 1;
         Effective_Figures = 0;
         Format_Id = 0;
@@ -579,7 +641,7 @@ Others_Data {
     Console_Size_y = 120;
     Componen_Tree_Position_x = 2;
     Componen_Tree_Position_y = 2;
-    Componen_Tree_Size_x = 250;
+    Componen_Tree_Size_x = 165;
     Componen_Tree_Size_y = 400;
     Console_Background_Color = 16777215;
     Console_Foreground_Color = 255;
@@ -708,8 +770,8 @@ Space_Map_Initial_Value {
 // Window Location Definition Division
 //-------------------------------------------------------
 Window_Rectangle {
-    Window_Name = Main_Window, 50, 51, 1008, 909;
-    Window_Name = Output_Setting_Window, 160, 271, 480, 290;
+    Window_Name = Main_Window, 570, 75, 996, 877;
+    Window_Name = Output_Setting_Window, 258, 293, 480, 290;
 }
 
 
