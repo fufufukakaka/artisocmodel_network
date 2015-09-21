@@ -36,6 +36,7 @@ UNIVERSE {
             Dim RouteCount(0, 0) As Integer = (0);
             Dim Color(0, 0) As Integer = (0);
             Dim action(0, 0) As Integer = (0);
+            Dim work(0, 0) As Integer = ();
         }
         AgtType Block(0, 0)[0] {
             Dim ID(0, 0) As Integer = (0);
@@ -43,6 +44,13 @@ UNIVERSE {
             Dim Y(0, 0) As Double = (0.0);
             Dim Layer(0, 0) As Integer = (0);
             Dim Direction(0, 0) As Double = (0.0);
+        }
+        AgtType government(0, 0)[1] {
+            Dim ID(0, 0) As Integer = ();
+            Dim X(0, 0) As Double = ();
+            Dim Y(0, 0) As Double = ();
+            Dim Layer(0, 0) As Integer = ();
+            Dim Direction(0, 0) As Double = ();
         }
     }
     AgtType Link(0, 0)[282] {
@@ -77,6 +85,8 @@ UNIVERSE {
         Dim StreetAgt(0, 0) As Agt = (0);
     }
     Dim TemporaryStreetAgtset(0, 0) As AgtSet = ();
+    Dim shoplist(0, 0)[5] As Integer = ();
+    Dim officelist(0, 0)[5] As Integer = ();
 }
 
 
@@ -84,32 +94,34 @@ UNIVERSE {
 // Agent Variable Initial Data
 //-------------------------------------------------------
 Initial_Value {
-    UNIVERSE.MAP.POINT.X = 110(44.991055456171736, 42.486583184257604, 43.20214669051879, 46.86940966010734, 45.16994633273703, 40.96601073345259, 43.82826475849731, 45.52772808586762, 48.21109123434705, 47.49552772808587
-, 42.039355992844364, 46.69051878354204, 41.77101967799642, 43.47048300536673, 46.601073345259394, 44.72271914132379, 41.94991055456172, 47.13774597495528, 49.28443649373882, 48.83720930232558
-, 43.38103756708408, 37.2093023255814, 36.76207513416816, 38.46153846153846, 41.59212880143113, 37.47763864042934, 33.72093023255814, 35.3309481216458, 38.550983899821105, 39.803220035778175
-, 36.85152057245081, 37.29874776386404, 38.81932021466905, 37.65652951699463, 38.550983899821105, 40.96601073345259, 34.97316636851521, 34.16815742397138, 37.83542039355993, 40.33989266547406
-, 47.76386404293381, 29.427549194991055, 29.338103756708406, 2*29.427549194991055, 29.24865831842576, 2*29.159212880143112, 29.60644007155635, 29.785330948121647, 29.695885509838998, 30.500894454382827
-, 31.127012522361362, 30.232558139534884, 31.037567084078713, 30.41144901610018, 3.1305903398926667, 1.967799642218246, 6.797853309481216, 0.8944543828264742, 4.83005366726297, 8.228980322003576
-, 4.293381037567084, 2.5939177101967807, 2.8622540250447237, 10.465116279069766, 8.050089445438282, 2.772808586762075, 2.236135957066189, 1.699463327370303, 4.472271914132378, 6.797853309481216
-, 5.277280858676207, 5.098389982110913, 8.318425760286225, 9.838998211091234, 13.595706618962433, 12.790697674418604, 14.490161001788909, 13.595706618962433, 11.180679785330948, 5.813953488372093
-, 9.481216457960643, 2*13.416815742397137, 10.822898032200358, 9.033989266547406, 12.611806797853308, 17.262969588550984, 10.822898032200358, 8.765652951699462, 13.595706618962433, 8.676207513416816
-, 5.54561717352415, 9.391771019677996, 6.8872987477638645, 16.368515205724506, 17.88908765652952, 18.6046511627907, 18.51520572450805, 17.88908765652952, 19.23076923076923, 20.304114490161002
-, 17.79964221824687, 15.026833631484793, 15.384615384615385, 15.56350626118068, 14.04293381037567, 15.116279069767442, 16.27906976744186);
-    UNIVERSE.MAP.POINT.Y = 110(43.112701252236135, 43.20214669051879, 40.429338103756706, 37.924865831842574, 34.34704830053667, 33.18425760286225, 28.354203935599283, 25.670840787119857, 28.443649373881932, 20.125223613595708
-, 18.872987477638638, 15.921288014311273, 14.758497316636848, 11.359570661896242, 10.644007155635066, 5.992844364937383, 7.781753130590339, 3.398926654740606, 5.903398926654745, 0.8050089445438289
-, 46.2432915921288, 42.39713774597496, 37.83542039355993, 34.883720930232556, 37.11985688729875, 31.48479427549195, 37.11985688729875, 28.354203935599283, 25.58139534883721, 20.840787119856888
-, 15.563506261180677, 12.880143112701248, 10.017889087656528, 5.187835420393554, 2.0572450805008913, 2.593917710196777, 42.039355992844364, 45.43828264758497, 47.227191413237925, 47.76386404293381
-, 45.796064400715565, 48.21109123434705, 45.70661896243291, 41.14490161001789, 39.355992844364934, 35.688729874776385, 33.09481216457961, 28.80143112701252, 25.760286225402503, 23.70304114490161
-, 19.677996422182467, 17.71019677996422, 12.254025044722717, 8.944543828264756, 6.171735241502688, 1.6100178890876577, 47.13774597495528, 42.39713774597496, 35.509838998211094, 30.85867620751342
-, 24.239713774597497, 25.22361359570662, 18.783542039355993, 21.10912343470483, 15.474060822898032, 14.579606440071558, 12.611806797853305, 11.896243291592128, 9.302325581395351, 5.635062611806802
-, 2.9516994633273725, 2.1466905187835437, 5.992844364937383, 8.676207513416813, 9.033989266547408, 6.529516994633269, 3.2200357781753155, 7.42397137745975, 11.53846153846154, 16.368515205724506
-, 17.262969588550988, 17.08407871198569, 21.10912343470483, 20.39355992844365, 27.191413237924866, 27.638640429338103, 2*31.932021466905187, 28.354203935599283, 37.11985688729875, 39.71377459749553
-, 39.98211091234347, 43.38103756708408, 45.974955277280856, 46.779964221824685, 48.56887298747764, 1.699463327370303, 4.203935599284435, 9.212880143112699, 13.506261180679786, 18.783542039355993
-, 23.076923076923077, 28.08586762075134, 31.3953488372093, 34.704830053667266, 37.29874776386404, 41.50268336314848, 44.5438282647585, 46.601073345259394, 47.94275491949911);
+    UNIVERSE.MAP.POINT.X = 110(44.99105546, 42.48658318, 43.20214669, 46.86940966, 45.16994633, 40.96601073, 43.82826476, 45.52772809, 48.21109123, 47.49552773
+, 42.03935599, 46.69051878, 41.77101968, 43.47048301, 46.60107335, 44.72271914, 41.94991055, 47.13774597, 49.28443649, 48.8372093
+, 43.38103757, 37.20930233, 36.76207513, 38.46153846, 41.5921288, 37.47763864, 33.72093023, 35.33094812, 38.5509839, 39.80322004
+, 36.85152057, 37.29874776, 38.81932021, 37.65652952, 38.5509839, 40.96601073, 34.97316637, 34.16815742, 37.83542039, 40.33989267
+, 47.76386404, 29.42754919, 29.33810376, 2*29.42754919, 29.24865832, 2*29.15921288, 29.60644007, 29.78533095, 29.69588551, 30.50089445
+, 31.12701252, 30.23255814, 31.03756708, 30.41144902, 3.13059034, 1.967799642, 6.797853309, 0.894454383, 4.830053667, 8.228980322
+, 4.293381038, 2.59391771, 2.862254025, 10.46511628, 8.050089445, 2.772808587, 2.236135957, 1.699463327, 4.472271914, 6.797853309
+, 5.277280859, 5.098389982, 8.31842576, 9.838998211, 13.59570662, 12.79069767, 14.490161, 13.59570662, 11.18067979, 5.813953488
+, 9.481216458, 2*13.41681574, 10.82289803, 9.033989267, 12.6118068, 17.26296959, 10.82289803, 8.765652952, 13.59570662, 8.676207513
+, 5.545617174, 9.39177102, 6.887298748, 16.36851521, 17.88908766, 18.60465116, 18.51520572, 17.88908766, 19.23076923, 20.30411449
+, 17.79964222, 15.02683363, 15.38461538, 15.56350626, 14.04293381, 15.11627907, 16.27906977);
+    UNIVERSE.MAP.POINT.Y = 110(43.11270125, 43.20214669, 40.4293381, 37.92486583, 34.3470483, 33.1842576, 28.35420394, 25.67084079, 28.44364937, 20.12522361
+, 18.87298748, 15.92128801, 14.75849732, 11.35957066, 10.64400716, 5.992844365, 7.781753131, 3.398926655, 5.903398927, 0.805008945
+, 46.24329159, 42.39713775, 37.83542039, 34.88372093, 37.11985689, 31.48479428, 37.11985689, 28.35420394, 25.58139535, 20.84078712
+, 15.56350626, 12.88014311, 10.01788909, 5.18783542, 2.057245081, 2.59391771, 42.03935599, 45.43828265, 47.22719141, 47.76386404
+, 45.7960644, 48.21109123, 45.70661896, 41.14490161, 39.35599284, 35.68872987, 33.09481216, 28.80143113, 25.76028623, 23.70304114
+, 19.67799642, 17.71019678, 12.25402504, 8.944543828, 6.171735242, 1.610017889, 47.13774597, 42.39713775, 35.509839, 30.85867621
+, 24.23971377, 25.2236136, 18.78354204, 21.10912343, 15.47406082, 14.57960644, 12.6118068, 11.89624329, 9.302325581, 5.635062612
+, 2.951699463, 2.146690519, 5.992844365, 8.676207513, 9.033989267, 6.529516995, 3.220035778, 7.423971377, 11.53846154, 16.36851521
+, 17.26296959, 17.08407871, 21.10912343, 20.39355993, 27.19141324, 27.63864043, 2*31.93202147, 28.35420394, 37.11985689, 39.7137746
+, 39.98211091, 43.38103757, 45.97495528, 46.77996422, 48.56887299, 1.699463327, 4.203935599, 9.212880143, 13.50626118, 18.78354204
+, 23.07692308, 28.08586762, 31.39534884, 34.70483005, 37.29874776, 41.50268336, 44.54382826, 46.60107335, 47.94275492);
     UNIVERSE.MAP.POINT.LAYER = 110(110*0);
     UNIVERSE.MAP.POINT.DIRECTION = 110(110*0.0);
     UNIVERSE.MAP.POINT.DIJKSTRAVALUE = 110(110*0.0);
-    UNIVERSE.MAP.POINT.SITE = 110(20*1, 36*0, 2*2, 0, 2, 3*0, 2*3, 2*0, 2*3, 41*0);
+    UNIVERSE.MAP.POINT.SITE = 110(20*1, 23*0, 4*4, 3*0, 2*4, 2*0, 2*4, 5*2, 2*0, 3*3
+, 0, 2*3, 41*0);
+    UNIVERSE.MAP.POINT.COLOR = 110(110*0);
 }
 
 
@@ -171,7 +183,7 @@ If My.ID <= 20  Then
 	personAgt.RouteCount = 1
 end if
 
-// siteが1なら家、2ならオフィス、3なら店
+// siteが1なら家、2ならオフィス、3なら店、4なら橋の計測部分
 if my.site == 0 then
 	my.color = COLOR_RED
 elseif my.site == 1 then
@@ -180,6 +192,8 @@ elseif my.site == 2 then
 	my.color = COLOR_GREEN
 elseif my.site == 3 then
 	my.color = COLOR_CYAN
+elseif my.site == 4 then
+	my.color = COLOR_MAGENTA
 end if
 }
 
@@ -238,7 +252,11 @@ Agt_Step{
 				// 経済活動をしていないなら対岸に向かう
 				elseif my.action == 0 then
 					my.action = 1
-					jobroute(targetpointagt)
+					if rnd() < 0.5 then
+						shoproute(targetpointagt)
+					else
+						jobroute(targetpointagt)
+					end if
 				end if
 			End If
 		End If
@@ -302,7 +320,7 @@ Sub homeroute(targetPointAgt As Agt)
 	My.Color = COLOR_YELLOW
 }
 
-Sub jobroute(targetPointAgt As Agt)
+Sub shoproute(targetPointAgt As Agt)
 {
 	Dim startPointID As Integer
 	Dim goalPointID As Integer
@@ -311,15 +329,18 @@ Sub jobroute(targetPointAgt As Agt)
 	Dim i As Integer
 	
 	// 現在地点から経路を再探索する
+	// どのshopに向かうかをランダムに決める
 	startPointid = my.ID
-	if rnd() < 0.25 then
-		goalPointID = 63
-	elseif rnd() < 0.5 then
-		goalPointID = 64
-	elseif rnd() < 0.75 then
-		goalPointID = 67
+	if rnd() < 0.2 then
+		goalPointID = universe.shoplist(0)
+	elseif rnd() < 0.4 then
+		goalPointID = universe.shoplist(1)
+	elseif rnd() < 0.6 then
+		goalPointID = universe.shoplist(2)
+	elseif rnd() < 0.8 then
+		goalPointID = universe.shoplist(3)
 	else
-		goalPointID = 68
+		goalPointID = universe.shoplist(4)
 	end if
 	newRoute = @dijkstra(startPointID, CStr(goalPointID))
 		
@@ -335,7 +356,46 @@ Sub jobroute(targetPointAgt As Agt)
 	My.RouteArray = My.RouteArray & newRoute
 	
 	// エージェントの色を変更する
-	My.Color = COLOR_BLUE
+	My.Color = COLOR_CYAN
+}
+
+Sub jobroute(targetPointAgt As Agt)
+{
+	Dim startPointID As Integer
+	Dim goalPointID As Integer
+	Dim newRoute As String
+	Dim lastRouteArray As String
+	Dim i As Integer
+	
+	// 現在地点から経路を再探索する
+	// どのofiiceに向かうかをランダムに決める
+	startPointid = my.ID
+	if rnd() < 0.2 then
+		goalPointID = universe.officelist(0)
+	elseif rnd() < 0.4 then
+		goalPointID = universe.officelist(1)
+	elseif rnd() < 0.6 then
+		goalPointID = universe.officelist(2)
+	elseif rnd() < 0.8 then
+		goalPointID = universe.officelist(3)
+	else
+		goalPointID = universe.officelist(4)
+	end if
+	newRoute = @dijkstra(startPointID, CStr(goalPointID))
+		
+	lastRouteArray = My.RouteArray
+	My.RouteArray = ""
+	
+	// これまでに通った経路を格納する
+	For i=0 To My.RouteCount - 2
+		My.RouteArray = My.RouteArray & GetToken(lastRouteArray, i) & ","
+	Next i
+	
+	// 新しい経路を追加する
+	My.RouteArray = My.RouteArray & newRoute
+	
+	// エージェントの色を変更する
+	My.Color = COLOR_GREEN
 }
 #end_rule UNIVERSE.MAP.PERSON
 
@@ -354,6 +414,57 @@ Agt_Step{
 
 }
 #end_rule UNIVERSE.MAP.BLOCK
+
+
+
+
+//-------------------------------------------------------
+// Agent Rule
+//-------------------------------------------------------
+#begin_rule UNIVERSE.MAP.GOVERNMENT
+Agt_Init{
+my.X = 25
+my.Y = 25
+dim list as agtset
+dim one as agt
+dim one1 as agt
+dim i as integer
+dim shops as agtset
+dim offices as agtset
+dim shoplist(5) as integer
+dim officelist(5) as integer
+// 店及びオフィスのIDを取得したい
+makeoneagtsetaroundown(list,1000,universe.Map.Point,false)
+for each one in list
+	if one.site == 2 then
+		addagt(offices,one)
+	elseif one.site == 3 then
+		addagt(shops,one)
+	end if
+next one
+for i = 0 to 4 
+	one = getagt(offices,i)
+	one1 = getagt(shops,i)
+	officelist(i) = one.id
+	shoplist(i) = one1.id
+next i
+universe.officelist(0) = officelist(0) 
+universe.officelist(1) = officelist(1) 
+universe.officelist(2) = officelist(2) 
+universe.officelist(3) = officelist(3) 
+universe.officelist(4) = officelist(4) 
+universe.shoplist(0) = shoplist(0) 
+universe.shoplist(1) = shoplist(1) 
+universe.shoplist(2) = shoplist(2) 
+universe.shoplist(3) = shoplist(3) 
+universe.shoplist(4) = shoplist(4) 
+print(universe.shoplist(0) & universe.shoplist(1) & universe.shoplist(2) & universe.shoplist(3) & universe.shoplist(4))
+}
+
+Agt_Step{
+
+}
+#end_rule UNIVERSE.MAP.GOVERNMENT
 
 
 
@@ -475,12 +586,12 @@ Map_Output {
     Title = "Map";
     Disable = No;
     Background_Color = 255, 255, 255;
-    Position_x = 174;
-    Position_y = 24;
+    Position_x = 115;
+    Position_y = 15;
     Size_x = 778;
     Size_y = 677;
     Remarks = Yes;
-    Map_Cell_Size = 10;
+    Map_Cell_Size = 11;
     Legend_Pos = Top;
     Font_Name = "Dialog";
     Font_Char_Set = 81;
@@ -606,6 +717,39 @@ Map_Output {
         Agent_Image_Transparency_Value = 0.0;
         Agent_Image_Transparency_Variable_Name = "Universe.Map.Block.ID";
     }
+    Output {
+        Map_Element_Name = "government";
+        Map_Element = Agent_Variable;
+        Output_Expression = "Universe.Map.government";
+        Draw_Line = No;
+        Collection_Name = "";
+        Line_Type = 0;
+        Line_Arrow = 0;
+        Line_Width = 0;
+        Line_Color = 0, 0, 0;
+        Line_Type_Variable = "";
+        Line_Arrow_Variable = "";
+        Line_Width_Variable = "";
+        Line_Color_Variable = "";
+        Agent_Color = 0,0,0;
+        Marker_Id = 1;
+        Effective_Figures = 0;
+        Format_Id = 0;
+        Agent_Image_Direction = No;
+        Icon_Type = 0;
+        Icon_Var_Name = "";
+        Icon_Transparent = No;
+        Icon_Enlarg_Reduce = No;
+        Icon_File_Name = "";
+        Num_Display = No;
+        Num_Var_Name = "";
+        Agent_Image_Magnify_by_value = Yes;
+        Agent_Image_Magnify_Value = 1.1;
+        Agent_Image_Magnify_Variable_Name = "Universe.Map.government.ID";
+        Agent_Image_Transparency_by_value = Yes;
+        Agent_Image_Transparency_Value = 0.0;
+        Agent_Image_Transparency_Variable_Name = "Universe.Map.government.ID";
+    }
 }
 
 
@@ -635,8 +779,8 @@ Others_Data {
     Debug_Position_y = 75;
     Debug_Size_x = 400;
     Debug_Size_y = 200;
-    Console_Position_x = 2;
-    Console_Position_y = 400;
+    Console_Position_x = 40;
+    Console_Position_y = 692;
     Console_Size_x = 600;
     Console_Size_y = 120;
     Componen_Tree_Position_x = 2;
@@ -770,8 +914,8 @@ Space_Map_Initial_Value {
 // Window Location Definition Division
 //-------------------------------------------------------
 Window_Rectangle {
-    Window_Name = Main_Window, 570, 75, 996, 877;
-    Window_Name = Output_Setting_Window, 258, 293, 480, 290;
+    Window_Name = Main_Window, 1, 55, 899, 917;
+    Window_Name = Output_Setting_Window, 209, 313, 480, 290;
 }
 
 
