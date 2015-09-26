@@ -37,6 +37,7 @@ UNIVERSE {
             Dim Color(0, 0) As Integer = (0);
             Dim action(0, 0) As Integer = (0);
             Dim check(0, 0) As Integer = (0);
+            Dim nowhome(0, 0) As Boolean = ();
         }
         AgtType Block(0, 0)[0] {
             Dim ID(0, 0) As Integer = (0);
@@ -95,7 +96,7 @@ UNIVERSE {
     Dim TemporaryStreetAgtset(0, 0) As AgtSet = ();
     Dim shoplist(0, 0)[5] As Integer = (5*0);
     Dim officelist(0, 0)[5] As Integer = (5*0);
-    Dim numberofendagt(0, 0) As Integer = ();
+    Dim numberofendagt(0, 0) As Integer = (0);
 }
 
 
@@ -225,10 +226,13 @@ Agt_Step{
 // Agent Rule
 //-------------------------------------------------------
 #begin_rule UNIVERSE.MAP.PERSON
+
+
 Agt_Init{
 my.Color = COLOR_BLUE
 my.action = 1
 my.check = 0
+my.nowhome = FALSE
 }
 
 Agt_Step{
@@ -238,7 +242,14 @@ Agt_Step{
 	Dim streetAgt As Agt
 	dim set as agtset
 	dim one as agt
-	
+
+if universe.numberofendagt mod 20 == 0 then
+	my.nowhome = FALSe
+end if
+
+if universe.numberofendagt mod 20 > 0 and my.nowhome == TRUE then	
+	my.Color = COLOR_BLACK
+else
 	lastTargetPointAgt = Universe.Map.Point(CInt(GetToken(My.RouteArray, My.RouteCount-1)))
 	targetPointAgt = Universe.Map.Point(CInt(GetToken(My.RouteArray, My.RouteCount)))
 	streetAgt = @get_street_from_points(lastTargetPointAgt.ID, targetPointAgt.ID)
@@ -275,21 +286,18 @@ Agt_Step{
 				// 全員が帰宅したら、次の日を迎えて行動に移る
 					my.action = 1
 					universe.numberofendagt = universe.numberofendagt + 1
-					if universe.numberofendagt == countagt(universe.Map.Person) then
-						if rnd() < 0.5 then
-							shoproute(targetpointagt)
-							my.check = 0
-							universe.numberofendagt = universe.numberofendagt - 1
-						else
-							jobroute(targetpointagt)
-							my.check = 0
-							universe.numberofendagt = universe.numberofendagt - 1
+					if rnd() < 0.5 then
+						shoproute(targetpointagt)
+						my.check = 0
+					else
+						jobroute(targetpointagt)
+						my.check = 0
 						end if
-					end if
 				end if
 			End If
 		End If
 	End If
+end if
 }
 
 // 経路を再探索する
@@ -425,22 +433,6 @@ Sub jobroute(targetPointAgt As Agt)
 	
 	// エージェントの色を変更する
 	My.Color = COLOR_GREEN
-}
-
-// その場にとどまる
-Sub stop(targetPointAgt As Agt)
-{
-	Dim startPointAgt As Agt
-	
-	// 現在地点を取得
-	startPointAgt = Universe.Map.Point(CInt(GetToken(My.RouteArray, My.RouteCount - 1)))
-	
-	// その座標にとどまる
-	my.X = startPointAgt.x
-	my.Y = startPointAGT.Y
-	
-	// エージェントの色を変更する
-	My.Color = COLOR_BLACK
 }
 #end_rule UNIVERSE.MAP.PERSON
 
@@ -746,7 +738,7 @@ Map_Output {
         Icon_Enlarg_Reduce = No;
         Icon_File_Name = "";
         Num_Display = Yes;
-        Num_Var_Name = "Universe.Map.Person.check";
+        Num_Var_Name = "Universe.Map.Person.action";
         Agent_Image_Magnify_by_value = Yes;
         Agent_Image_Magnify_Value = 1.0;
         Agent_Image_Magnify_Variable_Name = "Universe.Map.Person.ID";
@@ -1184,8 +1176,8 @@ Space_Map_Initial_Value {
 // Window Location Definition Division
 //-------------------------------------------------------
 Window_Rectangle {
-    Window_Name = Main_Window, 651, 113, 1132, 868;
-    Window_Name = Output_Setting_Window, 326, 289, 480, 290;
+    Window_Name = Main_Window, 804, 162, 1116, 832;
+    Window_Name = Output_Setting_Window, 318, 271, 480, 290;
 }
 
 
