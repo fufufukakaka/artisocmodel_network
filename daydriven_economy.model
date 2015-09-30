@@ -188,7 +188,7 @@ for i = 0 to 4
 	universe.Map.Point(shoplist(i)).site = 2
 	universe.Map.Point(officelist(i)).site = 3
 next i
-
+println(getcountsimulationnumber())
 print(universe.shoplist(0))
 print(universe.shoplist(1))
 print(universe.shoplist(2))
@@ -197,7 +197,7 @@ print(universe.shoplist(4))
 print(universe.officelist(0))
 print(universe.officelist(1))
 print(universe.officelist(2))
-print(universe.officelist(3))cc vvvvv                                                                    c
+print(universe.officelist(3)) 
 print(universe.officelist(4))
 }
 
@@ -207,13 +207,6 @@ universe.day = 0
 }
 
 Univ_Step_End{
-if universe.day == 30 then
-	exitsimulation()
-end if
-}
-
-Univ_Finish{
-
 openfilecsv("test0930.csv",2,3)
 writefilecsv(2,universe.day,false)
 writefilecsv(2,universe.Map.bridgecore(0).demand,false)
@@ -226,6 +219,14 @@ writefilecsv(2,universe.Map.bridgecore(6).demand,false)
 writefilecsv(2,universe.Map.bridgecore(7).demand,false)
 writefilecsv(2,universe.Map.bridgecore(8).demand,true)
 closefilecsv(2)
+
+if universe.day == 30 then
+	exitsimulation()
+end if
+}
+
+Univ_Finish{
+
 }
 
 sub create_block(countStep as Long, beginPointID as integer, endPointID as integer, newCost as Double)
@@ -702,10 +703,10 @@ Map_Output {
     Title = "Map";
     Disable = No;
     Background_Color = 255, 255, 255;
-    Position_x = 412;
-    Position_y = 66;
-    Size_x = 727;
-    Size_y = 644;
+    Position_x = 8;
+    Position_y = 5;
+    Size_x = 393;
+    Size_y = 398;
     Remarks = Yes;
     Map_Cell_Size = 11;
     Legend_Pos = Top;
@@ -1085,10 +1086,10 @@ Time_Graph {
     Remarks = Yes;
     Legend_Pos = Top;
     FastDraw = No;
-    Position_x = 12;
-    Position_y = 103;
-    Size_x = 410;
-    Size_y = 300;
+    Position_x = 405;
+    Position_y = -2;
+    Size_x = 872;
+    Size_y = 603;
     Map_Cell_Size = -1;
     Axis_Label = "", "";
     Draw_By_JFree_Chart = Yes;
@@ -1134,8 +1135,8 @@ Others_Data {
     Debug_Position_y = 75;
     Debug_Size_x = 400;
     Debug_Size_y = 200;
-    Console_Position_x = 58;
-    Console_Position_y = 268;
+    Console_Position_x = 568;
+    Console_Position_y = 45;
     Console_Size_x = 600;
     Console_Size_y = 351;
     Componen_Tree_Position_x = 2;
@@ -1282,7 +1283,7 @@ Space_Map_Initial_Value {
 // Window Location Definition Division
 //-------------------------------------------------------
 Window_Rectangle {
-    Window_Name = Main_Window, 0, 23, 800, 700;
+    Window_Name = Main_Window, 120, 422, 1341, 707;
     Window_Name = Output_Setting_Window, 332, 317, 480, 290;
 }
 
