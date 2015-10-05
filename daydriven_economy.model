@@ -39,6 +39,8 @@ UNIVERSE {
             Dim check(0, 0) As Integer = (0);
             Dim nowhome(0, 0) As Integer = (0);
             Dim daycount(0, 0) As Double = (0.0);
+            Dim speed(0, 0) As Double = (0.0);
+            Dim dist(0, 0) As Double = (0.0);
         }
         AgtType Block(0, 0)[0] {
             Dim ID(0, 0) As Integer = (0);
@@ -311,6 +313,7 @@ my.action = 1
 my.check = 0
 my.nowhome = 0
 my.daycount = 1
+my.speed = 1
 }
 
 Agt_Step{
@@ -320,8 +323,35 @@ Agt_Step{
 	Dim streetAgt As Agt
 	dim set as agtset
 	dim one as agt
+	dim CNo as integer
 universe.numberofendagt = universe.numberofendagt + my.nowhome
 universe.day = universe.day + (my.daycount / countagt(universe.Map.Person))
+
+
+forward(1)
+makeoneagtsetaroundown(set,1,universe.Map.Person,false)
+CNo = countagtset(set)
+forward(-1)
+if CNo >= 1 then
+	for each one in set
+		distance = measuredistance(my.X,my.y,one.x,one.y,universe.map)
+		one.dist = distance
+	next one
+	
+	// 一番近い距離の
+	sortagtset(set,"dist",true)
+	one = getagt(set,0)
+	
+	// 車間距離に応じたスピードの定義
+	if abs(one.direction - my.Direction) == 180 then // 反対車線にいる場合は平均速度(1)で
+		my.speed = 1
+	else
+		my.speed = 30*(tanh((one.dist-10)/3)+tanh(10/3)) //GithubのIssuesを参考に
+	end if
+elseif CNo == 0 then //誰もいないなら最高速度(2)で
+	my.speed = 2
+end if
+
 if  gethistory(universe.numberofendagt,1)== 20 then
 	my.nowhome = 0
 	targetPointAgt = Universe.Map.Point(CInt(GetToken(My.RouteArray, My.RouteCount)))
@@ -338,7 +368,7 @@ end if
 	ElseIf my.nowhome == 0 and My.RouteCount < CountToken(My.RouteArray) Then
 		// 経路に沿って進む
 		targetPointAgt = Universe.Map.Point(CInt(GetToken(My.RouteArray, My.RouteCount)))
-		distance = Pursue(targetPointAgt, 1)
+		distance = Pursue(targetPointAgt, my.speed)
 		
 		If distance > 0 Then
 			// 次のPointに到着したとき
@@ -705,8 +735,8 @@ Map_Output {
     Background_Color = 255, 255, 255;
     Position_x = 8;
     Position_y = 5;
-    Size_x = 393;
-    Size_y = 398;
+    Size_x = 880;
+    Size_y = 899;
     Remarks = Yes;
     Map_Cell_Size = 11;
     Legend_Pos = Top;
@@ -1143,7 +1173,7 @@ Others_Data {
     Componen_Tree_Position_y = 2;
     Componen_Tree_Size_x = 165;
     Componen_Tree_Size_y = 400;
-    Console_Background_Color = 16777215;
+    Console_Background_Color = 10066329;
     Console_Foreground_Color = 255;
     Console_DisplayLines_Max = 500;
     Font_Name = "Dialog";
@@ -1170,7 +1200,7 @@ Network_Info {
 //-------------------------------------------------------
 Space_Map_Initial_Value {
     Space_Path_Name = Universe.Map;
-    Background_Image_File_Path_Name = "../../Downloads/ph3.jpg";
+    Background_Image_File_Path_Name = "..\..\Downloads\ph3.jpg";
     Origin_Position = Left_Bottom;
     Position_Agent {
         Agent_Name = Universe.Map.Point;
@@ -1283,7 +1313,7 @@ Space_Map_Initial_Value {
 // Window Location Definition Division
 //-------------------------------------------------------
 Window_Rectangle {
-    Window_Name = Main_Window, 120, 422, 1341, 707;
+    Window_Name = Main_Window, 0, 22, 1053, 1014;
     Window_Name = Output_Setting_Window, 332, 317, 480, 290;
 }
 
