@@ -327,15 +327,16 @@ Agt_Step{
 universe.numberofendagt = universe.numberofendagt + my.nowhome
 universe.day = universe.day + (my.daycount / countagt(universe.Map.Person))
 
-
 forward(1)
 makeoneagtsetaroundown(set,1,universe.Map.Person,false)
 CNo = countagtset(set)
 forward(-1)
 if CNo >= 1 then
 	for each one in set
-		distance = measuredistance(my.X,my.y,one.x,one.y,universe.map)
-		one.dist = distance
+		if abs(one.direction - my.Direction) <> 180 then
+			distance = measuredistance(my.X,my.y,one.x,one.y,universe.map)
+			one.dist = distance
+		end if
 	next one
 	
 	// 一番近い距離の
@@ -350,6 +351,11 @@ if CNo >= 1 then
 	end if
 elseif CNo == 0 then //誰もいないなら最高速度(2)で
 	my.speed = 2
+end if
+
+//下限界は0.333(10km/hのイメージ)
+if my.speed < 0.333 then
+	my.speed = 0.333
 end if
 
 if  gethistory(universe.numberofendagt,1)== 20 then
@@ -733,12 +739,12 @@ Map_Output {
     Title = "Map";
     Disable = No;
     Background_Color = 255, 255, 255;
-    Position_x = 8;
-    Position_y = 5;
+    Position_x = 264;
+    Position_y = 23;
     Size_x = 880;
     Size_y = 899;
     Remarks = Yes;
-    Map_Cell_Size = 11;
+    Map_Cell_Size = 13;
     Legend_Pos = Top;
     Font_Name = "Dialog";
     Font_Char_Set = 81;
@@ -1313,7 +1319,7 @@ Space_Map_Initial_Value {
 // Window Location Definition Division
 //-------------------------------------------------------
 Window_Rectangle {
-    Window_Name = Main_Window, 0, 22, 1053, 1014;
+    Window_Name = Main_Window, 0, 23, 1244, 995;
     Window_Name = Output_Setting_Window, 332, 317, 480, 290;
 }
 
