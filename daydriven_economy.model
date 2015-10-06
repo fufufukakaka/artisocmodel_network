@@ -103,7 +103,7 @@ UNIVERSE {
     Dim shoplist(0, 0)[5] As Integer = (5*0);
     Dim officelist(0, 0)[5] As Integer = (5*0);
     Dim numberofendagt(0, 0) <5>  As Integer = (0);
-    Dim day(0, 0) As Double = (0.0);
+    Dim day(0, 0) <10>  As Double = ();
 }
 
 
@@ -322,6 +322,12 @@ Agt_Step{
 universe.numberofendagt = universe.numberofendagt + my.nowhome
 universe.day = universe.day + (my.daycount / countagt(universe.Map.Person))
 
+// 日数が30の倍数ならarchivementをmoneyに換算する(今はテストなので5の倍数にしているよ)
+if Int(gethistory(universe.day,1)) mod 5 == 4 and Int(universe.day) mod 5 == 0 then
+	my.money = my.money + my.archivement
+	my.archivement = 0
+end if
+
 // 進む速度の定義
 forward(1)
 makeoneagtsetaroundown(set,1,universe.Map.Person,false)
@@ -353,8 +359,6 @@ end if
 if my.speed < 0.333 then
 	my.speed = 0.333
 end if
-
-// 日数が30の倍数になったら、archivementがmoneyとして懐に入る
 
 //ダイクストラ法に基づいて進む
 if  gethistory(universe.numberofendagt,1)== 20 then
@@ -1125,14 +1129,14 @@ Time_Graph {
     Draw_Interval = 1;
     Graph_Name = "day";
     Title = "day";
-    Disable = Yes;
+    Disable = No;
     Background_Color = 255, 255, 255;
     Remarks = Yes;
     Legend_Pos = Top;
     FastDraw = No;
-    Position_x = 405;
-    Position_y = -2;
-    Size_x = 872;
+    Position_x = 602;
+    Position_y = 172;
+    Size_x = 633;
     Size_y = 603;
     Map_Cell_Size = -1;
     Axis_Label = "", "";
@@ -1172,9 +1176,9 @@ Time_Graph {
     Remarks = Yes;
     Legend_Pos = Top;
     FastDraw = No;
-    Position_x = 100;
-    Position_y = 100;
-    Size_x = 1015;
+    Position_x = 58;
+    Position_y = 173;
+    Size_x = 536;
     Size_y = 609;
     Map_Cell_Size = -1;
     Axis_Label = "", "";
