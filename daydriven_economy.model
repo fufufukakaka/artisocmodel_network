@@ -41,9 +41,11 @@ UNIVERSE {
             Dim daycount(0, 0) As Double = (0.0);
             Dim speed(0, 0) As Double = (0.0);
             Dim dist(0, 0) As Double = (0.0);
-            Dim archivement(0, 0) As Integer = ();
-            Dim money(0, 0) As Integer = ();
-            Dim goalpointid(0, 0) As Integer = ();
+            Dim archivement(0, 0) As Integer = (0);
+            Dim money(0, 0) As Integer = (0);
+            Dim goalpointid(0, 0) As Integer = (0);
+            Dim consump(0, 0) As Integer = ();
+            Dim potential(0, 0) As Integer = ();
         }
         AgtType Block(0, 0)[0] {
             Dim ID(0, 0) As Integer = (0);
@@ -103,7 +105,7 @@ UNIVERSE {
     Dim shoplist(0, 0)[5] As Integer = (5*0);
     Dim officelist(0, 0)[5] As Integer = (5*0);
     Dim numberofendagt(0, 0) <5>  As Integer = (0);
-    Dim day(0, 0) <10>  As Double = ();
+    Dim day(0, 0) <10>  As Double = (0.0);
 }
 
 
@@ -319,6 +321,8 @@ Agt_Step{
 	dim set as agtset
 	dim one as agt
 	dim CNo as integer
+my.consump = norminv(rnd(),9360,int(rnd()*5000) + 500)
+my.potential = norminv(rnd(),14581,int(rnd()*5000) + 500)
 universe.numberofendagt = universe.numberofendagt + my.nowhome
 universe.day = universe.day + (my.daycount / countagt(universe.Map.Person))
 
@@ -1383,7 +1387,7 @@ Space_Map_Initial_Value {
 // Window Location Definition Division
 //-------------------------------------------------------
 Window_Rectangle {
-    Window_Name = Main_Window, 0, 23, 1244, 995;
+    Window_Name = Main_Window, 0, 23, 800, 700;
     Window_Name = Output_Setting_Window, 382, 352, 480, 290;
 }
 
