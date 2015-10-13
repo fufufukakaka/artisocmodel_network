@@ -50,6 +50,7 @@ UNIVERSE {
             Dim timecount_sum(0, 0) As Integer = (0);
             Dim freetime(0, 0) As Integer = (0);
             Dim freetime_sum(0, 0) As Integer = (0);
+            Dim consump_sum(0, 0) As Integer = (0);
         }
         AgtType Block(0, 0)[0] {
             Dim ID(0, 0) As Integer = (0);
@@ -72,6 +73,7 @@ UNIVERSE {
             Dim Layer(0, 0) As Integer = (0);
             Dim Direction(0, 0) As Double = (0.0);
             Dim demand(0, 0) As Integer = (0);
+            Dim strength(0, 0) As Integer = ();
         }
     }
     AgtType Link(0, 0)[282] {
@@ -319,6 +321,8 @@ my.timecount = 0
 my.timecount_sum = 0
 my.freetime = 0
 my.freetime_sum = 0
+my.consump = norminv(rnd(),9360,int(rnd()*5000) + 500)
+my.potential = norminv(rnd(),14581,int(rnd()*5000) + 500)
 }
 
 Agt_Step{
@@ -330,8 +334,6 @@ Agt_Step{
 	dim one as agt
 	dim CNo as integer
 my.timecount = my.timecount + 1
-my.consump = norminv(rnd(),9360,int(rnd()*5000) + 500)
-my.potential = norminv(rnd(),14581,int(rnd()*5000) + 500)
 universe.numberofendagt = universe.numberofendagt + my.nowhome
 universe.day = universe.day + (my.daycount / countagt(universe.Map.Person))
 
@@ -417,10 +419,11 @@ end if
 				if my.action == 1 then
 					// 店なら消費して効用を得る
 					if universe.Map.Point(my.goalpointid).site == 2 then
-						my.money = my.money - 10000
+						my.consump_sum = my.consump_sum + my.consump
+						my.money = my.money - my.consump
 					// オフィスなら将来受け取る成果を積み上げる
 					elseif universe.Map.Point(my.goalpointid).site == 3 then
-						my.archivement = my.archivement + 10000
+						my.archivement = my.archivement + my.potential
 					end if
 					my.action = 0
 					my.check = 0
@@ -617,18 +620,20 @@ Agt_Step{
 //-------------------------------------------------------
 #begin_rule UNIVERSE.MAP.BRIDGECORE
 Agt_Init{
-
+my.strength = 10000
 }
 
 Agt_Step{
 dim set as agtset
 dim one as agt
+my.strength = my.strength - 1
 
-// personが来たらdemandを増加させる
-makeoneagtsetaroundown(set,1,universe.Map.Person,false)
+// personが来たらdemand(経済価値or需要)を増加させる
+makeoneagtsetaroundown(set,2,universe.Map.Person,false)
 for each one in set
 	if one.check == 0 then
-		my.demand = my.demand + 1
+		my.demand = my.demand + one.consump
+		my.strength = my.strength - 5
 		one.check = 1
 	end if
 next one
@@ -986,15 +991,15 @@ Time_Graph {
     Draw_Interval = 1;
     Graph_Name = "bridgecore";
     Title = "core";
-    Disable = Yes;
+    Disable = No;
     Background_Color = 255, 255, 255;
     Remarks = Yes;
     Legend_Pos = Top;
     FastDraw = No;
-    Position_x = 4;
-    Position_y = 281;
-    Size_x = 786;
-    Size_y = 544;
+    Position_x = 40;
+    Position_y = 100;
+    Size_x = 725;
+    Size_y = 716;
     Map_Cell_Size = -1;
     Axis_Label = "", "";
     Draw_By_JFree_Chart = Yes;
@@ -1006,7 +1011,7 @@ Time_Graph {
         Line_Color = 255, 0, 0;
         Line_Width = 2;
         Marker_Id = 0;
-        Output_Expression = "universe.Map.bridgecore(0).demand";
+        Output_Expression = "universe.Map.bridgecore(0).strength";
         Expression_Value_Display = No;
         Effective_Fraction_Figures = 0;
         Graph_Element_Color = (0, 255, 0);
@@ -1016,7 +1021,7 @@ Time_Graph {
         Line_Color = 0, 0, 255;
         Line_Width = 2;
         Marker_Id = 0;
-        Output_Expression = "universe.Map.bridgecore(1).demand";
+        Output_Expression = "universe.Map.bridgecore(1).strength";
         Expression_Value_Display = No;
         Effective_Fraction_Figures = 0;
         Graph_Element_Color = (255, 255, 0);
@@ -1026,7 +1031,7 @@ Time_Graph {
         Line_Color = 0, 255, 0;
         Line_Width = 2;
         Marker_Id = 0;
-        Output_Expression = "universe.Map.bridgecore(2).demand";
+        Output_Expression = "universe.Map.bridgecore(2).strength";
         Expression_Value_Display = No;
         Effective_Fraction_Figures = 0;
         Graph_Element_Color = (255, 102, 0);
@@ -1036,7 +1041,7 @@ Time_Graph {
         Line_Color = 255, 0, 255;
         Line_Width = 2;
         Marker_Id = 0;
-        Output_Expression = "universe.Map.bridgecore(3).demand";
+        Output_Expression = "universe.Map.bridgecore(3).strength";
         Expression_Value_Display = No;
         Effective_Fraction_Figures = 0;
         Graph_Element_Color = (255, 0, 0);
@@ -1046,7 +1051,7 @@ Time_Graph {
         Line_Color = 0, 255, 255;
         Line_Width = 2;
         Marker_Id = 0;
-        Output_Expression = "universe.Map.bridgecore(4).demand";
+        Output_Expression = "universe.Map.bridgecore(4).strength";
         Expression_Value_Display = No;
         Effective_Fraction_Figures = 0;
         Graph_Element_Color = (255, 0, 255);
@@ -1056,7 +1061,7 @@ Time_Graph {
         Line_Color = 255, 255, 0;
         Line_Width = 2;
         Marker_Id = 0;
-        Output_Expression = "universe.Map.bridgecore(5).demand";
+        Output_Expression = "universe.Map.bridgecore(5).strength";
         Expression_Value_Display = No;
         Effective_Fraction_Figures = 0;
         Graph_Element_Color = (0, 0, 255);
@@ -1066,7 +1071,7 @@ Time_Graph {
         Line_Color = 128, 128, 128;
         Line_Width = 2;
         Marker_Id = 0;
-        Output_Expression = "universe.Map.bridgecore(6).demand";
+        Output_Expression = "universe.Map.bridgecore(6).strength";
         Expression_Value_Display = No;
         Effective_Fraction_Figures = 0;
         Graph_Element_Color = (153, 153, 153);
@@ -1076,7 +1081,7 @@ Time_Graph {
         Line_Color = 255, 0, 0;
         Line_Width = 2;
         Marker_Id = 0;
-        Output_Expression = "universe.Map.bridgecore(7).demand";
+        Output_Expression = "universe.Map.bridgecore(7).strength";
         Expression_Value_Display = No;
         Effective_Fraction_Figures = 0;
         Graph_Element_Color = (0, 102, 102);
@@ -1086,7 +1091,7 @@ Time_Graph {
         Line_Color = 128, 128, 128;
         Line_Width = 2;
         Marker_Id = 0;
-        Output_Expression = "universe.Map.bridgecore(8).demand";
+        Output_Expression = "universe.Map.bridgecore(8).strength";
         Expression_Value_Display = No;
         Effective_Fraction_Figures = 0;
         Graph_Element_Color = (0, 153, 153);
@@ -1274,15 +1279,15 @@ Time_Graph {
     Draw_Interval = 1;
     Graph_Name = "stat_consump&freetime&movetime";
     Title = "consump,freetime,movetime";
-    Disable = No;
+    Disable = Yes;
     Background_Color = 255, 255, 255;
     Remarks = Yes;
     Legend_Pos = Top;
     FastDraw = No;
-    Position_x = 100;
-    Position_y = 100;
-    Size_x = 500;
-    Size_y = 300;
+    Position_x = 72;
+    Position_y = 67;
+    Size_x = 655;
+    Size_y = 472;
     Map_Cell_Size = -1;
     Axis_Label = "", "";
     Draw_By_JFree_Chart = Yes;
@@ -1294,7 +1299,7 @@ Time_Graph {
         Line_Color = 255, 0, 0;
         Line_Width = 2;
         Marker_Id = 0;
-        Output_Expression = "universe.Map.Person(0).consump";
+        Output_Expression = "universe.Map.Person(0).consump_sum";
         Expression_Value_Display = No;
         Effective_Fraction_Figures = 0;
         Graph_Element_Color = (0, 255, 0);
@@ -1304,10 +1309,10 @@ Time_Graph {
         Line_Color = 255, 50, 0;
         Line_Width = 2;
         Marker_Id = 0;
-        Output_Expression = "universe.Map.Person(1).consump";
+        Output_Expression = "universe.Map.Person(1).consump_sum";
         Expression_Value_Display = No;
         Effective_Fraction_Figures = 0;
-        Graph_Element_Color = (50, 255, 0);
+        Graph_Element_Color = (0, 204, 0);
     }
     Output {
         Graph_Element_Name = "freetime0";
@@ -1317,7 +1322,7 @@ Time_Graph {
         Output_Expression = "universe.Map.Person(0).freetime_sum";
         Expression_Value_Display = No;
         Effective_Fraction_Figures = 0;
-        Graph_Element_Color = (100, 255, 0);
+        Graph_Element_Color = (51, 51, 255);
     }
     Output {
         Graph_Element_Name = "freetime1";
@@ -1327,7 +1332,7 @@ Time_Graph {
         Output_Expression = "universe.Map.Person(1).freetime_sum";
         Expression_Value_Display = No;
         Effective_Fraction_Figures = 0;
-        Graph_Element_Color = (150, 255, 0);
+        Graph_Element_Color = (0, 102, 153);
     }
     Output {
         Graph_Element_Name = "movetime0";
@@ -1337,7 +1342,7 @@ Time_Graph {
         Output_Expression = "universe.Map.Person(0).timecount_sum";
         Expression_Value_Display = No;
         Effective_Fraction_Figures = 0;
-        Graph_Element_Color = (200, 255, 0);
+        Graph_Element_Color = (255, 51, 51);
     }
     Output {
         Graph_Element_Name = "movetime1";
@@ -1347,7 +1352,7 @@ Time_Graph {
         Output_Expression = "universe.Map.Person(1).timecount_sum";
         Expression_Value_Display = No;
         Effective_Fraction_Figures = 0;
-        Graph_Element_Color = (250, 255, 0);
+        Graph_Element_Color = (153, 0, 51);
     }
 }
 
@@ -1384,7 +1389,7 @@ Others_Data {
     Console_Size_y = 351;
     Componen_Tree_Position_x = 2;
     Componen_Tree_Position_y = 2;
-    Componen_Tree_Size_x = 165;
+    Componen_Tree_Size_x = 227;
     Componen_Tree_Size_y = 400;
     Console_Background_Color = 10066329;
     Console_Foreground_Color = 255;
@@ -1526,8 +1531,8 @@ Space_Map_Initial_Value {
 // Window Location Definition Division
 //-------------------------------------------------------
 Window_Rectangle {
-    Window_Name = Main_Window, 0, 23, 800, 700;
-    Window_Name = Output_Setting_Window, 160, 205, 480, 290;
+    Window_Name = Main_Window, 0, 23, 900, 947;
+    Window_Name = Output_Setting_Window, 210, 328, 480, 290;
 }
 
 
