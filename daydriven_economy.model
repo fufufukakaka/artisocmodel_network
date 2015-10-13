@@ -65,9 +65,11 @@ UNIVERSE {
             Dim Y(0, 0) As Double = (0.0);
             Dim Layer(0, 0) As Integer = (0);
             Dim Direction(0, 0) As Double = (0.0);
-            Dim bridge_status(0, 0)[9] As Integer = ();
-            Dim bridge_damage(0, 0) As Integer = ();
-            Dim bridge_demand(0, 0) As Integer = ();
+            Dim bridge_status(0, 0)[9] As Integer = (9*0);
+            Dim bridge_damage(0, 0) As Integer = (0);
+            Dim bridge_demand(0, 0) As Integer = (0);
+            Dim bridge_averagedemand(0, 0) As Double = ();
+            Dim bridge_distance(0, 0) As Double = ();
         }
         AgtType bridgecore(0, 0)[9] {
             Dim ID(0, 0) As Integer = (0);
@@ -76,11 +78,11 @@ UNIVERSE {
             Dim Layer(0, 0) As Integer = (0);
             Dim Direction(0, 0) As Double = (0.0);
             Dim demand(0, 0) As Integer = (0);
-            Dim strength(0, 0) As Integer = ();
-            Dim estimatedamage(0, 0) As Integer = ();
-            Dim damage(0, 0) As Integer = ();
-            Dim beginpointid(0, 0) As Integer = ();
-            Dim endpointid(0, 0) As Integer = ();
+            Dim strength(0, 0) As Integer = (0);
+            Dim damage(0, 0) As Integer = (0);
+            Dim beginpointid(0, 0) As Integer = (0);
+            Dim endpointid(0, 0) As Integer = (0);
+            Dim distance(0, 0) As Double = ();
         }
     }
     AgtType Link(0, 0)[282] {
@@ -156,16 +158,19 @@ Initial_Value {
     UNIVERSE.MAP.GOVERNMENT.X = 1(24.41860465116279);
     UNIVERSE.MAP.GOVERNMENT.Y = 1(23.613595706618963);
     UNIVERSE.MAP.GOVERNMENT.LAYER = 1(0);
-    UNIVERSE.MAP.BRIDGECORE.X = 9(22.361359570661897, 22.003577817531305, 22.361359570661897, 21.82468694096601, 22.003577817531305, 21.735241502683362, 24.955277280858677, 23.166368515205725, 22.719141323792485);
-    UNIVERSE.MAP.BRIDGECORE.Y = 9(44.812164579606446, 38.64042933810376, 34.61538461538461, 29.427549194991055, 23.881932021466906, 19.856887298747765, 11.449016100178895, 6.082289803220036, 3.4883720930232585);
+    UNIVERSE.MAP.GOVERNMENT.DIRECTION = 1(0.0);
+    UNIVERSE.MAP.GOVERNMENT.BRIDGE_STATUS = 1(9*0);
+    UNIVERSE.MAP.GOVERNMENT.BRIDGE_DAMAGE = 1(0);
+    UNIVERSE.MAP.GOVERNMENT.BRIDGE_DEMAND = 1(0);
+    UNIVERSE.MAP.BRIDGECORE.X = 9(22.36135957, 22.00357782, 22.36135957, 21.82468694, 22.00357782, 21.7352415, 24.95527728, 23.16636852, 22.71914132);
+    UNIVERSE.MAP.BRIDGECORE.Y = 9(44.81216458, 38.64042934, 34.61538462, 29.42754919, 23.88193202, 19.8568873, 11.4490161, 6.082289803, 3.488372093);
     UNIVERSE.MAP.BRIDGECORE.LAYER = 9(9*0);
-    UNIVERSE.MAP.BRIDGECORE.DIRECTION = 8(8*0.0);
-    UNIVERSE.MAP.BRIDGECORE.DEMAND = 8(8*0);
+    UNIVERSE.MAP.BRIDGECORE.DIRECTION = 9(9*0.0);
+    UNIVERSE.MAP.BRIDGECORE.DEMAND = 9(9*0);
     UNIVERSE.MAP.BRIDGECORE.STRENGTH = 9(9*0);
-    UNIVERSE.MAP.BRIDGECORE.ESTIMATEDAMAGE = 9(9*0);
     UNIVERSE.MAP.BRIDGECORE.DAMAGE = 9(9*0);
-    UNIVERSE.MAP.BRIDGECORE.BEGINPOINTID = 9(9*0);
-    UNIVERSE.MAP.BRIDGECORE.ENDPOINTID = 9(9*0);
+    UNIVERSE.MAP.BRIDGECORE.BEGINPOINTID = 9(43, 45, 44, 50, 46, 45, 51, 55, 54);
+    UNIVERSE.MAP.BRIDGECORE.ENDPOINTID = 9(109, 106, 103, 105, 100, 99, 97, 98, 96);
 }
 
 
@@ -624,6 +629,7 @@ dim one as agt
 dim blockagt as agt
 dim set as agtset
 dim i as integer
+dim distance(9) as double
 
 // 30ì˙Ç≤Ç∆Ç…ã¥Çì_åü(ã¥Ç≤Ç∆ÇÃëœãvíl,ç°ä˙ï™ÇÃÉ_ÉÅÅ[ÉW,ç°ä˙ï™ÇÃé˘óvÇéÊìæ)Ç∑ÇÈ(ç°ÇÕ5ì˙Ç≤Ç∆Ç…ì_åüÇ∑ÇÈ)
 if Int(gethistory(universe.day,1)) mod 5 == 4 and Int(universe.day) mod 5 == 0 then
@@ -631,6 +637,8 @@ if Int(gethistory(universe.day,1)) mod 5 == 4 and Int(universe.day) mod 5 == 0 t
 		my.bridge_status(i) = universe.Map.bridgecore(i).strength
 		my.bridge_damage(i) = universe.Map.bridgecore(i).damage
 		my.bridge_demand(i) = universe.Map.bridgecore(i).demand
+		my.bridge_averagedemand = my.bridge_demand(i) / 9
+		my.bridge_distance(i) = universe.Map.bridgecore(i).distance
 		universe.Map.bridgecore(i).demand = 0
 		universe.Map.bridgecore(i).damage = 0
 // ç°ãGÇÃå∏è≠ï™Ç©ÇÁîªífÇµÇƒóàãGÇ…ÇÕïˆâÛÇ∑ÇÈã¥Çí çsé~ÇﬂÇ…Ç∑ÇÈ
@@ -638,13 +646,16 @@ if Int(gethistory(universe.day,1)) mod 5 == 4 and Int(universe.day) mod 5 == 0 t
 		blockagt = createagt(universe.Map.block)
 		blockagt.x = universe.Map.bridgecore(i).x
 		blockagt.y = universe.Map.bridgecore(i).y
+		updatecost(universe.Map.bridgecore(i).beginpointid,universe.Map.bridgecore(i).endpointid,10000)
 	end if
-// í çsé~ÇﬂÇ…ÇµÇΩã¥ÇÃílÇ™Å`Ç»ÇÁã¥ÇÃëœãvílÇâÒïúÇµÅAí çsé~ÇﬂÇâèúÇ∑ÇÈ
+// í çsé~ÇﬂÇ…ÇµÇΩã¥ÇÃílÇ™Å`(ç°ÇÕïΩãœ*(1/2)à»è„Ç»ÇÁ)Ç»ÇÁã¥ÇÃëœãvílÇâÒïúÇµÅAí çsé~ÇﬂÇâèúÇ∑ÇÈ(ÉRÉXÉgÇå≥Ç…ñﬂÇ∑)
+	if  my.bridge_demand(i) >=  my.bridge_averagedemand * (1/2) then
+		universe.Map.bridgecore(i).strength = universe.Map.bridgecore(i).strength + 10000
+		updatecost(universe.Map.bridgecore(i).beginpointid,universe.Map.bridgecore(i).endpointid,universe.Map.bridgecore(i).distance)
 // í çsé~ÇﬂÇ…ÇµÇΩã¥ÇÃílÇ™Å`Ç»ÇÁí çsé~ÇﬂÇÃÇ‹Ç‹Ç≈ëœãvílÇ0Ç…å≈íËÇ∑ÇÈ
 	next i
 end if
 }
-
 #end_rule UNIVERSE.MAP.GOVERNMENT
 
 
@@ -658,6 +669,7 @@ Agt_Init{
 my.strength = 10000
 my.damage = 0
 my.demand = 0
+my.distance = measuredistance(universe.Map.Point(my.beginpointid).x,universe.Map.Point(my.beginpointid).x,universe.Map.Point(my.endpointid).x,universe.Map.Point(my.endpointid).y,universe.Map)
 }
 
 Agt_Step{
@@ -816,10 +828,10 @@ Map_Output {
     Title = "Map";
     Disable = No;
     Background_Color = 255, 255, 255;
-    Position_x = 212;
-    Position_y = 6;
-    Size_x = 880;
-    Size_y = 899;
+    Position_x = 123;
+    Position_y = 96;
+    Size_x = 898;
+    Size_y = 737;
     Remarks = Yes;
     Map_Cell_Size = 13;
     Legend_Pos = Top;
@@ -1570,7 +1582,7 @@ Space_Map_Initial_Value {
 // Window Location Definition Division
 //-------------------------------------------------------
 Window_Rectangle {
-    Window_Name = Main_Window, -3, 51, 900, 947;
+    Window_Name = Main_Window, 0, 23, 1361, 997;
     Window_Name = Output_Setting_Window, 210, 328, 480, 290;
 }
 
