@@ -220,7 +220,6 @@ next i
 }
 
 Univ_Step_Begin{
-universe.day = 0
 dim list as agtset
 	dim one as agt
 	dim one1 as agt
@@ -233,7 +232,7 @@ dim list as agtset
 	dim shoplist(5) as integer
 	dim officelist(5) as integer
 // 1日が終了したらオフィスと店の場所をシャッフルする
-if  gethistory(universe.numberofendagt,1) == 20 then
+if  universe.numberofendagt == 20 then
 
 // 候補地のノードIDを格納
 	for i = 0 to 39
@@ -260,7 +259,7 @@ if  gethistory(universe.numberofendagt,1) == 20 then
 		universe.Map.Point(officelist(i)).site = 3
 	next i
 end if
-
+universe.day = 0
 universe.numberofendagt = 0
 }
 
@@ -338,6 +337,9 @@ If My.site == 1  Then
 	personAgt.RouteCount = 1
 end if
 
+}
+
+Agt_Step{
 // siteが1なら家、2ならオフィス、3なら店
 if my.site == 0 then
 	my.color = COLOR_RED
@@ -348,11 +350,6 @@ elseif my.site == 2 then
 elseif my.site == 3 then
 	my.color = COLOR_CYAN
 end if
-
-
-}
-
-Agt_Step{
 }
 #end_rule UNIVERSE.MAP.POINT
 
@@ -1125,8 +1122,8 @@ Time_Graph {
     Remarks = Yes;
     Legend_Pos = Top;
     FastDraw = No;
-    Position_x = 28;
-    Position_y = 21;
+    Position_x = 22;
+    Position_y = 17;
     Size_x = 519;
     Size_y = 533;
     Map_Cell_Size = -1;
@@ -1242,15 +1239,15 @@ Time_Graph {
     Draw_Interval = 1;
     Graph_Name = "endagt";
     Title = "end agt";
-    Disable = Yes;
+    Disable = No;
     Background_Color = 255, 255, 255;
     Remarks = Yes;
     Legend_Pos = Top;
     FastDraw = No;
-    Position_x = 13;
-    Position_y = 412;
-    Size_x = 412;
-    Size_y = 300;
+    Position_x = 831;
+    Position_y = 370;
+    Size_x = 536;
+    Size_y = 502;
     Map_Cell_Size = -1;
     Axis_Label = "", "";
     Draw_By_JFree_Chart = Yes;
@@ -1602,12 +1599,12 @@ Others_Data {
     Indent = 4;
     Rule_Colored = Yes;
     Window_Hide_Run = 1;
-    Debug_Position_x = 75;
-    Debug_Position_y = 75;
+    Debug_Position_x = 245;
+    Debug_Position_y = 10;
     Debug_Size_x = 400;
     Debug_Size_y = 200;
-    Console_Position_x = 187;
-    Console_Position_y = 183;
+    Console_Position_x = 453;
+    Console_Position_y = 397;
     Console_Size_x = 600;
     Console_Size_y = 351;
     Componen_Tree_Position_x = 2;
@@ -1754,8 +1751,8 @@ Space_Map_Initial_Value {
 // Window Location Definition Division
 //-------------------------------------------------------
 Window_Rectangle {
-    Window_Name = Main_Window, 118, 23, 1352, 969;
-    Window_Name = Output_Setting_Window, 321, 339, 480, 290;
+    Window_Name = Main_Window, 118, 23, 1501, 969;
+    Window_Name = Output_Setting_Window, 436, 339, 480, 290;
 }
 
 
