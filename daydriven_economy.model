@@ -122,6 +122,8 @@ UNIVERSE {
     Dim officelist(0, 0)[5] As Integer = (5*0);
     Dim numberofendagt(0, 0) <5>  As Integer = (0);
     Dim day(0, 0) <10>  As Double = (0.0);
+    Dim checkmode(0, 0) As Boolean = ();
+    Dim daychange(0, 0) As Boolean = ();
 }
 
 
@@ -220,11 +222,19 @@ next i
 }
 
 Univ_Step_Begin{
-println(getcountstep()&","&Int(cdbl(round(gethistory(universe.day,2)*1000)/1000)) mod 5&","&cdbl(round(universe.day*1000)/1000) mod 5)
-if Int(cdbl(round(gethistory(universe.day,2)*1000)/1000)) mod 5 == 4 then
-if cdbl(round(universe.day*1000)/1000) mod 5 == 0 then
-	println("good")
+
+// 橋の点検モードに入るか否か
+if Int(cdbl(round(gethistory(universe.day,2)*1000)/1000)) mod 5 == 4 and cdbl(round(universe.day*1000)/1000) mod 5 == 0 then
+	universe.checkmode = TRUE
+else
+	universe.checkmode = FALSE
 end if
+
+// 日付が変更されたか否か
+if universe.numberofendagt == 19 then
+	universe.daychange = TRUE
+else
+	universe.daychange = FALSE
 end if
 
 dim list as agtset
@@ -238,9 +248,10 @@ dim list as agtset
 	dim optionlist(40) as integer
 	dim shoplist(5) as integer
 	dim officelist(5) as integer
+	
 // 1日が終了したらオフィスと店の場所をシャッフルする
-if  universe.numberofendagt == 20 then
-
+if  universe.daychange == TRUE then
+println("good")
 // 候補地のノードIDを格納
 	for i = 0 to 39
 		optionlist(i) = i + 56
@@ -398,8 +409,8 @@ my.timecount = my.timecount + 1
 universe.numberofendagt = universe.numberofendagt + my.nowhome
 universe.day = universe.day + (my.daycount / countagt(universe.Map.Person))
 
-// 日数が30の倍数ならarchivementをmoneyに換算する(今はテストなので5の倍数にしているよ)
-if Int(gethistory(universe.day,1)) mod 5 == 4 and Int(universe.day) mod 5 == 0 then
+// 日数が30の倍数ならarchivementをmoneyに換算する(今はテストなので5の倍数にしているよ。ここの処理ではズレが生じるのであとでgovernmentのものにさしかえるよ)
+if universe.daychange == TRUE then
 	my.money = my.money + my.archivement
 	my.archivement = 0
 end if
@@ -437,7 +448,7 @@ if my.speed < 0.333 then
 end if
 
 //ダイクストラ法に基づいて進む
-if  gethistory(universe.numberofendagt,1)== 20 then
+if  gethistory(universe.numberofendagt,1) == 20  then
 	my.nowhome = 0
 	targetPointAgt = Universe.Map.Point(CInt(GetToken(My.RouteArray, My.RouteCount)))
 	my.daycount = my.daycount + 0.5
@@ -685,9 +696,9 @@ for i = 0 to 8
 	my.bridge_distance(i) = universe.Map.bridgecore(i).distance
 next i
 
-// 30日ごとに橋を点検(今は5日ごとに点検を行う)
-if Int(cdbl(round(gethistory(universe.day,2)*1000)/1000)) mod 5 == 4 then
-if cdbl(round(universe.day*1000)/1000) mod 5 == 0 then
+// 30日ごとに橋を点検(今は5日ごとに点検を行う)(universeで日付と同期)
+if universe.checkmode == TRUE then
+	println("good")
 	for i = 0 to 8	
 // 今季の減少分から判断して来季には崩壊する橋を通行止めにする
 	if my.bridge_status(i) < my.bridge_damage(i) then
@@ -701,18 +712,16 @@ if cdbl(round(universe.day*1000)/1000) mod 5 == 0 then
 // 通行止めにした橋の値が～(今は平均以上なら)なら橋の耐久値を回復し、通行止めを解除する(コストを元に戻す)
 	if universe.Map.bridgecore(i).hasblock == TRUE then
 		if  my.bridge_demand(i) >=  my.bridge_averagedemand then
-			universe.Map.bridgecore(i).strength = universe.Map.bridgecore(i).strength + 10000
-			update_cost(universe.Map.bridgecore(i).beginpointid,universe.Map.bridgecore(i).endpointid,universe.Map.bridgecore(i).distance)
-			universe.Map.bridgecore(i).hasblock = FALSE
+			universe.Map.bridgecore(i).strength = universe.Map.bridgecore(i).strength + 10000                            update_cost(universe.Map.bridgecore(i).beginpointid,universe.Map.bridgecore(i).endpointid,universe.Map.bridgecore(i).distance)
+            universe.Map.bridgecore(i).hasblock = FALSE
 // 通行止めにした橋の値が～以下なら通行止めのまま
-		end if
+        end if
 	end if
 	my.bridge_damage(i) = 0
 	my.bridge_demand(i) = 0
 	universe.Map.bridgecore(i).demand = 0
 	universe.Map.bridgecore(i).damage = 0
 	next i
-end if
 end if
 }
 #end_rule UNIVERSE.MAP.GOVERNMENT
@@ -1753,7 +1762,7 @@ Space_Map_Initial_Value {
 // Window Location Definition Division
 //-------------------------------------------------------
 Window_Rectangle {
-    Window_Name = Main_Window, 0, 23, 1324, 992;
+    Window_Name = Main_Window, 0, 23, 1319, 999;
     Window_Name = Output_Setting_Window, 422, 344, 480, 290;
 }
 
