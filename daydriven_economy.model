@@ -66,10 +66,10 @@ UNIVERSE {
             Dim Layer(0, 0) As Integer = (0);
             Dim Direction(0, 0) As Double = (0.0);
             Dim bridge_status(0, 0)[9] As Integer = (9*0);
-            Dim bridge_damage(0, 0)[9] As Integer = ();
-            Dim bridge_demand(0, 0)[9] As Integer = ();
-            Dim bridge_averagedemand(0, 0) As Double = ();
-            Dim bridge_distance(0, 0)[9] As Double = ();
+            Dim bridge_damage(0, 0)[9] As Integer = (9*0);
+            Dim bridge_demand(0, 0)[9] As Integer = (9*0);
+            Dim bridge_averagedemand(0, 0) As Double = (0.0);
+            Dim bridge_distance(0, 0)[9] As Double = (9*0.0);
         }
         AgtType bridgecore(0, 0)[9] {
             Dim ID(0, 0) As Integer = (0);
@@ -83,7 +83,7 @@ UNIVERSE {
             Dim beginpointid(0, 0) As Integer = (0);
             Dim endpointid(0, 0) As Integer = (0);
             Dim distance(0, 0) As Double = (0.0);
-            Dim hasblock(0, 0) As Boolean = ();
+            Dim hasblock(0, 0) As Boolean = (0);
         }
     }
     AgtType Link(0, 0)[282] {
@@ -120,7 +120,7 @@ UNIVERSE {
     Dim TemporaryStreetAgtset(0, 0) As AgtSet = ();
     Dim shoplist(0, 0)[5] As Integer = (5*0);
     Dim officelist(0, 0)[5] As Integer = (5*0);
-    Dim numberofendagt(0, 0) <5>  As Integer = ();
+    Dim numberofendagt(0, 0) <5>  As Integer = (0);
     Dim day(0, 0) <10>  As Double = (0.0);
 }
 
@@ -220,6 +220,13 @@ next i
 }
 
 Univ_Step_Begin{
+println(getcountstep()&","&Int(cdbl(round(gethistory(universe.day,2)*1000)/1000)) mod 5&","&cdbl(round(universe.day*1000)/1000) mod 5)
+if Int(cdbl(round(gethistory(universe.day,2)*1000)/1000)) mod 5 == 4 then
+if cdbl(round(universe.day*1000)/1000) mod 5 == 0 then
+	println("good")
+end if
+end if
+
 dim list as agtset
 	dim one as agt
 	dim one1 as agt
@@ -670,18 +677,18 @@ dim set as agtset
 dim i as integer
 
 makeoneagtsetaroundown(set,1,universe.Map.Block,false)
+for i = 0 to 8
+	my.bridge_status(i) = universe.Map.bridgecore(i).strength
+	my.bridge_damage(i) = universe.Map.bridgecore(i).damage
+	my.bridge_demand(i) = universe.Map.bridgecore(i).demand
+	my.bridge_averagedemand = my.bridge_averagedemand + my.bridge_demand(i) / 9
+	my.bridge_distance(i) = universe.Map.bridgecore(i).distance
+next i
 
-// 30“ú‚²‚Æ‚É‹´‚ğ“_ŒŸ(‹´‚²‚Æ‚Ì‘Ï‹v’l,¡Šú•ª‚Ìƒ_ƒ[ƒW,¡Šú•ª‚Ìù—v‚ğæ“¾)‚·‚é(¡‚Í5“ú‚²‚Æ‚É“_ŒŸ‚·‚é)
-if Int(gethistory(universe.day,1)) mod 5 == 4 and Int(universe.day) mod 5 == 0 then
-	for i = 0 to 8
-		my.bridge_status(i) = universe.Map.bridgecore(i).strength
-		my.bridge_damage(i) = universe.Map.bridgecore(i).damage
-		my.bridge_demand(i) = universe.Map.bridgecore(i).demand
-		my.bridge_averagedemand = my.bridge_averagedemand + my.bridge_demand(i) / 9
-		my.bridge_distance(i) = universe.Map.bridgecore(i).distance
-		universe.Map.bridgecore(i).demand = 0
-		universe.Map.bridgecore(i).damage = 0
-		
+// 30“ú‚²‚Æ‚É‹´‚ğ“_ŒŸ(¡‚Í5“ú‚²‚Æ‚É“_ŒŸ‚ğs‚¤)
+if Int(cdbl(round(gethistory(universe.day,2)*1000)/1000)) mod 5 == 4 then
+if cdbl(round(universe.day*1000)/1000) mod 5 == 0 then
+	for i = 0 to 8	
 // ¡‹G‚ÌŒ¸­•ª‚©‚ç”»’f‚µ‚Ä—ˆ‹G‚É‚Í•ö‰ó‚·‚é‹´‚ğ’Ês~‚ß‚É‚·‚é
 	if my.bridge_status(i) < my.bridge_damage(i) then
 		universe.Map.bridgecore(i).hasblock = TRUE
@@ -700,7 +707,12 @@ if Int(gethistory(universe.day,1)) mod 5 == 4 and Int(universe.day) mod 5 == 0 t
 // ’Ês~‚ß‚É‚µ‚½‹´‚Ì’l‚ª`ˆÈ‰º‚È‚ç’Ês~‚ß‚Ì‚Ü‚Ü
 		end if
 	end if
+	my.bridge_damage(i) = 0
+	my.bridge_demand(i) = 0
+	universe.Map.bridgecore(i).demand = 0
+	universe.Map.bridgecore(i).damage = 0
 	next i
+end if
 end if
 }
 #end_rule UNIVERSE.MAP.GOVERNMENT
@@ -1239,7 +1251,7 @@ Time_Graph {
     Draw_Interval = 1;
     Graph_Name = "endagt";
     Title = "end agt";
-    Disable = No;
+    Disable = Yes;
     Background_Color = 255, 255, 255;
     Remarks = Yes;
     Legend_Pos = Top;
@@ -1549,7 +1561,7 @@ Time_Graph {
         Line_Color = 0, 255, 0;
         Line_Width = 2;
         Marker_Id = 0;
-        Output_Expression = "universe.Map.government.bridge_damage(0)";
+        Output_Expression = "universe.Map.government.bridge_damage(8)";
         Expression_Value_Display = No;
         Effective_Fraction_Figures = 0;
         Graph_Element_Color = (0, 255, 0);
@@ -1559,20 +1571,10 @@ Time_Graph {
         Line_Color = 255, 0, 255;
         Line_Width = 2;
         Marker_Id = 0;
-        Output_Expression = "universe.Map.government.bridge_status(0)";
+        Output_Expression = "universe.Map.government.bridge_status(8)";
         Expression_Value_Display = No;
         Effective_Fraction_Figures = 0;
         Graph_Element_Color = (0, 51, 102);
-    }
-    Output {
-        Graph_Element_Name = "demand";
-        Line_Color = 255, 255, 0;
-        Line_Width = 2;
-        Marker_Id = 0;
-        Output_Expression = "universe.Map.government.bridge_demand(0)";
-        Expression_Value_Display = No;
-        Effective_Fraction_Figures = 0;
-        Graph_Element_Color = (255, 0, 0);
     }
 }
 
@@ -1603,10 +1605,10 @@ Others_Data {
     Debug_Position_y = 10;
     Debug_Size_x = 400;
     Debug_Size_y = 200;
-    Console_Position_x = 453;
-    Console_Position_y = 397;
-    Console_Size_x = 600;
-    Console_Size_y = 351;
+    Console_Position_x = 14;
+    Console_Position_y = 186;
+    Console_Size_x = 226;
+    Console_Size_y = 689;
     Componen_Tree_Position_x = 2;
     Componen_Tree_Position_y = 2;
     Componen_Tree_Size_x = 227;
@@ -1751,8 +1753,8 @@ Space_Map_Initial_Value {
 // Window Location Definition Division
 //-------------------------------------------------------
 Window_Rectangle {
-    Window_Name = Main_Window, 118, 23, 1501, 969;
-    Window_Name = Output_Setting_Window, 436, 339, 480, 290;
+    Window_Name = Main_Window, 0, 23, 1324, 992;
+    Window_Name = Output_Setting_Window, 422, 344, 480, 290;
 }
 
 
