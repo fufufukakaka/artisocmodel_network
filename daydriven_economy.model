@@ -120,7 +120,7 @@ UNIVERSE {
     Dim TemporaryStreetAgtset(0, 0) As AgtSet = ();
     Dim shoplist(0, 0)[5] As Integer = (5*0);
     Dim officelist(0, 0)[5] As Integer = (5*0);
-    Dim numberofendagt(0, 0) <5>  As Integer = (0);
+    Dim numberofendagt(0, 0) <5>  As Integer = ();
     Dim day(0, 0) <10>  As Double = (0.0);
 }
 
@@ -220,11 +220,52 @@ next i
 }
 
 Univ_Step_Begin{
-universe.numberofendagt = 0
 universe.day = 0
+dim list as agtset
+	dim one as agt
+	dim one1 as agt
+	dim i as integer
+	dim j as integer
+	dim c as integer
+	dim shops as agtset
+	dim offices as agtset
+	dim optionlist(40) as integer
+	dim shoplist(5) as integer
+	dim officelist(5) as integer
+// 1日が終了したらオフィスと店の場所をシャッフルする
+if  gethistory(universe.numberofendagt,1) == 20 then
+
+// 候補地のノードIDを格納
+	for i = 0 to 39
+		optionlist(i) = i + 56
+	next i
+// 全要素をシャッフルして上から順次officelist,shoplistに格納していく
+	for i = 0 to 39
+		universe.Map.Point(optionlist(i)).site = 0
+		j = Int(rnd() * 39)
+		c = optionlist(i)
+		optionlist(i) = optionlist(j)
+		optionlist(j) = c
+	next i
+	for i = 0 to 4
+		shoplist(i) = optionlist(i)
+		officelist(i) = optionlist(i + 5)
+		universe.shoplist(i) = shoplist(i)
+		universe.officelist(i) = officelist(i)
+	next i
+
+// 指定されたIDのノードをオフィス、店に指定
+	for i = 0 to 4 
+		universe.Map.Point(shoplist(i)).site = 2
+		universe.Map.Point(officelist(i)).site = 3
+	next i
+end if
+
+universe.numberofendagt = 0
 }
 
 Univ_Step_End{
+
 /*
 openfilecsv("test0930.csv",2,3)
 writefilecsv(2,universe.day,false)
@@ -239,9 +280,7 @@ writefilecsv(2,universe.Map.bridgecore(7).demand,false)
 writefilecsv(2,universe.Map.bridgecore(8).demand,true)
 closefilecsv(2)
 */
-if universe.day == 30 then
-	exitsimulation()
-end if
+
 }
 
 Univ_Finish{
@@ -309,6 +348,8 @@ elseif my.site == 2 then
 elseif my.site == 3 then
 	my.color = COLOR_CYAN
 end if
+
+
 }
 
 Agt_Step{
@@ -677,7 +718,7 @@ end if
 include"dijkstra.inc"
 
 Agt_Init{
-my.strength = 10000
+my.strength = 5000
 my.damage = 0
 my.demand = 0
 my.distance = measuredistance(universe.Map.Point(my.beginpointid).x,universe.Map.Point(my.beginpointid).x,universe.Map.Point(my.endpointid).x,universe.Map.Point(my.endpointid).y,universe.Map)
@@ -686,12 +727,13 @@ my.hasblock = FALSE
 
 Agt_Step{
 dim set as agtset
+dim blockset as agtset
 dim one as agt
 dim blockagt as agt
 
 my.strength = my.strength - 1
 my.damage = my.damage + 1
-makeoneagtsetaroundown(set,1,universe.Map.Block,false)
+makeoneagtsetaroundown(blockset,1,universe.Map.Block,false)
 
 // personが来たらdemand(経済価値or需要)を増加させる
 makeoneagtsetaroundown(set,2,universe.Map.Person,false)
@@ -705,16 +747,18 @@ for each one in set
 next one
 
 // フラグが消去されているのにblockがあるならそれを消去する
-if my.hasblock == FALSE & countagtset(set) > 0 then
-	one = getagt(set,Int(rnd() * countagtset(set)))
-	delagt(one)
+if my.hasblock == FALSE then
+	if countagtset(blockset) > 0 then
+		one = getagt(blockset,Int(rnd() * countagtset(blockset)))
+		delagt(one)
+	end if
 end if
 
 // もし耐久値が負になってしまったら、崩落したと判断して自身のコストを10000にする。
 if my.strength <= 0 then
 	my.strength = 0
 // まだブロックがないなら置いてコストを10000にする
-	if countagtset(set) == 0 then
+	if countagtset(blockset) == 0 then
 		blockagt = createagt(universe.Map.block)
 		blockagt.x = my.x
 		blockagt.y = my.y
@@ -862,12 +906,12 @@ Map_Output {
     Title = "Map";
     Disable = No;
     Background_Color = 255, 255, 255;
-    Position_x = 505;
-    Position_y = 44;
-    Size_x = 594;
+    Position_x = 546;
+    Position_y = 14;
+    Size_x = 753;
     Size_y = 522;
     Remarks = Yes;
-    Map_Cell_Size = 13;
+    Map_Cell_Size = 8;
     Legend_Pos = Top;
     Font_Name = "Dialog";
     Font_Char_Set = 81;
@@ -1083,8 +1127,8 @@ Time_Graph {
     FastDraw = No;
     Position_x = 28;
     Position_y = 21;
-    Size_x = 482;
-    Size_y = 540;
+    Size_x = 519;
+    Size_y = 533;
     Map_Cell_Size = -1;
     Axis_Label = "", "";
     Draw_By_JFree_Chart = Yes;
@@ -1451,10 +1495,10 @@ Time_Graph {
     Remarks = Yes;
     Legend_Pos = Top;
     FastDraw = No;
-    Position_x = 560;
-    Position_y = 575;
-    Size_x = 500;
-    Size_y = 300;
+    Position_x = 645;
+    Position_y = 552;
+    Size_x = 665;
+    Size_y = 325;
     Map_Cell_Size = -1;
     Axis_Label = "", "";
     Draw_By_JFree_Chart = Yes;
@@ -1493,10 +1537,10 @@ Time_Graph {
     Remarks = Yes;
     Legend_Pos = Top;
     FastDraw = No;
-    Position_x = 120;
-    Position_y = 120;
-    Size_x = 500;
-    Size_y = 300;
+    Position_x = 32;
+    Position_y = 569;
+    Size_x = 596;
+    Size_y = 308;
     Map_Cell_Size = -1;
     Axis_Label = "", "";
     Draw_By_JFree_Chart = Yes;
@@ -1508,7 +1552,7 @@ Time_Graph {
         Line_Color = 0, 255, 0;
         Line_Width = 2;
         Marker_Id = 0;
-        Output_Expression = "universe.Map.government.bridge_damage0)";
+        Output_Expression = "universe.Map.government.bridge_damage(0)";
         Expression_Value_Display = No;
         Effective_Fraction_Figures = 0;
         Graph_Element_Color = (0, 255, 0);
@@ -1710,7 +1754,7 @@ Space_Map_Initial_Value {
 // Window Location Definition Division
 //-------------------------------------------------------
 Window_Rectangle {
-    Window_Name = Main_Window, 673, 23, 1122, 969;
+    Window_Name = Main_Window, 118, 23, 1352, 969;
     Window_Name = Output_Setting_Window, 321, 339, 480, 290;
 }
 
