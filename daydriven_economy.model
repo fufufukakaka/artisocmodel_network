@@ -66,10 +66,10 @@ UNIVERSE {
             Dim Layer(0, 0) As Integer = (0);
             Dim Direction(0, 0) As Double = (0.0);
             Dim bridge_status(0, 0)[9] As Integer = (9*0);
-            Dim bridge_damage(0, 0) As Integer = (0);
-            Dim bridge_demand(0, 0) As Integer = (0);
+            Dim bridge_damage(0, 0)[9] As Integer = ();
+            Dim bridge_demand(0, 0)[9] As Integer = ();
             Dim bridge_averagedemand(0, 0) As Double = ();
-            Dim bridge_distance(0, 0) As Double = ();
+            Dim bridge_distance(0, 0)[9] As Double = ();
         }
         AgtType bridgecore(0, 0)[9] {
             Dim ID(0, 0) As Integer = (0);
@@ -82,7 +82,8 @@ UNIVERSE {
             Dim damage(0, 0) As Integer = (0);
             Dim beginpointid(0, 0) As Integer = (0);
             Dim endpointid(0, 0) As Integer = (0);
-            Dim distance(0, 0) As Double = ();
+            Dim distance(0, 0) As Double = (0.0);
+            Dim hasblock(0, 0) As Boolean = ();
         }
     }
     AgtType Link(0, 0)[282] {
@@ -160,10 +161,8 @@ Initial_Value {
     UNIVERSE.MAP.GOVERNMENT.LAYER = 1(0);
     UNIVERSE.MAP.GOVERNMENT.DIRECTION = 1(0.0);
     UNIVERSE.MAP.GOVERNMENT.BRIDGE_STATUS = 1(9*0);
-    UNIVERSE.MAP.GOVERNMENT.BRIDGE_DAMAGE = 1(0);
-    UNIVERSE.MAP.GOVERNMENT.BRIDGE_DEMAND = 1(0);
-    UNIVERSE.MAP.BRIDGECORE.X = 9(22.36135957, 22.00357782, 22.36135957, 21.82468694, 22.00357782, 21.7352415, 24.95527728, 23.16636852, 22.71914132);
-    UNIVERSE.MAP.BRIDGECORE.Y = 9(44.81216458, 38.64042934, 34.61538462, 29.42754919, 23.88193202, 19.8568873, 11.4490161, 6.082289803, 3.488372093);
+    UNIVERSE.MAP.BRIDGECORE.X = 9(22.361359570661897, 22.003577817531305, 22.361359570661897, 21.82468694096601, 22.003577817531305, 21.735241502683362, 24.955277280858677, 23.166368515205725, 22.719141323792485);
+    UNIVERSE.MAP.BRIDGECORE.Y = 9(44.812164579606446, 38.64042933810376, 34.61538461538461, 29.427549194991055, 23.881932021466906, 19.856887298747765, 11.449016100178895, 6.082289803220036, 3.4883720930232585);
     UNIVERSE.MAP.BRIDGECORE.LAYER = 9(9*0);
     UNIVERSE.MAP.BRIDGECORE.DIRECTION = 9(9*0.0);
     UNIVERSE.MAP.BRIDGECORE.DEMAND = 9(9*0);
@@ -618,6 +617,8 @@ Agt_Step{
 // Agent Rule
 //-------------------------------------------------------
 #begin_rule UNIVERSE.MAP.GOVERNMENT
+include "dijkstra.inc"
+
 Agt_Init{
 my.X = 25
 my.Y = 25
@@ -629,7 +630,8 @@ dim one as agt
 dim blockagt as agt
 dim set as agtset
 dim i as integer
-dim distance(9) as double
+
+makeoneagtsetaroundown(set,1,universe.Map.Block,false)
 
 // 30日ごとに橋を点検(橋ごとの耐久値,今期分のダメージ,今期分の需要を取得)する(今は5日ごとに点検する)
 if Int(gethistory(universe.day,1)) mod 5 == 4 and Int(universe.day) mod 5 == 0 then
@@ -637,22 +639,29 @@ if Int(gethistory(universe.day,1)) mod 5 == 4 and Int(universe.day) mod 5 == 0 t
 		my.bridge_status(i) = universe.Map.bridgecore(i).strength
 		my.bridge_damage(i) = universe.Map.bridgecore(i).damage
 		my.bridge_demand(i) = universe.Map.bridgecore(i).demand
-		my.bridge_averagedemand = my.bridge_demand(i) / 9
+		my.bridge_averagedemand = my.bridge_averagedemand + my.bridge_demand(i) / 9
 		my.bridge_distance(i) = universe.Map.bridgecore(i).distance
 		universe.Map.bridgecore(i).demand = 0
 		universe.Map.bridgecore(i).damage = 0
+		
 // 今季の減少分から判断して来季には崩壊する橋を通行止めにする
 	if my.bridge_status(i) < my.bridge_damage(i) then
+		universe.Map.bridgecore(i).hasblock = TRUE
 		blockagt = createagt(universe.Map.block)
 		blockagt.x = universe.Map.bridgecore(i).x
 		blockagt.y = universe.Map.bridgecore(i).y
-		updatecost(universe.Map.bridgecore(i).beginpointid,universe.Map.bridgecore(i).endpointid,10000)
+		update_cost(universe.Map.bridgecore(i).beginpointid,universe.Map.bridgecore(i).endpointid,10000)
 	end if
-// 通行止めにした橋の値が～(今は平均*(1/2)以上なら)なら橋の耐久値を回復し、通行止めを解除する(コストを元に戻す)
-	if  my.bridge_demand(i) >=  my.bridge_averagedemand * (1/2) then
-		universe.Map.bridgecore(i).strength = universe.Map.bridgecore(i).strength + 10000
-		updatecost(universe.Map.bridgecore(i).beginpointid,universe.Map.bridgecore(i).endpointid,universe.Map.bridgecore(i).distance)
-// 通行止めにした橋の値が～なら通行止めのままで耐久値を0に固定する
+	
+// 通行止めにした橋の値が～(今は平均以上なら)なら橋の耐久値を回復し、通行止めを解除する(コストを元に戻す)
+	if universe.Map.bridgecore(i).hasblock == TRUE then
+		if  my.bridge_demand(i) >=  my.bridge_averagedemand then
+			universe.Map.bridgecore(i).strength = universe.Map.bridgecore(i).strength + 10000
+			update_cost(universe.Map.bridgecore(i).beginpointid,universe.Map.bridgecore(i).endpointid,universe.Map.bridgecore(i).distance)
+			universe.Map.bridgecore(i).hasblock = FALSE
+// 通行止めにした橋の値が～以下なら通行止めのまま
+		end if
+	end if
 	next i
 end if
 }
@@ -665,18 +674,24 @@ end if
 // Agent Rule
 //-------------------------------------------------------
 #begin_rule UNIVERSE.MAP.BRIDGECORE
+include"dijkstra.inc"
+
 Agt_Init{
 my.strength = 10000
 my.damage = 0
 my.demand = 0
 my.distance = measuredistance(universe.Map.Point(my.beginpointid).x,universe.Map.Point(my.beginpointid).x,universe.Map.Point(my.endpointid).x,universe.Map.Point(my.endpointid).y,universe.Map)
+my.hasblock = FALSE
 }
 
 Agt_Step{
 dim set as agtset
 dim one as agt
+dim blockagt as agt
+
 my.strength = my.strength - 1
 my.damage = my.damage + 1
+makeoneagtsetaroundown(set,1,universe.Map.Block,false)
 
 // personが来たらdemand(経済価値or需要)を増加させる
 makeoneagtsetaroundown(set,2,universe.Map.Person,false)
@@ -688,6 +703,25 @@ for each one in set
 		one.check = 1
 	end if
 next one
+
+// フラグが消去されているのにblockがあるならそれを消去する
+if my.hasblock == FALSE & countagtset(set) > 0 then
+	one = getagt(set,Int(rnd() * countagtset(set)))
+	delagt(one)
+end if
+
+// もし耐久値が負になってしまったら、崩落したと判断して自身のコストを10000にする。
+if my.strength <= 0 then
+	my.strength = 0
+// まだブロックがないなら置いてコストを10000にする
+	if countagtset(set) == 0 then
+		blockagt = createagt(universe.Map.block)
+		blockagt.x = my.x
+		blockagt.y = my.y
+		update_cost(my.beginpointid,my.endpointid,10000)
+		my.hasblock = TRUE
+	end if
+end if
 }
 #end_rule UNIVERSE.MAP.BRIDGECORE
 
@@ -828,10 +862,10 @@ Map_Output {
     Title = "Map";
     Disable = No;
     Background_Color = 255, 255, 255;
-    Position_x = 123;
-    Position_y = 96;
-    Size_x = 898;
-    Size_y = 737;
+    Position_x = 505;
+    Position_y = 44;
+    Size_x = 594;
+    Size_y = 522;
     Remarks = Yes;
     Map_Cell_Size = 13;
     Legend_Pos = Top;
@@ -940,7 +974,7 @@ Map_Output {
         Line_Arrow_Variable = "";
         Line_Width_Variable = "";
         Line_Color_Variable = "";
-        Agent_Color = 0,51,255;
+        Agent_Color = 0,255,204;
         Marker_Id = 4;
         Effective_Figures = 0;
         Format_Id = 0;
@@ -1047,10 +1081,10 @@ Time_Graph {
     Remarks = Yes;
     Legend_Pos = Top;
     FastDraw = No;
-    Position_x = 40;
-    Position_y = 100;
-    Size_x = 725;
-    Size_y = 716;
+    Position_x = 28;
+    Position_y = 21;
+    Size_x = 482;
+    Size_y = 540;
     Map_Cell_Size = -1;
     Axis_Label = "", "";
     Draw_By_JFree_Chart = Yes;
@@ -1211,26 +1245,16 @@ Time_Graph {
     Remarks = Yes;
     Legend_Pos = Top;
     FastDraw = No;
-    Position_x = 602;
-    Position_y = 172;
-    Size_x = 633;
-    Size_y = 603;
+    Position_x = 42;
+    Position_y = 576;
+    Size_x = 510;
+    Size_y = 301;
     Map_Cell_Size = -1;
     Axis_Label = "", "";
     Draw_By_JFree_Chart = Yes;
     Scale = 0, 0.0, 1000, 100.0, 100, 10.0;
     ScaleAuto = Yes, Yes;
     Output_Group_Name = "";
-    Output {
-        Graph_Element_Name = "day";
-        Line_Color = 0, 0, 255;
-        Line_Width = 2;
-        Marker_Id = 0;
-        Output_Expression = "universe.Map.Person(0).daycount";
-        Expression_Value_Display = No;
-        Effective_Fraction_Figures = 0;
-        Graph_Element_Color = (0, 255, 0);
-    }
     Output {
         Graph_Element_Name = "timecount";
         Line_Color = 0, 0, 255;
@@ -1409,6 +1433,110 @@ Time_Graph {
 
 
 //-------------------------------------------------------
+// Time Graph Output Definition Division
+//-------------------------------------------------------
+Time_Graph {
+    Font_Name = "Dialog";
+    Font_Char_Set = 81;
+    Font_Size = 12.0;
+    Font_Style = 0;
+    Font_Color = 0, 0, 0;
+    Font_Background_Color = 255, 255, 255;
+    Draw_Timing = Simulation_Step;
+    Draw_Interval = 1;
+    Graph_Name = "day";
+    Title = "day";
+    Disable = No;
+    Background_Color = 255, 255, 255;
+    Remarks = Yes;
+    Legend_Pos = Top;
+    FastDraw = No;
+    Position_x = 560;
+    Position_y = 575;
+    Size_x = 500;
+    Size_y = 300;
+    Map_Cell_Size = -1;
+    Axis_Label = "", "";
+    Draw_By_JFree_Chart = Yes;
+    Scale = 0, 0.0, 1000, 100.0, 100, 10.0;
+    ScaleAuto = Yes, Yes;
+    Output_Group_Name = "";
+    Output {
+        Graph_Element_Name = "day";
+        Line_Color = 255, 0, 0;
+        Line_Width = 2;
+        Marker_Id = 0;
+        Output_Expression = "universe.day";
+        Expression_Value_Display = No;
+        Effective_Fraction_Figures = 0;
+        Graph_Element_Color = (0, 255, 0);
+    }
+}
+
+
+//-------------------------------------------------------
+// Time Graph Output Definition Division
+//-------------------------------------------------------
+Time_Graph {
+    Font_Name = "Dialog";
+    Font_Char_Set = 81;
+    Font_Size = 12.0;
+    Font_Style = 0;
+    Font_Color = 0, 0, 0;
+    Font_Background_Color = 255, 255, 255;
+    Draw_Timing = Simulation_Step;
+    Draw_Interval = 1;
+    Graph_Name = "damage,etc";
+    Title = "damage,etc";
+    Disable = No;
+    Background_Color = 255, 255, 255;
+    Remarks = Yes;
+    Legend_Pos = Top;
+    FastDraw = No;
+    Position_x = 120;
+    Position_y = 120;
+    Size_x = 500;
+    Size_y = 300;
+    Map_Cell_Size = -1;
+    Axis_Label = "", "";
+    Draw_By_JFree_Chart = Yes;
+    Scale = 0, 0.0, 1000, 100.0, 100, 10.0;
+    ScaleAuto = Yes, Yes;
+    Output_Group_Name = "";
+    Output {
+        Graph_Element_Name = "damage";
+        Line_Color = 0, 255, 0;
+        Line_Width = 2;
+        Marker_Id = 0;
+        Output_Expression = "universe.Map.government.bridge_damage0)";
+        Expression_Value_Display = No;
+        Effective_Fraction_Figures = 0;
+        Graph_Element_Color = (0, 255, 0);
+    }
+    Output {
+        Graph_Element_Name = "status";
+        Line_Color = 255, 0, 255;
+        Line_Width = 2;
+        Marker_Id = 0;
+        Output_Expression = "universe.Map.government.bridge_status(0)";
+        Expression_Value_Display = No;
+        Effective_Fraction_Figures = 0;
+        Graph_Element_Color = (0, 51, 102);
+    }
+    Output {
+        Graph_Element_Name = "demand";
+        Line_Color = 255, 255, 0;
+        Line_Width = 2;
+        Marker_Id = 0;
+        Output_Expression = "universe.Map.government.bridge_demand(0)";
+        Expression_Value_Display = No;
+        Effective_Fraction_Figures = 0;
+        Graph_Element_Color = (255, 0, 0);
+    }
+}
+
+
+//-------------------------------------------------------
 // Control Panel Definition Division
 //-------------------------------------------------------
 Control_Panel {
@@ -1582,8 +1710,8 @@ Space_Map_Initial_Value {
 // Window Location Definition Division
 //-------------------------------------------------------
 Window_Rectangle {
-    Window_Name = Main_Window, 0, 23, 1361, 997;
-    Window_Name = Output_Setting_Window, 210, 328, 480, 290;
+    Window_Name = Main_Window, 673, 23, 1122, 969;
+    Window_Name = Output_Setting_Window, 321, 339, 480, 290;
 }
 
 
