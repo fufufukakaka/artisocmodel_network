@@ -808,7 +808,7 @@ Single_Simulation {
     Exec_Order_Random_First_Step_Only = No;
     Random_Seed = 0;
     Redraw_Timing = Step;
-    Redraw_Interval = 10;
+    Redraw_Interval = 1;
     Garbage_Interval = 0;
 }
 
@@ -1439,8 +1439,8 @@ Time_Graph {
     Remarks = Yes;
     Legend_Pos = Top;
     FastDraw = Yes;
-    Position_x = 379;
-    Position_y = 168;
+    Position_x = 441;
+    Position_y = 77;
     Size_x = 524;
     Size_y = 496;
     Map_Cell_Size = -1;
@@ -1688,7 +1688,7 @@ Space_Map_Initial_Value {
 // Window Location Definition Division
 //-------------------------------------------------------
 Window_Rectangle {
-    Window_Name = Main_Window, 0, 23, 1345, 893;
+    Window_Name = Main_Window, 120, 122, 1345, 893;
     Window_Name = Output_Setting_Window, 432, 301, 480, 290;
 }
 
