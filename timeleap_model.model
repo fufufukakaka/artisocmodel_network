@@ -188,7 +188,7 @@ include"dijkstra.inc"
 
 Univ_Init{
 initialize_dijkstra()
-
+universe.checkmode = FALSE
 }
 
 Univ_Step_Begin{
@@ -196,6 +196,10 @@ Univ_Step_Begin{
 // 橋の点検モードに入るか否か
 if Int(cdbl(round(gethistory(universe.day,2)*1000)/1000)) mod 30 == 29 and cdbl(round(universe.day*1000)/1000) mod 30 == 0 then
 	universe.checkmode = TRUE
+	universe.averagearchive = 0
+	universe.averageconsump = 0
+	universe.averagefreetime = 0
+	universe.averagemovetime = 0
 else
 	universe.checkmode = FALSE
 end if
@@ -209,10 +213,6 @@ end if
 
 universe.day = 0
 universe.numberofendagt = 0
-universe.averagearchive = 0
-universe.averageconsump = 0
-universe.averagefreetime = 0
-universe.averagemovetime = 0
 }
 
 Univ_Step_End{
@@ -263,17 +263,19 @@ dim personAgt as agt
 dim firstsight as string
 
 //最初の一回は必ずオフィス(一日目)
-if rnd() < 0.2 then
-		firstsight = universe.officelist(0)
-elseif rnd() < 0.4 then
-		firstsight = universe.officelist(1)
-elseif rnd() < 0.6 then
-		firstsight = universe.officelist(2)
-elseif rnd() < 0.8 then
-		firstsight = universe.officelist(3)
-else
-		firstsight = universe.officelist(4)
-end if
+if rnd() < 0.16 then
+		firstsight = 94
+	elseif rnd() < 0.32 then
+		firstsight = 90
+	elseif rnd() < 0.48 then
+		firstsight = 57
+	elseif rnd() < 0.64 then
+		firstsight = 62
+	elseif rnd() < 0.8 then
+		firstsight = 64
+	else
+		firstsight = 68
+	end if
 
 If My.site == 1  Then
 	personAgt = createagt(universe.Map.Person)
@@ -323,6 +325,7 @@ my.freetime_sum = 0
 my.consump = norminv(rnd(),9360,int(rnd()*1000) + 500)
 my.potential = norminv(rnd(),14581,int(rnd()*1000) + 500)
 my.archivement = my.potential
+universe.averagearchive = universe.averagearchive + (my.archivement / 20)
 }
 
 Agt_Step{
@@ -337,12 +340,7 @@ my.timecount = my.timecount + 1
 universe.numberofendagt = universe.numberofendagt + my.nowhome
 universe.day = universe.day + (my.daycount / countagt(universe.Map.Person))
 
-universe.averagearchive = universe.averagearchive + (my.archivement / 20)
-universe.averagefreetime = universe.averagefreetime + (my.freetime_sum/ 20)
-universe.averagemovetime= universe.averagemovetime + (my.timecount_sum / 20)
-universe.averageconsump = universe.averageconsump + (my.consump_sum / 20)
-
-// 日数が30の倍数ならarchivementをmoneyに換算する(今はテストなので5の倍数にしているよ。ここの処理ではズレが生じるのであとでgovernmentのものにさしかえるよ)
+// 日数が30の倍数ならarchivementをmoneyに換算する()
 if universe.daychange == TRUE then
 	my.money = my.money + my.archivement
 	my.archivement = 0
@@ -388,7 +386,7 @@ if  gethistory(universe.numberofendagt,1) == 20  then
 	my.nowhome = 0
 	targetPointAgt = Universe.Map.Point(CInt(GetToken(My.RouteArray, My.RouteCount)))
 	my.daycount = my.daycount + 0.5
-	if rnd() < 2/7 then
+	if rnd() < 2/7  or my.money <= 50000 then
 		shoproute(targetpointagt)
 	else
 		jobroute(targetpointagt)
@@ -403,6 +401,7 @@ end if
 		my.freetime = my.freetime + 1
 	ElseIf my.nowhome == 0 and My.RouteCount < CountToken(My.RouteArray) Then
 		my.freetime_sum = my.freetime_sum + my.freetime
+		universe.averagefreetime = universe.averagefreetime + (my.freetime_sum/ 20)
 		my.freetime = 0
 		// 経路に沿って進む
 		targetPointAgt = Universe.Map.Point(CInt(GetToken(My.RouteArray, My.RouteCount)))
@@ -426,12 +425,14 @@ end if
 				// 目的地に到着
 				if my.action == 1 then
 					// 店なら消費して効用を得る
-					if universe.Map.Point(my.goalpointid).site == 2 then
+					if universe.Map.Point(my.goalpointid).site == 3 then
 						my.consump_sum = my.consump_sum + my.consump
+						universe.averageconsump = universe.averageconsump + (my.consump_sum / 20)
 						my.money = my.money - my.consump
 					// オフィスなら将来受け取る成果を積み上げる
-					elseif universe.Map.Point(my.goalpointid).site == 3 then
+					elseif universe.Map.Point(my.goalpointid).site == 2 then
 						my.archivement = my.archivement + my.potential
+						universe.averagearchive = universe.averagearchive + (my.archivement / 20)
 					end if
 					my.action = 0
 					my.check = 0
@@ -440,7 +441,8 @@ end if
 				elseif my.action == 0 then
 					my.action = 1
 					my.nowhome = 1
-					my.timecount_sum = my.timecount_sum + my.timecount
+					my.timecount_sum = my.timecount_sum + my.timecount			
+					universe.averagemovetime= universe.averagemovetime + (my.timecount_sum / 20)
 					my.timecount = 0
 				end if
 			End If
@@ -505,7 +507,7 @@ Sub homeroute(targetPointAgt As Agt)
 	My.Color = COLOR_YELLOW
 }
 
-Sub shoproute(targetPointAgt As Agt)
+Sub jobroute(targetPointAgt As Agt)
 {
 	Dim startPointID As Integer
 	Dim goalPointID As Integer
@@ -516,16 +518,18 @@ Sub shoproute(targetPointAgt As Agt)
 	// 現在地点から経路を再探索する
 	// どのshopに向かうかをランダムに決める
 	startPointid = my.ID
-	if rnd() < 0.2 then
-		goalPointID = universe.shoplist(0)
-	elseif rnd() < 0.4 then
-		goalPointID = universe.shoplist(1)
-	elseif rnd() < 0.6 then
-		goalPointID = universe.shoplist(2)
+	if rnd() < 0.16 then
+		goalPointID = 94
+	elseif rnd() < 0.32 then
+		goalPointID = 90
+	elseif rnd() < 0.48 then
+		goalPointID = 57
+	elseif rnd() < 0.64 then
+		goalPointID = 62
 	elseif rnd() < 0.8 then
-		goalPointID = universe.shoplist(3)
+		goalPointID = 64
 	else
-		goalPointID = universe.shoplist(4)
+		goalPointID = 68
 	end if
 	my.goalpointid = goalpointid
 	newRoute = @dijkstra(startPointID, CStr(goalPointID))
@@ -545,7 +549,7 @@ Sub shoproute(targetPointAgt As Agt)
 	My.Color = COLOR_CYAN
 }
 
-Sub jobroute(targetPointAgt As Agt)
+Sub shoproute(targetPointAgt As Agt)
 {
 	Dim startPointID As Integer
 	Dim goalPointID As Integer
@@ -556,16 +560,18 @@ Sub jobroute(targetPointAgt As Agt)
 	// 現在地点から経路を再探索する
 	// どのofiiceに向かうかをランダムに決める
 	startPointid = my.ID
-	if rnd() < 0.2 then
-		goalPointID = universe.officelist(0)
-	elseif rnd() < 0.4 then
-		goalPointID = universe.officelist(1)
-	elseif rnd() < 0.6 then
-		goalPointID = universe.officelist(2)
+	if rnd() < 0.16 then
+		goalPointID = 95
+	elseif rnd() < 0.32 then
+		goalPointID = 56
+	elseif rnd() < 0.48 then
+		goalPointID = 58
+	elseif rnd() < 0.64 then
+		goalPointID = 60
 	elseif rnd() < 0.8 then
-		goalPointID = universe.officelist(3)
+		goalPointID = 63
 	else
-		goalPointID = universe.officelist(4)
+		goalPointID = 69
 	end if
 	my.goalpointid = goalpointid
 	newRoute = @dijkstra(startPointID, CStr(goalPointID))
@@ -874,7 +880,7 @@ Map_Output {
     Font_Color = 0, 0, 0;
     Font_Background_Color = 255, 255, 255;
     FastDraw = Yes;
-    Draw_Timing = Simulation_End;
+    Draw_Timing = Simulation_Step;
     Draw_Interval = 1;
     Axis_Label = "", "";
     Draw_Range = 0, 0, 50, 50;
@@ -1300,13 +1306,13 @@ Time_Graph {
     Draw_Interval = 1;
     Graph_Name = "archive and money";
     Title = "archive and money";
-    Disable = Yes;
+    Disable = No;
     Background_Color = 255, 255, 255;
     Remarks = Yes;
     Legend_Pos = Top;
     FastDraw = No;
-    Position_x = 58;
-    Position_y = 173;
+    Position_x = 111;
+    Position_y = 169;
     Size_x = 536;
     Size_y = 609;
     Map_Cell_Size = -1;
@@ -1320,20 +1326,40 @@ Time_Graph {
         Line_Color = 255, 0, 0;
         Line_Width = 2;
         Marker_Id = 0;
-        Output_Expression = "universe.Map.Person(1).archivement";
+        Output_Expression = "universe.averagearchive";
         Expression_Value_Display = No;
         Effective_Fraction_Figures = 0;
         Graph_Element_Color = (0, 255, 0);
     }
     Output {
-        Graph_Element_Name = "money";
+        Graph_Element_Name = "consump";
         Line_Color = 0, 0, 255;
         Line_Width = 2;
         Marker_Id = 0;
-        Output_Expression = "universe.Map.Person(1).money";
+        Output_Expression = "universe.averageconsump";
         Expression_Value_Display = No;
         Effective_Fraction_Figures = 0;
         Graph_Element_Color = (0, 0, 153);
+    }
+    Output {
+        Graph_Element_Name = "freetime";
+        Line_Color = 0, 255, 0;
+        Line_Width = 2;
+        Marker_Id = 0;
+        Output_Expression = "universe.averagefreetime";
+        Expression_Value_Display = No;
+        Effective_Fraction_Figures = 0;
+        Graph_Element_Color = (204, 102, 0);
+    }
+    Output {
+        Graph_Element_Name = "movetime";
+        Line_Color = 255, 0, 255;
+        Line_Width = 2;
+        Marker_Id = 0;
+        Output_Expression = "universe.averagemovetime";
+        Expression_Value_Display = No;
+        Effective_Fraction_Figures = 0;
+        Graph_Element_Color = (0, 255, 255);
     }
 }
 
@@ -1525,6 +1551,58 @@ Time_Graph {
 
 
 //-------------------------------------------------------
+// Time Graph Output Definition Division
+//-------------------------------------------------------
+Time_Graph {
+    Font_Name = "Dialog";
+    Font_Char_Set = 81;
+    Font_Size = 12.0;
+    Font_Style = 0;
+    Font_Color = 0, 0, 0;
+    Font_Background_Color = 255, 255, 255;
+    Draw_Timing = Simulation_Step;
+    Draw_Interval = 1;
+    Graph_Name = "check";
+    Title = "check";
+    Disable = No;
+    Background_Color = 255, 255, 255;
+    Remarks = Yes;
+    Legend_Pos = Top;
+    FastDraw = No;
+    Position_x = 100;
+    Position_y = 100;
+    Size_x = 500;
+    Size_y = 300;
+    Map_Cell_Size = -1;
+    Axis_Label = "", "";
+    Draw_By_JFree_Chart = Yes;
+    Scale = 0, 0.0, 1000, 100.0, 100, 10.0;
+    ScaleAuto = Yes, Yes;
+    Output_Group_Name = "";
+    Output {
+        Graph_Element_Name = "freetime";
+        Line_Color = 0, 255, 0;
+        Line_Width = 2;
+        Marker_Id = 0;
+        Output_Expression = "universe.Map.Person(1).freetime";
+        Expression_Value_Display = No;
+        Effective_Fraction_Figures = 0;
+        Graph_Element_Color = (0, 255, 0);
+    }
+    Output {
+        Graph_Element_Name = "movetime";
+        Line_Color = 255, 0, 255;
+        Line_Width = 2;
+        Marker_Id = 0;
+        Output_Expression = "universe.Map.Person(1).timecount";
+        Expression_Value_Display = No;
+        Effective_Fraction_Figures = 0;
+        Graph_Element_Color = (0, 153, 153);
+    }
+}
+
+
+//-------------------------------------------------------
 // Control Panel Definition Division
 //-------------------------------------------------------
 Control_Panel {
@@ -1698,8 +1776,8 @@ Space_Map_Initial_Value {
 // Window Location Definition Division
 //-------------------------------------------------------
 Window_Rectangle {
-    Window_Name = Main_Window, 21, 68, 980, 836;
-    Window_Name = Output_Setting_Window, 432, 301, 480, 290;
+    Window_Name = Main_Window, 21, 68, 1238, 888;
+    Window_Name = Output_Setting_Window, 379, 299, 480, 290;
 }
 
 
