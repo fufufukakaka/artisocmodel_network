@@ -217,14 +217,14 @@ universe.averagemovetime = 0
 
 Univ_Step_End{
 
-/*
-openfilecsv("test1000.csv",2,3)
+openfilecsv("test1030.csv",2,3)
 writefilecsv(2,universe.day,false)
-writefilecsv(2,universe.Map.bridgecore(0).demand,false)
-writefilecsv(2,universe.Map.bridgecore(1).demand,false)
-writefilecsv(2,universe.Map.bridgecore(8).demand,true)
+writefilecsv(2,universe.averagearchive,false)
+writefilecsv(2,universe.averagefreetime,false)
+writefilecsv(2,universe.averagemovetime,false)
+writefilecsv(2,universe.averageconsump,true)
 closefilecsv(2)
-*/
+
 
 }
 
@@ -1698,7 +1698,7 @@ Space_Map_Initial_Value {
 // Window Location Definition Division
 //-------------------------------------------------------
 Window_Rectangle {
-    Window_Name = Main_Window, 21, 154, 980, 836;
+    Window_Name = Main_Window, 21, 68, 980, 836;
     Window_Name = Output_Setting_Window, 432, 301, 480, 290;
 }
 
