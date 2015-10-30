@@ -124,6 +124,10 @@ UNIVERSE {
     Dim day(0, 0) <10>  As Double = (0.0);
     Dim checkmode(0, 0) As Boolean = (0);
     Dim daychange(0, 0) As Boolean = (0);
+    Dim averagearchive(0, 0) As Double = ();
+    Dim averagefreetime(0, 0) As Double = ();
+    Dim averagemovetime(0, 0) As Double = ();
+    Dim averageconsump(0, 0) As Double = ();
 }
 
 
@@ -190,7 +194,7 @@ initialize_dijkstra()
 Univ_Step_Begin{
 
 // 橋の点検モードに入るか否か
-if Int(cdbl(round(gethistory(universe.day,2)*1000)/1000)) mod 5 == 4 and cdbl(round(universe.day*1000)/1000) mod 5 == 0 then
+if Int(cdbl(round(gethistory(universe.day,2)*1000)/1000)) mod 30 == 29 and cdbl(round(universe.day*1000)/1000) mod 30 == 0 then
 	universe.checkmode = TRUE
 else
 	universe.checkmode = FALSE
@@ -205,21 +209,19 @@ end if
 
 universe.day = 0
 universe.numberofendagt = 0
+universe.averagearchive = 0
+universe.averageconsump = 0
+universe.averagefreetime = 0
+universe.averagemovetime = 0
 }
 
 Univ_Step_End{
 
 /*
-openfilecsv("test0930.csv",2,3)
+openfilecsv("test1000.csv",2,3)
 writefilecsv(2,universe.day,false)
 writefilecsv(2,universe.Map.bridgecore(0).demand,false)
 writefilecsv(2,universe.Map.bridgecore(1).demand,false)
-writefilecsv(2,universe.Map.bridgecore(2).demand,false)
-writefilecsv(2,universe.Map.bridgecore(3).demand,false)
-writefilecsv(2,universe.Map.bridgecore(4).demand,false)
-writefilecsv(2,universe.Map.bridgecore(5).demand,false)
-writefilecsv(2,universe.Map.bridgecore(6).demand,false)
-writefilecsv(2,universe.Map.bridgecore(7).demand,false)
 writefilecsv(2,universe.Map.bridgecore(8).demand,true)
 closefilecsv(2)
 */
@@ -313,7 +315,6 @@ my.check = 0
 my.nowhome = 0
 my.daycount = 1
 my.speed = 1
-my.archivement = 0
 my.money = 200000
 my.timecount = 0
 my.timecount_sum = 0
@@ -321,6 +322,7 @@ my.freetime = 0
 my.freetime_sum = 0
 my.consump = norminv(rnd(),9360,int(rnd()*1000) + 500)
 my.potential = norminv(rnd(),14581,int(rnd()*1000) + 500)
+my.archivement = my.potential
 }
 
 Agt_Step{
@@ -335,10 +337,18 @@ my.timecount = my.timecount + 1
 universe.numberofendagt = universe.numberofendagt + my.nowhome
 universe.day = universe.day + (my.daycount / countagt(universe.Map.Person))
 
+universe.averagearchive = universe.averagearchive + (my.archivement / 20)
+universe.averagefreetime = universe.averagefreetime + (my.freetime_sum/ 20)
+universe.averagemovetime= universe.averagemovetime + (my.timecount_sum / 20)
+universe.averageconsump = universe.averageconsump + (my.consump_sum / 20)
+
 // 日数が30の倍数ならarchivementをmoneyに換算する(今はテストなので5の倍数にしているよ。ここの処理ではズレが生じるのであとでgovernmentのものにさしかえるよ)
 if universe.daychange == TRUE then
 	my.money = my.money + my.archivement
 	my.archivement = 0
+	my.freetime_sum = 0
+	my.consump_sum = 0
+	my.timecount_sum = 0
 end if
 
 // 進む速度の定義
@@ -1688,7 +1698,7 @@ Space_Map_Initial_Value {
 // Window Location Definition Division
 //-------------------------------------------------------
 Window_Rectangle {
-    Window_Name = Main_Window, 120, 122, 1345, 893;
+    Window_Name = Main_Window, 21, 154, 980, 836;
     Window_Name = Output_Setting_Window, 432, 301, 480, 290;
 }
 
