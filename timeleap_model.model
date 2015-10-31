@@ -51,6 +51,8 @@ UNIVERSE {
             Dim freetime(0, 0) As Integer = (0);
             Dim freetime_sum(0, 0) As Integer = (0);
             Dim consump_sum(0, 0) As Integer = (0);
+            Dim jobrouteoption(0, 0)[6] As String = ();
+            Dim shoprouteoption(0, 0)[6] As String = ();
         }
         AgtType Block(0, 0)[0] {
             Dim ID(0, 0) As Integer = (0);
@@ -119,8 +121,8 @@ UNIVERSE {
         Dim StreetAgt(0, 0) As Agt = (0);
     }
     Dim TemporaryStreetAgtset(0, 0) As AgtSet = ();
-    Dim shoplist(0, 0)[5] As Integer = (5*0);
-    Dim officelist(0, 0)[5] As Integer = (5*0);
+    Dim shoplist(0, 0)[6] As Integer = ();
+    Dim officelist(0, 0)[6] As Integer = ();
     Dim numberofendagt(0, 0) <5>  As Integer = (0);
     Dim day(0, 0) <10>  As Double = (0.0);
     Dim checkmode(0, 0) As Boolean = (0);
@@ -190,6 +192,18 @@ include"dijkstra.inc"
 Univ_Init{
 initialize_dijkstra()
 universe.checkmode = FALSE
+universe.officelist(0) = 94
+universe.officelist(1) = 90
+universe.officelist(2) = 57
+universe.officelist(3) = 62
+universe.officelist(4) = 64
+universe.officelist(5) = 68
+universe.shoplist(0) = 95
+universe.shoplist(1) = 56
+universe.shoplist(2) = 58
+universe.shoplist(3) = 60
+universe.shoplist(4) = 63
+universe.shoplist(5) = 69
 }
 
 Univ_Step_Begin{
@@ -218,7 +232,7 @@ universe.numberofendagt = 0
 
 Univ_Step_End{
 
-openfilecsv("test1031.csv",2,3)
+openfilecsv("test1031_2.csv",2,3)
 writefilecsv(2,universe.day,false)
 writefilecsv(2,universe.averagearchive,false)
 writefilecsv(2,universe.averagefreetime,false)
@@ -327,6 +341,14 @@ my.consump = norminv(rnd(),9360,int(rnd()*1000) + 500)
 my.potential = norminv(rnd(),14581,int(rnd()*1000) + 500)
 my.archivement = my.potential
 universe.averagearchive = universe.averagearchive + (my.archivement / 20)
+
+// 最初に全部のルートを予め計算しておく
+// 使っていた橋がなくなった場合は再計算する
+dim i as integer
+for i = 0 to 5
+	my.jobrouteoption(i) = @dijkstra(my.ID, CStr(universe.officelist(i)))
+	my.shoprouteoption(i) = @dijkstra(my.ID, CStr(universe.shoplist(i)))
+next i
 }
 
 Agt_Step{
@@ -515,25 +537,26 @@ Sub jobroute(targetPointAgt As Agt)
 	Dim newRoute As String
 	Dim lastRouteArray As String
 	Dim i As Integer
+	dim m as integer
 	
 	// 現在地点から経路を再探索する
 	// どのshopに向かうかをランダムに決める
-	startPointid = my.ID
+	// 予め計算してある値を使用(jobrouteoption)
 	if rnd() < 0.16 then
-		goalPointID = 94
+		m = 0
 	elseif rnd() < 0.32 then
-		goalPointID = 90
+		m = 1
 	elseif rnd() < 0.48 then
-		goalPointID = 57
+		m = 2
 	elseif rnd() < 0.64 then
-		goalPointID = 62
+		m = 3
 	elseif rnd() < 0.8 then
-		goalPointID = 64
+		m = 4
 	else
-		goalPointID = 68
+		m = 5
 	end if
-	my.goalpointid = goalpointid
-	newRoute = @dijkstra(startPointID, CStr(goalPointID))
+	newRoute = my.jobrouteoption(m)
+	my.goalpointid = universe.officelist(m)
 		
 	lastRouteArray = My.RouteArray
 	My.RouteArray = ""
@@ -557,25 +580,26 @@ Sub shoproute(targetPointAgt As Agt)
 	Dim newRoute As String
 	Dim lastRouteArray As String
 	Dim i As Integer
+	dim m as integer
 	
 	// 現在地点から経路を再探索する
 	// どのofiiceに向かうかをランダムに決める
-	startPointid = my.ID
+	// 予め計算してある値を使用(jobrouteoption)
 	if rnd() < 0.16 then
-		goalPointID = 95
+		m = 0
 	elseif rnd() < 0.32 then
-		goalPointID = 56
+		m = 1
 	elseif rnd() < 0.48 then
-		goalPointID = 58
+		m = 2
 	elseif rnd() < 0.64 then
-		goalPointID = 60
+		m = 3
 	elseif rnd() < 0.8 then
-		goalPointID = 63
+		m = 4
 	else
-		goalPointID = 69
+		m = 5
 	end if
-	my.goalpointid = goalpointid
-	newRoute = @dijkstra(startPointID, CStr(goalPointID))
+	newRoute = my.shoprouteoption(m)
+	my.goalpointid = universe.shoplist(m)
 		
 	lastRouteArray = My.RouteArray
 	My.RouteArray = ""
@@ -693,7 +717,7 @@ dim blockset as agtset
 dim one as agt
 dim blockagt as agt
 my.bridgetime = my.bridgetime + 1
-my.strength = 182500*(1-(1/(1+10000*exp(-0.008((my.bridgetime)/100))))
+my.strength = 182500*(1-(1/(1+10000*exp(-0.008*(my.bridgetime/100)))))
 my.damage = my.damage + 1
 makeoneagtsetaroundown(blockset,1,universe.Map.Block,false)
 
