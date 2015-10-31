@@ -84,6 +84,7 @@ UNIVERSE {
             Dim endpointid(0, 0) As Integer = (0);
             Dim distance(0, 0) As Double = (0.0);
             Dim hasblock(0, 0) As Boolean = (0);
+            Dim bridgetime(0, 0) As Integer = ();
         }
     }
     AgtType Link(0, 0)[282] {
@@ -124,10 +125,10 @@ UNIVERSE {
     Dim day(0, 0) <10>  As Double = (0.0);
     Dim checkmode(0, 0) As Boolean = (0);
     Dim daychange(0, 0) As Boolean = (0);
-    Dim averagearchive(0, 0) As Double = ();
-    Dim averagefreetime(0, 0) As Double = ();
-    Dim averagemovetime(0, 0) As Double = ();
-    Dim averageconsump(0, 0) As Double = ();
+    Dim averagearchive(0, 0) As Double = (0.0);
+    Dim averagefreetime(0, 0) As Double = (0.0);
+    Dim averagemovetime(0, 0) As Double = (0.0);
+    Dim averageconsump(0, 0) As Double = (0.0);
 }
 
 
@@ -192,14 +193,14 @@ universe.checkmode = FALSE
 }
 
 Univ_Step_Begin{
+universe.averagefreetime = 0
+universe.averagemovetime = 0
+universe.averageconsump = 0
+universe.averagearchive = 0
 
 // ã¥ÇÃì_åüÉÇÅ[ÉhÇ…ì¸ÇÈÇ©î€Ç©
 if Int(cdbl(round(gethistory(universe.day,2)*1000)/1000)) mod 30 == 29 and cdbl(round(universe.day*1000)/1000) mod 30 == 0 then
 	universe.checkmode = TRUE
-	universe.averagearchive = 0
-	universe.averageconsump = 0
-	universe.averagefreetime = 0
-	universe.averagemovetime = 0
 else
 	universe.checkmode = FALSE
 end if
@@ -217,7 +218,7 @@ universe.numberofendagt = 0
 
 Univ_Step_End{
 
-openfilecsv("test1030.csv",2,3)
+openfilecsv("test1031.csv",2,3)
 writefilecsv(2,universe.day,false)
 writefilecsv(2,universe.averagearchive,false)
 writefilecsv(2,universe.averagefreetime,false)
@@ -339,9 +340,13 @@ Agt_Step{
 my.timecount = my.timecount + 1
 universe.numberofendagt = universe.numberofendagt + my.nowhome
 universe.day = universe.day + (my.daycount / countagt(universe.Map.Person))
+universe.averagefreetime = universe.averagefreetime + (my.freetime_sum/ 20)
+universe.averagemovetime= universe.averagemovetime + (my.timecount_sum / 20)
+universe.averagearchive = universe.averagearchive + (my.archivement/ 20)
+universe.averageconsump = universe.averageconsump + (my.consump_sum / 20)
 
 // ì˙êîÇ™30ÇÃî{êîÇ»ÇÁarchivementÇmoneyÇ…ä∑éZÇ∑ÇÈ()
-if universe.daychange == TRUE then
+if universe.checkmode == TRUE then
 	my.money = my.money + my.archivement
 	my.archivement = 0
 	my.freetime_sum = 0
@@ -401,7 +406,6 @@ end if
 		my.freetime = my.freetime + 1
 	ElseIf my.nowhome == 0 and My.RouteCount < CountToken(My.RouteArray) Then
 		my.freetime_sum = my.freetime_sum + my.freetime
-		universe.averagefreetime = universe.averagefreetime + (my.freetime_sum/ 20)
 		my.freetime = 0
 		// åoòHÇ…âàÇ¡ÇƒêiÇﬁ
 		targetPointAgt = Universe.Map.Point(CInt(GetToken(My.RouteArray, My.RouteCount)))
@@ -427,12 +431,10 @@ end if
 					// ìXÇ»ÇÁè¡îÔÇµÇƒå¯ópÇìæÇÈ
 					if universe.Map.Point(my.goalpointid).site == 3 then
 						my.consump_sum = my.consump_sum + my.consump
-						universe.averageconsump = universe.averageconsump + (my.consump_sum / 20)
 						my.money = my.money - my.consump
 					// ÉIÉtÉBÉXÇ»ÇÁè´óàéÛÇØéÊÇÈê¨â ÇêœÇ›è„Ç∞ÇÈ
 					elseif universe.Map.Point(my.goalpointid).site == 2 then
 						my.archivement = my.archivement + my.potential
-						universe.averagearchive = universe.averagearchive + (my.archivement / 20)
 					end if
 					my.action = 0
 					my.check = 0
@@ -442,7 +444,6 @@ end if
 					my.action = 1
 					my.nowhome = 1
 					my.timecount_sum = my.timecount_sum + my.timecount			
-					universe.averagemovetime= universe.averagemovetime + (my.timecount_sum / 20)
 					my.timecount = 0
 				end if
 			End If
@@ -655,6 +656,7 @@ if universe.checkmode == TRUE then
 	if universe.Map.bridgecore(i).hasblock == TRUE then
 		if  my.bridge_demand(i) >=  my.bridge_averagedemand then
 			universe.Map.bridgecore(i).strength = universe.Map.bridgecore(i).strength + 10000                            update_cost(universe.Map.bridgecore(i).beginpointid,universe.Map.bridgecore(i).endpointid,universe.Map.bridgecore(i).distance)
+			universe.Map.bridgecore(i).bridgetime = 0
             universe.Map.bridgecore(i).hasblock = FALSE
 // í çsé~ÇﬂÇ…ÇµÇΩã¥ÇÃílÇ™Å`à»â∫Ç»ÇÁí çsé~ÇﬂÇÃÇ‹Ç‹
         end if
@@ -678,7 +680,7 @@ end if
 include"dijkstra.inc"
 
 Agt_Init{
-my.strength = 5000
+my.strength = 182500
 my.damage = 0
 my.demand = 0
 my.distance = measuredistance(universe.Map.Point(my.beginpointid).x,universe.Map.Point(my.beginpointid).x,universe.Map.Point(my.endpointid).x,universe.Map.Point(my.endpointid).y,universe.Map)
@@ -690,8 +692,8 @@ dim set as agtset
 dim blockset as agtset
 dim one as agt
 dim blockagt as agt
-
-my.strength = my.strength - 1
+my.bridgetime = my.bridgetime + 1
+my.strength = 182500*(1-(1/(1+10000*exp(-0.008((my.bridgetime)/100))))
 my.damage = my.damage + 1
 makeoneagtsetaroundown(blockset,1,universe.Map.Block,false)
 
@@ -866,8 +868,8 @@ Map_Output {
     Title = "Map";
     Disable = No;
     Background_Color = 255, 255, 255;
-    Position_x = 546;
-    Position_y = 14;
+    Position_x = 70;
+    Position_y = 211;
     Size_x = 753;
     Size_y = 522;
     Remarks = Yes;
@@ -1304,43 +1306,23 @@ Time_Graph {
     Font_Background_Color = 255, 255, 255;
     Draw_Timing = Simulation_Step;
     Draw_Interval = 1;
-    Graph_Name = "archive and money";
-    Title = "archive and money";
+    Graph_Name = "time";
+    Title = "time";
     Disable = No;
     Background_Color = 255, 255, 255;
     Remarks = Yes;
     Legend_Pos = Top;
     FastDraw = No;
-    Position_x = 111;
-    Position_y = 169;
-    Size_x = 536;
-    Size_y = 609;
+    Position_x = 149;
+    Position_y = 423;
+    Size_x = 608;
+    Size_y = 391;
     Map_Cell_Size = -1;
     Axis_Label = "", "";
     Draw_By_JFree_Chart = Yes;
     Scale = 0, 0.0, 1000, 100.0, 100, 10.0;
     ScaleAuto = Yes, Yes;
     Output_Group_Name = "";
-    Output {
-        Graph_Element_Name = "archive";
-        Line_Color = 255, 0, 0;
-        Line_Width = 2;
-        Marker_Id = 0;
-        Output_Expression = "universe.averagearchive";
-        Expression_Value_Display = No;
-        Effective_Fraction_Figures = 0;
-        Graph_Element_Color = (0, 255, 0);
-    }
-    Output {
-        Graph_Element_Name = "consump";
-        Line_Color = 0, 0, 255;
-        Line_Width = 2;
-        Marker_Id = 0;
-        Output_Expression = "universe.averageconsump";
-        Expression_Value_Display = No;
-        Effective_Fraction_Figures = 0;
-        Graph_Element_Color = (0, 0, 153);
-    }
     Output {
         Graph_Element_Name = "freetime";
         Line_Color = 0, 255, 0;
@@ -1475,8 +1457,8 @@ Time_Graph {
     Remarks = Yes;
     Legend_Pos = Top;
     FastDraw = Yes;
-    Position_x = 441;
-    Position_y = 77;
+    Position_x = 192;
+    Position_y = 193;
     Size_x = 524;
     Size_y = 496;
     Map_Cell_Size = -1;
@@ -1562,8 +1544,8 @@ Time_Graph {
     Font_Background_Color = 255, 255, 255;
     Draw_Timing = Simulation_Step;
     Draw_Interval = 1;
-    Graph_Name = "check";
-    Title = "check";
+    Graph_Name = "money";
+    Title = "money";
     Disable = No;
     Background_Color = 255, 255, 255;
     Remarks = Yes;
@@ -1580,24 +1562,24 @@ Time_Graph {
     ScaleAuto = Yes, Yes;
     Output_Group_Name = "";
     Output {
-        Graph_Element_Name = "freetime";
-        Line_Color = 0, 255, 0;
+        Graph_Element_Name = "consump";
+        Line_Color = 255, 0, 0;
         Line_Width = 2;
         Marker_Id = 0;
-        Output_Expression = "universe.Map.Person(1).freetime";
+        Output_Expression = "universe.averageconsump";
         Expression_Value_Display = No;
         Effective_Fraction_Figures = 0;
         Graph_Element_Color = (0, 255, 0);
     }
     Output {
-        Graph_Element_Name = "movetime";
-        Line_Color = 255, 0, 255;
+        Graph_Element_Name = "archive";
+        Line_Color = 0, 0, 255;
         Line_Width = 2;
         Marker_Id = 0;
-        Output_Expression = "universe.Map.Person(1).timecount";
+        Output_Expression = "universe.averagearchive";
         Expression_Value_Display = No;
         Effective_Fraction_Figures = 0;
-        Graph_Element_Color = (0, 153, 153);
+        Graph_Element_Color = (102, 0, 0);
     }
 }
 
@@ -1776,8 +1758,8 @@ Space_Map_Initial_Value {
 // Window Location Definition Division
 //-------------------------------------------------------
 Window_Rectangle {
-    Window_Name = Main_Window, 21, 68, 1238, 888;
-    Window_Name = Output_Setting_Window, 379, 299, 480, 290;
+    Window_Name = Main_Window, 0, 23, 925, 983;
+    Window_Name = Output_Setting_Window, 222, 346, 480, 290;
 }
 
 
