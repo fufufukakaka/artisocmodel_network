@@ -232,7 +232,7 @@ universe.numberofendagt = 0
 
 Univ_Step_End{
 
-openfilecsv("test1031_2.csv",2,3)
+openfilecsv("test1031_3.csv",2,3)
 writefilecsv(2,universe.day,false)
 writefilecsv(2,universe.averagearchive,false)
 writefilecsv(2,universe.averagefreetime,false)
@@ -240,7 +240,9 @@ writefilecsv(2,universe.averagemovetime,false)
 writefilecsv(2,universe.averageconsump,true)
 closefilecsv(2)
 
-
+if universe.day >= 151 then
+	exitsimulation()
+end if
 }
 
 Univ_Finish{
@@ -515,16 +517,11 @@ Sub homeroute(targetPointAgt As Agt)
 	goalPointID = my.ID
 	newRoute = @dijkstra(startPointAgt.ID, CStr(goalPointID))
 		
-	lastRouteArray = My.RouteArray
 	My.RouteArray = ""
-	
-	// これまでに通った経路を格納する
-	For i=0 To My.RouteCount - 2
-		My.RouteArray = My.RouteArray & GetToken(lastRouteArray, i) & ","
-	Next i
+	my.RouteCount = 0
 	
 	// 新しい経路を追加する
-	My.RouteArray = My.RouteArray & newRoute
+	My.RouteArray = newRoute
 	
 	// エージェントの色を変更する
 	My.Color = COLOR_YELLOW
@@ -557,20 +554,15 @@ Sub jobroute(targetPointAgt As Agt)
 	end if
 	newRoute = my.jobrouteoption(m)
 	my.goalpointid = universe.officelist(m)
-		
-	lastRouteArray = My.RouteArray
+
 	My.RouteArray = ""
-	
-	// これまでに通った経路を格納する
-	For i=0 To My.RouteCount - 2
-		My.RouteArray = My.RouteArray & GetToken(lastRouteArray, i) & ","
-	Next i
+	my.RouteCount = 0
 	
 	// 新しい経路を追加する
-	My.RouteArray = My.RouteArray & newRoute
+	My.RouteArray = newRoute
 	
 	// エージェントの色を変更する
-	My.Color = COLOR_CYAN
+	My.Color = COLOR_GREEN
 }
 
 Sub shoproute(targetPointAgt As Agt)
@@ -583,8 +575,8 @@ Sub shoproute(targetPointAgt As Agt)
 	dim m as integer
 	
 	// 現在地点から経路を再探索する
-	// どのofiiceに向かうかをランダムに決める
-	// 予め計算してある値を使用(jobrouteoption)
+	// どのshopに向かうかをランダムに決める
+	// 予め計算してある値を使用(shoprouteoption)
 	if rnd() < 0.16 then
 		m = 0
 	elseif rnd() < 0.32 then
@@ -601,19 +593,14 @@ Sub shoproute(targetPointAgt As Agt)
 	newRoute = my.shoprouteoption(m)
 	my.goalpointid = universe.shoplist(m)
 		
-	lastRouteArray = My.RouteArray
 	My.RouteArray = ""
-	
-	// これまでに通った経路を格納する
-	For i=0 To My.RouteCount - 2
-		My.RouteArray = My.RouteArray & GetToken(lastRouteArray, i) & ","
-	Next i
+	my.RouteCount = 0
 	
 	// 新しい経路を追加する
-	My.RouteArray = My.RouteArray & newRoute
+	My.RouteArray = newRoute
 	
 	// エージェントの色を変更する
-	My.Color = COLOR_GREEN
+	My.Color = COLOR_CYAN
 }
 #end_rule UNIVERSE.MAP.PERSON
 
@@ -861,7 +848,7 @@ Single_Simulation {
 Repeat_Simulation {
     Value_Change = None;
     Initial_Value_Change_None {
-        Repeat_Max = 10;
+        Repeat_Max = 3;
     }
 }
 
@@ -892,8 +879,8 @@ Map_Output {
     Title = "Map";
     Disable = No;
     Background_Color = 255, 255, 255;
-    Position_x = 70;
-    Position_y = 211;
+    Position_x = 154;
+    Position_y = 91;
     Size_x = 753;
     Size_y = 522;
     Remarks = Yes;
@@ -1481,8 +1468,8 @@ Time_Graph {
     Remarks = Yes;
     Legend_Pos = Top;
     FastDraw = Yes;
-    Position_x = 192;
-    Position_y = 193;
+    Position_x = 23;
+    Position_y = 11;
     Size_x = 524;
     Size_y = 496;
     Map_Cell_Size = -1;
@@ -1575,8 +1562,8 @@ Time_Graph {
     Remarks = Yes;
     Legend_Pos = Top;
     FastDraw = No;
-    Position_x = 100;
-    Position_y = 100;
+    Position_x = 417;
+    Position_y = -14;
     Size_x = 500;
     Size_y = 300;
     Map_Cell_Size = -1;
@@ -1782,7 +1769,7 @@ Space_Map_Initial_Value {
 // Window Location Definition Division
 //-------------------------------------------------------
 Window_Rectangle {
-    Window_Name = Main_Window, 0, 23, 925, 983;
+    Window_Name = Main_Window, 0, 23, 938, 983;
     Window_Name = Output_Setting_Window, 222, 346, 480, 290;
 }
 
