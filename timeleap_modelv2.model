@@ -262,6 +262,10 @@ writefilecsv(2,universe.Map.Person(17).archivement,false)
 writefilecsv(2,universe.Map.Person(18).archivement,false)
 writefilecsv(2,universe.Map.Person(19).archivement,true)
 closefilecsv(2)
+
+if universe.day == 361 then
+	ExitSimulation()
+end if
 }
 
 Univ_Finish{
@@ -1233,7 +1237,7 @@ Time_Graph {
     Draw_Interval = 1;
     Graph_Name = "endagt";
     Title = "end agt";
-    Disable = No;
+    Disable = Yes;
     Background_Color = 255, 255, 255;
     Remarks = Yes;
     Legend_Pos = Top;
@@ -1782,8 +1786,8 @@ Space_Map_Initial_Value {
 // Window Location Definition Division
 //-------------------------------------------------------
 Window_Rectangle {
-    Window_Name = Main_Window, 0, 0, 1141, 986;
-    Window_Name = Output_Setting_Window, 330, 348, 480, 290;
+    Window_Name = Main_Window, 49, 222, 980, 700;
+    Window_Name = Output_Setting_Window, 250, 205, 480, 290;
 }
 
 
