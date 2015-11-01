@@ -1,0 +1,163 @@
+---
+title: "Pre-Data"
+author: "Yusuke Fukasawa"
+date: "2015年11月1日"
+output: html_document
+---
+
+ここでは実験を行う前に必要な各種数的処理を報告します。
+
+# archiveの分布を調べる
+```{r}
+require(ggplot2)
+ar<-read.csv("testdata_3.csv")
+ar<-ar[,-1]
+# archiveの統計量
+summary(ar)
+# 徴税表を作成するためにヒストグラムが欲しかった
+# とりあえず散布図を見てみる
+ar.hist<-c(ar$archive0,ar$archive1,ar$archive2,ar$archive3,ar$archive4,ar$archive5,ar$archive6,ar$archive7,ar$archive8,ar$archive9,ar$archive10,ar$archive11,ar$archive12,ar$archive13,ar$archive14,ar$archive15,ar$archive16,ar$archive17,ar$archive18,ar$archive19)
+summary(ar.hist)
+plot(ar.hist)
+# まんべんなく散らばっている模様。正規分布乱数で出しているのでそりゃそうかという感じですが。
+# ヒストグラムを出す
+hist(ar.hist)
+```
+
+月収25万から35万がボリュームゾーンのようですね
+取り敢えずこの結果を受けて徴税表 (年ごとに徴税するので12倍)は暫定的に以下のようにしました
+月収基準では200000,278700,303600,332300,400000でした。4分位点を参考にしつつ。
+
+```{r}
+tax.table<-c("2400000円以下","3344400円以下","3643200円以下","3987600円以下","4800000円以上")
+tax.table<-data.frame(tax.table)
+tax.table$rate<-c(0.05,0.15,0.25,0.35,0.45)
+names(tax.table)<-c("Rule","Rate")
+knitr::kable(tax.table)
+```
+
+ちなみに現在の所得税徴収表を参考にしておりますので、参考資料をば
+
+| 課税される所得金額 | 税率 | 控除額 |
+|:---:|:---:|:---:|
+|195万円以下|5%|0円|
+|195万円を超え、330万円以下|10%|97,500円|
+|330万円を超え、695万円以下|20%|427,500円|
+|695万円を超え、900万円以下|23%|636,000円|
+|900万円を超え、1,800万円以下|33%|1,536,000円|
+|1,800万円を超え、4.000万円以下|40%|2,796,000円|
+|4,000万円超|45%|4,796,000円|
+
+# 効用関数を構成するパラメータのスケーリング
+効用関数を定義するパラメータとして消費額、余暇時間、交通時間を用いるつもりですが、これらを並列して扱えるようにスケーリングします
+```{r}
+mm<-read.csv("testdata.csv")
+mm<-mm[,c(-1,-2)]
+# 概要
+knitr::kable(mm)
+# 平均など
+summary(mm)
+# 標準偏差
+sapply(mm,sd)
+# 各変数のヒストグラム
+hist(mm$freetime)
+hist(mm$movetime)
+hist(mm$consump)
+```
+
+これらの値を用いてそれぞれ標準化する式を組み立てると
+
+1. freetime_std...((freetime-938.4)/60.5)+10
+2. movetime_std...((movetime-2142.5)/41.7)+10
+3. consump_std...((consump-77989.19)/6526.4)+10
+
+となる。
+10を足しているのは、このままだと負の値が出てしまって処理に不具合が出るので分散はそのままに平均だけ動かすという意図のもとです。この式を用いて改めて分布を見てみます。
+
+```{r}
+scaletable<-mm
+scaletable$freetime<-((mm$freetime-938.4)/60.5)+10
+scaletable$movetime<-((mm$movetime-2142.5)/41.7)+10
+scaletable$consump<-((mm$consump-77989.19)/6526.4)+10
+names(scaletable)<-c("freetime_std","movetime_std","consump_std")
+# 概要
+knitr::kable(scaletable)
+# 平均など
+summary(scaletable)
+# 標準偏差
+sapply(scaletable,sd)
+# 各変数のヒストグラム
+hist(scaletable$freetime)
+hist(scaletable$movetime)
+hist(scaletable$consump)
+```
+
+これをしたからといって正規分布に近似させたいわけではなく、あくまでもスケーリングのためです。。。
+効用の値も算出してみます
+
+```{r}
+scaletable$trial<-1:30
+scaletable$utilize<-(scaletable$freetime)^0.33+(scaletable$movetime)^0.33-(scaletable$consump)^0.33
+# 平均など
+summary(scaletable$utilize)
+# ヒストグラム
+hist(scaletable$utilize)
+# ggplot2で棒グラフにしてみる
+g <- ggplot(
+  scaletable,                    # ggplot 用データフレーム
+  aes (                  # ggplot オプション設定
+    x = trial,           # x 軸を df$group とする
+    y = utilize,          # y 軸を df$length とする
+    fill = trial         # df$group に従ってグループ分ける
+  )
+)
+g <- g + geom_bar(                    # plotbarに当たる関数
+  width = 0.8,                        # 棒の幅
+  stat = "identity"
+)
+g <- g + xlab("Trial Number(a month)")            # x 軸名
+g <- g + ylab("Utilize")       # y 軸名
+g <- g + ggtitle("Bar Graph About Utilize")   # グラフ名
+
+plot(g)
+```
+
+さらっと飛ばしましたけど
+U=x^0.33+y^0.33-z^0.33
+ということでいきます
+
+# 単年度処理、長年度処理の判断ポイント
+微分して傾きが最大になるとかならないとかで決めます
+まず、確かめがてら効用関数を一階微分・二階微分してみます
+```{r}
+u <- expression(x^0.33+y^0.33-z^0.33)
+# 一階微分
+uxyz<-deriv(u,c("x","y","z"),func=TRUE)
+x<-seq(from=0,to=20,by=0.01)
+y<-seq(from=0,to=20,by=0.01)
+z<-seq(from=0,to=20,by=0.01)
+res<-uxyz(x,y,z)
+plot(res)
+# 二階微分したいところですが、やり方がわからないので一旦保留
+```
+
+取り敢えず効用関数として効用逓減状態は再現できている模様
+続いて今回扱う橋の劣化曲線について説明します。
+こういう式になっています。
+(時間経過ベースの耐久値)=(シミュレーションしたい日数)(1-(1/(1+10000×EXP(-0.008((time)/100))))
+実際にプロットしてみましょうぞ
+今回はシミュレーション日数について、100stepを1日、360日で1年と考えているので50年で182500ですね
+
+```{r}
+res3<-c()
+res3$x<-1:182500
+res3$damage<-1
+res3<-data.frame(res3)
+res3$damage<-182500*(1-(1/(1+10000*exp((-0.008)*(res3$x/100)))))
+plot(res3)
+# 一階微分します
+d<-expression(182500*(1-(1/(1+10000*exp((-0.008)*(t/100))))))
+dt<-deriv(d,"t",func = TRUE)
+t<-seq(from=1,to=182500,by=1)
+res4<-dt(t)
+```

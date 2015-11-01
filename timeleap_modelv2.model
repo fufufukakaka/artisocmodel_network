@@ -53,6 +53,7 @@ UNIVERSE {
             Dim consump_sum(0, 0) As Integer = (0);
             Dim jobrouteoption(0, 0)[6] As String = (6*"");
             Dim shoprouteoption(0, 0)[6] As String = (6*"");
+            Dim destination(0, 0) As Integer = ();
         }
         AgtType Block(0, 0)[0] {
             Dim ID(0, 0) As Integer = (0);
@@ -239,31 +240,22 @@ universe.numberofendagt = 0
 
 Univ_Step_End{
 
-openfilecsv("test1031_4.csv",2,3)
+openfilecsv("test1101.csv",2,3)
 writefilecsv(2,universe.day,false)
-writefilecsv(2,universe.Map.Person(0).archivement,false)
-writefilecsv(2,universe.Map.Person(1).archivement,false)
-writefilecsv(2,universe.Map.Person(2).archivement,false)
-writefilecsv(2,universe.Map.Person(3).archivement,false)
-writefilecsv(2,universe.Map.Person(4).archivement,false)
-writefilecsv(2,universe.Map.Person(5).archivement,false)
-writefilecsv(2,universe.Map.Person(6).archivement,false)
-writefilecsv(2,universe.Map.Person(7).archivement,false)
-writefilecsv(2,universe.Map.Person(8).archivement,false)
-writefilecsv(2,universe.Map.Person(9).archivement,false)
-writefilecsv(2,universe.Map.Person(10).archivement,false)
-writefilecsv(2,universe.Map.Person(11).archivement,false)
-writefilecsv(2,universe.Map.Person(12).archivement,false)
-writefilecsv(2,universe.Map.Person(13).archivement,false)
-writefilecsv(2,universe.Map.Person(14).archivement,false)
-writefilecsv(2,universe.Map.Person(15).archivement,false)
-writefilecsv(2,universe.Map.Person(16).archivement,false)
-writefilecsv(2,universe.Map.Person(17).archivement,false)
-writefilecsv(2,universe.Map.Person(18).archivement,false)
-writefilecsv(2,universe.Map.Person(19).archivement,true)
+writefilecsv(2,universe.Map.bridgecore(0).demand,false)
+writefilecsv(2,universe.Map.bridgecore(1).demand,false)
+writefilecsv(2,universe.Map.bridgecore(2).demand,false)
+writefilecsv(2,universe.Map.bridgecore(3).demand,false)
+writefilecsv(2,universe.Map.bridgecore(4).demand,false)
+writefilecsv(2,universe.Map.bridgecore(5).demand,false)
+writefilecsv(2,universe.Map.bridgecore(6).demand,false)
+writefilecsv(2,universe.Map.bridgecore(7).demand,false)
+writefilecsv(2,universe.Map.bridgecore(8).demand,false)
+writefilecsv(2,universe.Map.bridgecore(9).demand,false)
+writefilecsv(2,universe.Map.bridgecore(10).demand,true)
 closefilecsv(2)
 
-if universe.day == 361 then
+if universe.day >= 361 then
 	ExitSimulation()
 end if
 }
@@ -352,6 +344,7 @@ end if
 
 Agt_Init{
 my.Color = COLOR_BLUE
+my.destination = 1
 my.action = 1
 my.check = 0
 my.nowhome = 0
@@ -368,7 +361,7 @@ my.archivement = my.potential
 universe.averagearchive = universe.averagearchive + (my.archivement / 20)
 
 // 最初に全部のルートを予め計算しておく
-// 使っていた橋がなくなった場合は再計算する
+// 家からオフィスや商業地に向かうルート
 dim i as integer
 for i = 0 to 5
 	my.jobrouteoption(i) = @dijkstra(my.ID, CStr(universe.officelist(i)))
@@ -440,10 +433,8 @@ if  gethistory(universe.numberofendagt,1) == 20  then
 	my.daycount = my.daycount + 0.5
 	if rnd() < 2/7  or my.money <= 50000 then
 		shoproute(targetpointagt)
-		println(my.ID&"shop")
 	else
 		jobroute(targetpointagt)
-		println(my.ID&"job")
 	end if
 end if
 	If my.nowhome == 1  Then
@@ -578,6 +569,7 @@ Sub jobroute(targetPointAgt As Agt)
 	end if
 	my.goalpointid = universe.officelist(m)
 	newRoute = my.jobrouteoption(m)
+	my.destination = 1
 	
 	my.RouteArray = ""
 	My.Routecount = 0
@@ -615,6 +607,7 @@ Sub shoproute(targetPointAgt As Agt)
 	end if
 	my.goalpointid = universe.shoplist(m)
 	newRoute = my.shoprouteoption(m)
+	my.destination = 2
 		
 	my.RouteArray = ""
 	My.Routecount = 0
@@ -674,8 +667,7 @@ next i
 
 // 30日ごとに橋を点検(今は5日ごとに点検を行う)(universeで日付と同期)
 if universe.checkmode == TRUE then
-	println("good")
-	for i = 0 to 11	
+	for i = 0 to 10	
 // 今季の減少分から判断して来季には崩壊する橋を通行止めにする
 	if my.bridge_status(i) < my.bridge_damage(i) then
 		universe.Map.bridgecore(i).hasblock = TRUE
@@ -734,7 +726,12 @@ makeoneagtsetaroundown(blockset,1,universe.Map.Block,false)
 makeoneagtsetaroundown(set,2,universe.Map.Person,false)
 for each one in set
 	if one.check == 0 then
-		my.demand = my.demand + one.consump
+		// エージェントの目的に合わせて取得する値を変更する
+		if one.destination == 1 then
+			my.demand = my.demand + one.potential
+		elseif one.destination == 2 then
+			my.demand = my.demand + one.consump
+		end if
 		my.strength = my.strength - 5
 		my.damage = my.damage + 5
 		one.check = 1
@@ -870,7 +867,7 @@ Single_Simulation {
 Repeat_Simulation {
     Value_Change = None;
     Initial_Value_Change_None {
-        Repeat_Max = 3;
+        Repeat_Max = 1;
     }
 }
 
@@ -879,6 +876,7 @@ Repeat_Simulation {
 // Executing Order By Agent Component Definition Division
 //-------------------------------------------------------
 Executing_Order_Component {
+    Component_Priority = "Universe.Map.Point", 1;
     Component_Priority = "Universe.Map.Block", 1;
     Component_Priority = "Universe.Map.government", 1;
     Component_Priority = "Universe.Map.bridgecore", 1;
@@ -887,7 +885,6 @@ Executing_Order_Component {
     Component_Priority = "Universe.DijkstraStreet", 1;
     Component_Priority = "Universe.StreetBackup", 1;
     Component_Priority = "Universe.PointBackup", 1;
-    Component_Priority = "Universe.Map.Point", 1;
     Component_Priority = "Universe.Map.Person", 3;
 }
 
@@ -901,12 +898,12 @@ Map_Output {
     Title = "Map";
     Disable = No;
     Background_Color = 255, 255, 255;
-    Position_x = 314;
-    Position_y = 28;
+    Position_x = -1;
+    Position_y = 8;
     Size_x = 753;
     Size_y = 522;
-    Remarks = Yes;
-    Map_Cell_Size = 8;
+    Remarks = No;
+    Map_Cell_Size = 9;
     Legend_Pos = Top;
     Font_Name = "Dialog";
     Font_Char_Set = 81;
@@ -1242,8 +1239,8 @@ Time_Graph {
     Remarks = Yes;
     Legend_Pos = Top;
     FastDraw = No;
-    Position_x = 278;
-    Position_y = 362;
+    Position_x = 741;
+    Position_y = 351;
     Size_x = 536;
     Size_y = 502;
     Map_Cell_Size = -1;
@@ -1485,7 +1482,7 @@ Time_Graph {
     Draw_Interval = 1;
     Graph_Name = "day";
     Title = "day";
-    Disable = No;
+    Disable = Yes;
     Background_Color = 255, 255, 255;
     Remarks = Yes;
     Legend_Pos = Top;
@@ -1643,8 +1640,8 @@ Others_Data {
     Debug_Position_y = 10;
     Debug_Size_x = 400;
     Debug_Size_y = 200;
-    Console_Position_x = 222;
-    Console_Position_y = 65;
+    Console_Position_x = -128;
+    Console_Position_y = 140;
     Console_Size_x = 618;
     Console_Size_y = 689;
     Componen_Tree_Position_x = 2;
@@ -1786,8 +1783,8 @@ Space_Map_Initial_Value {
 // Window Location Definition Division
 //-------------------------------------------------------
 Window_Rectangle {
-    Window_Name = Main_Window, 49, 222, 980, 700;
-    Window_Name = Output_Setting_Window, 250, 205, 480, 290;
+    Window_Name = Main_Window, 0, 121, 383, 99;
+    Window_Name = Output_Setting_Window, 310, 353, 480, 290;
 }
 
 
