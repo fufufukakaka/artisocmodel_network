@@ -53,7 +53,7 @@ UNIVERSE {
             Dim consump_sum(0, 0) As Integer = (0);
             Dim jobrouteoption(0, 0)[6] As String = (6*"");
             Dim shoprouteoption(0, 0)[6] As String = (6*"");
-            Dim destination(0, 0) As Integer = ();
+            Dim destination(0, 0) As Integer = (0);
         }
         AgtType Block(0, 0)[0] {
             Dim ID(0, 0) As Integer = (0);
@@ -239,23 +239,23 @@ universe.numberofendagt = 0
 }
 
 Univ_Step_End{
-
-openfilecsv("test1101.csv",2,3)
+/*
+openfilecsv("test1101_strength.csv",2,3)
 writefilecsv(2,universe.day,false)
-writefilecsv(2,universe.Map.bridgecore(0).demand,false)
-writefilecsv(2,universe.Map.bridgecore(1).demand,false)
-writefilecsv(2,universe.Map.bridgecore(2).demand,false)
-writefilecsv(2,universe.Map.bridgecore(3).demand,false)
-writefilecsv(2,universe.Map.bridgecore(4).demand,false)
-writefilecsv(2,universe.Map.bridgecore(5).demand,false)
-writefilecsv(2,universe.Map.bridgecore(6).demand,false)
-writefilecsv(2,universe.Map.bridgecore(7).demand,false)
-writefilecsv(2,universe.Map.bridgecore(8).demand,false)
-writefilecsv(2,universe.Map.bridgecore(9).demand,false)
-writefilecsv(2,universe.Map.bridgecore(10).demand,true)
+writefilecsv(2,universe.Map.bridgecore(0).strength,false)
+writefilecsv(2,universe.Map.bridgecore(1).strength,false)
+writefilecsv(2,universe.Map.bridgecore(2).strength,false)
+writefilecsv(2,universe.Map.bridgecore(3).strength,false)
+writefilecsv(2,universe.Map.bridgecore(4).strength,false)
+writefilecsv(2,universe.Map.bridgecore(5).strength,false)
+writefilecsv(2,universe.Map.bridgecore(6).strength,false)
+writefilecsv(2,universe.Map.bridgecore(7).strength,false)
+writefilecsv(2,universe.Map.bridgecore(8).strength,false)
+writefilecsv(2,universe.Map.bridgecore(9).strength,false)
+writefilecsv(2,universe.Map.bridgecore(10).strength,true)
 closefilecsv(2)
-
-if universe.day >= 361 then
+*/
+if universe.day >= 360 then
 	ExitSimulation()
 end if
 }
@@ -482,6 +482,7 @@ end if
 				// ãAëÓÇµÅAñæì˙Ç…îıÇ¶ÇÈ
 				elseif my.action == 0 then
 					my.action = 1
+					my.check = 0
 					my.nowhome = 1
 					my.timecount_sum = my.timecount_sum + my.timecount			
 					my.timecount = 0
@@ -851,7 +852,7 @@ Single_Simulation {
     Step_Max = 0;
     Time_Max = 0;
     End_Condition = "";
-    Exec_Wait = 10;
+    Exec_Wait = 100;
     Exec_Order = Component;
     Exec_Order_Random_First_Step_Only = No;
     Random_Seed = 0;
@@ -898,8 +899,8 @@ Map_Output {
     Title = "Map";
     Disable = No;
     Background_Color = 255, 255, 255;
-    Position_x = -1;
-    Position_y = 8;
+    Position_x = 4;
+    Position_y = 59;
     Size_x = 753;
     Size_y = 522;
     Remarks = No;
@@ -987,8 +988,8 @@ Map_Output {
         Icon_Transparent = No;
         Icon_Enlarg_Reduce = No;
         Icon_File_Name = "";
-        Num_Display = No;
-        Num_Var_Name = "Universe.Map.Person.action";
+        Num_Display = Yes;
+        Num_Var_Name = "Universe.Map.Person.check";
         Agent_Image_Magnify_by_value = Yes;
         Agent_Image_Magnify_Value = 1.0;
         Agent_Image_Magnify_Variable_Name = "Universe.Map.Person.ID";
@@ -1234,13 +1235,13 @@ Time_Graph {
     Draw_Interval = 1;
     Graph_Name = "endagt";
     Title = "end agt";
-    Disable = Yes;
+    Disable = No;
     Background_Color = 255, 255, 255;
     Remarks = Yes;
     Legend_Pos = Top;
     FastDraw = No;
-    Position_x = 741;
-    Position_y = 351;
+    Position_x = 285;
+    Position_y = 389;
     Size_x = 536;
     Size_y = 502;
     Map_Cell_Size = -1;
@@ -1783,8 +1784,8 @@ Space_Map_Initial_Value {
 // Window Location Definition Division
 //-------------------------------------------------------
 Window_Rectangle {
-    Window_Name = Main_Window, 0, 121, 383, 99;
-    Window_Name = Output_Setting_Window, 310, 353, 480, 290;
+    Window_Name = Main_Window, 0, 0, 1071, 933;
+    Window_Name = Output_Setting_Window, 295, 321, 480, 290;
 }
 
 
