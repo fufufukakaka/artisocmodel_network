@@ -228,12 +228,16 @@ universe.averagearchive = 0
 universe.averageutilize = 0
 universe.recalculate = 0
 
-// 橋が壊れた時にルートが変更されるかどうか実験
-if Int(cdbl(round(gethistory(universe.day,2)*1000)/1000))  == 9 and cdbl(round(universe.day*1000)/1000)  == 9.5 then
-	five = universe.Map.bridgecore(5).bridgelink
-	universe.recalculateflag = TRUE
+if universe.day == 30 then
+	Terminateagt(universe.Link(26))
 end if
-
+// 橋が壊れた時にルートが変更されるかどうか実験
+/*
+if Int(cdbl(round(gethistory(universe.day,2)*1000)/1000))  == 100 and cdbl(round(universe.day*1000)/1000)  == 100.5 then
+	universe.recalculateflag = TRUE
+	initialize_dijkstra()
+end if
+*/
 // 橋の点検モードに入るか否か
 if Int(cdbl(round(gethistory(universe.day,2)*1000)/1000)) mod 30 == 29 and cdbl(round(universe.day*1000)/1000) mod 30 == 0 then
 	universe.checkmode = TRUE
@@ -780,8 +784,8 @@ end if
 #begin_rule UNIVERSE.LINK
 Agt_Init{
 if my.ID == 26 then
-	println(my.Begin_agt)
-	println(my.End_Agt)
+	println(my.Begin_agt.id)
+		println(my.end_agt.id)
 end if
 }
 
@@ -1713,12 +1717,12 @@ Others_Data {
     Debug_Position_y = 10;
     Debug_Size_x = 400;
     Debug_Size_y = 200;
-    Console_Position_x = 90;
-    Console_Position_y = 143;
+    Console_Position_x = 297;
+    Console_Position_y = 131;
     Console_Size_x = 149;
-    Console_Size_y = 689;
-    Componen_Tree_Position_x = 7;
-    Componen_Tree_Position_y = 25;
+    Console_Size_y = 377;
+    Componen_Tree_Position_x = 17;
+    Componen_Tree_Position_y = 15;
     Componen_Tree_Size_x = 253;
     Componen_Tree_Size_y = 489;
     Console_Background_Color = 10066329;
@@ -1856,7 +1860,7 @@ Space_Map_Initial_Value {
 // Window Location Definition Division
 //-------------------------------------------------------
 Window_Rectangle {
-    Window_Name = Main_Window, 0, 0, 800, 700;
+    Window_Name = Main_Window, 0, 0, 859, 798;
     Window_Name = Output_Setting_Window, 160, 205, 480, 290;
 }
 
