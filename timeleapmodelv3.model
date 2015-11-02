@@ -747,7 +747,6 @@ dim blockagt as agt
 my.bridgetime = my.bridgetime + 1
 my.strength = 182500*(1-(1/(1+10000*exp(-0.008*(my.bridgetime/100)))))
 my.damage = my.damage + 1
-makeoneagtsetaroundown(blockset,1,universe.Map.Block,false)
 
 // personが来たらdemand(経済価値or需要)を増加させる
 makeoneagtsetaroundown(set,2,universe.Map.Person,false)
@@ -765,25 +764,9 @@ for each one in set
 	end if
 next one
 
-// フラグが消去されているのにblockがあるならそれを消去する
-if my.hasblock == FALSE then
-	if countagtset(blockset) > 0 then
-		one = getagt(blockset,Int(rnd() * countagtset(blockset)))
-		delagt(one)
-	end if
-end if
-
 // もし耐久値が負になってしまったら、崩落したと判断して自身のコストを10000にする。
 if my.strength <= 0 then
 	my.strength = 0
-// まだブロックがないなら置いてコストを10000にする
-	if countagtset(blockset) == 0 then
-		blockagt = createagt(universe.Map.block)
-		blockagt.x = my.x
-		blockagt.y = my.y
-		update_cost(my.beginpointid,my.endpointid,10000)
-		my.hasblock = TRUE
-	end if
 end if
 }
 #end_rule UNIVERSE.MAP.BRIDGECORE
@@ -796,15 +779,14 @@ end if
 //-------------------------------------------------------
 #begin_rule UNIVERSE.LINK
 Agt_Init{
-
+if my.ID == 26 then
+	println(my.Begin_agt)
+	println(my.End_Agt)
+end if
 }
 
 Agt_Step{
-if my.ID == 26 then
-	if universe.recalculateflag == TRUE then
-		delagt(my.UniqueID)
-	end if
-end if
+
 }
 #end_rule UNIVERSE.LINK
 
@@ -908,7 +890,6 @@ Repeat_Simulation {
 //-------------------------------------------------------
 Executing_Order_Component {
     Component_Priority = "Universe.Map.Point", 1;
-    Component_Priority = "Universe.Map.Block", 1;
     Component_Priority = "Universe.Map.government", 1;
     Component_Priority = "Universe.Map.bridgecore", 1;
     Component_Priority = "Universe.Link", 1;
@@ -1732,12 +1713,12 @@ Others_Data {
     Debug_Position_y = 10;
     Debug_Size_x = 400;
     Debug_Size_y = 200;
-    Console_Position_x = -8;
-    Console_Position_y = 310;
-    Console_Size_x = 618;
+    Console_Position_x = 90;
+    Console_Position_y = 143;
+    Console_Size_x = 149;
     Console_Size_y = 689;
     Componen_Tree_Position_x = 7;
-    Componen_Tree_Position_y = 14;
+    Componen_Tree_Position_y = 25;
     Componen_Tree_Size_x = 253;
     Componen_Tree_Size_y = 489;
     Console_Background_Color = 10066329;
