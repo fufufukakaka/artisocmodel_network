@@ -137,15 +137,22 @@ x<-seq(from=0,to=20,by=0.01)
 y<-seq(from=0,to=20,by=0.01)
 z<-seq(from=0,to=20,by=0.01)
 res<-uxyz(x,y,z)
-plot(res)
-# 二階微分したいところですが、やり方がわからないので一旦保留
+plot(attr(res,"gradient"))
+# 二階微分もします
+res2<-deriv(expression(0.33*(x^-0.67+y^-0.67-z^-0.67)),c("x","y","z"),func=TRUE)
+res21<-res2(x,y,z)
+plot(attr(res21,"gradient"))
 ```
 
 取り敢えず効用関数として効用逓減状態は再現できている模様
+
 続いて今回扱う橋の劣化曲線について説明します。
 こういう式になっています。
+
 (時間経過ベースの耐久値)=(シミュレーションしたい日数)(1-(1/(1+10000×EXP(-0.008((time)/100))))
+
 実際にプロットしてみましょうぞ
+
 今回はシミュレーション日数について、100stepを1日、360日で1年と考えているので50年で182500ですね
 
 ```{r}
@@ -159,5 +166,54 @@ plot(res3)
 d<-expression(182500*(1-(1/(1+10000*exp((-0.008)*(t/100))))))
 dt<-deriv(d,"t",func = TRUE)
 t<-seq(from=1,to=182500,by=1)
-res4<-dt(t)
+plot(attr(dt(t),"gradient"))
+# 二階微分します
+dtt<-deriv(expression(182500 * (10000 * (exp(-0.008 * (t/100)) * (-0.008 * (1/100)))/1 + 10000 * (exp(-0.008 * (t/100)))^2)),"t",func = TRUE)
+plot(attr(dtt(t),"gradient"))
 ```
+
+ちょっとずれている気もしますが。後で解析的な記述もしますよ。
+
+# 橋の需要分布
+橋についてもデータが必要なので取りました。
+```{r}
+b<-read.csv("bridge_testdata.csv")
+b<-b[,-1]
+names(b)<-c("bridge1","bridge2","bridge3","bridge4","bridge5","bridge6","bridge7","bridge8","bridge9","bridge10","bridge11")
+summary(b)
+sapply(b,sd)
+# 各変数のヒストグラム
+hist(b$bridge1)
+hist(b$bridge2)
+hist(b$bridge3)
+hist(b$bridge4)
+hist(b$bridge5)
+hist(b$bridge6)
+hist(b$bridge7)
+hist(b$bridge8)
+hist(b$bridge9)
+hist(b$bridge10)
+hist(b$bridge11)
+# 1年間のデータで橋を比較する
+sum1<-sapply(b,sum)
+sum1<-data.frame(sum1)
+sum1$names<-rownames(sum1)
+g <- ggplot(
+  sum1,                    # ggplot 用データフレーム
+  aes (                  # ggplot オプション設定
+    x = names,           # x 軸を df$group とする
+    y = sum1,          # y 軸を df$length とする
+    fill = names         # df$group に従ってグループ分ける
+  )
+)
+g <- g + geom_bar(                    # plotbarに当たる関数
+  width = 0.8,                        # 棒の幅
+  stat = "identity"
+)
+g <- g + xlab("Bridge")            # x 軸名
+g <- g + ylab("Demand")       # y 軸名
+g <- g + ggtitle("Bar Graph About Demand")   # グラフ名
+plot(g)
+```
+
+5番さんが圧倒的すぎませんかね

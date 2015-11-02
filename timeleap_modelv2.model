@@ -54,6 +54,8 @@ UNIVERSE {
             Dim jobrouteoption(0, 0)[6] As String = (6*"");
             Dim shoprouteoption(0, 0)[6] As String = (6*"");
             Dim destination(0, 0) As Integer = (0);
+            Dim utilize(0, 0) As Double = (0.0);
+            Dim recal(0, 0) As Integer = ();
         }
         AgtType Block(0, 0)[0] {
             Dim ID(0, 0) As Integer = (0);
@@ -73,6 +75,7 @@ UNIVERSE {
             Dim bridge_demand(0, 0)[11] As Integer = (11*0);
             Dim bridge_averagedemand(0, 0) As Double = (0.0);
             Dim bridge_distance(0, 0)[11] As Double = (11*0.0);
+            Dim budget(0, 0) As Double = (0.0);
         }
         AgtType bridgecore(0, 0)[11] {
             Dim ID(0, 0) As Integer = (0);
@@ -88,6 +91,7 @@ UNIVERSE {
             Dim distance(0, 0) As Double = (0.0);
             Dim hasblock(0, 0) As Boolean = (0);
             Dim bridgetime(0, 0) As Integer = (0);
+            Dim bridgelink(0, 0) As Integer = ();
         }
     }
     AgtType Link(0, 0)[250] {
@@ -132,6 +136,9 @@ UNIVERSE {
     Dim averagefreetime(0, 0) As Double = (0.0);
     Dim averagemovetime(0, 0) As Double = (0.0);
     Dim averageconsump(0, 0) As Double = (0.0);
+    Dim averageutilize(0, 0) As Double = (0.0);
+    Dim recalculate(0, 0) As Integer = ();
+    Dim recalculalteflag(0, 0) As Boolean = ();
 }
 
 
@@ -200,6 +207,8 @@ include"dijkstra.inc"
 Univ_Init{
 initialize_dijkstra()
 universe.checkmode = FALSE
+universe.recalculateflag =FALSE
+universe.recalculate = 0
 universe.officelist(0) = 57
 universe.officelist(1) = 112
 universe.officelist(2) = 111
@@ -219,6 +228,8 @@ universe.averagefreetime = 0
 universe.averagemovetime = 0
 universe.averageconsump = 0
 universe.averagearchive = 0
+universe.averageutilize = 0
+universe.recalculate = 0
 
 // 橋の点検モードに入るか否か
 if Int(cdbl(round(gethistory(universe.day,2)*1000)/1000)) mod 30 == 29 and cdbl(round(universe.day*1000)/1000) mod 30 == 0 then
@@ -234,25 +245,23 @@ else
 	universe.daychange = FALSE
 end if
 
+// 人々エージェントのルート再計算が終わったら解除
+if universe.recalculate = 20 then
+	universe.recalculalteflag = FALSE
+end if
+
 universe.day = 0
 universe.numberofendagt = 0
 }
 
 Univ_Step_End{
 /*
-openfilecsv("test1101_strength.csv",2,3)
+openfilecsv("test1102_utilize.csv",2,3)
 writefilecsv(2,universe.day,false)
-writefilecsv(2,universe.Map.bridgecore(0).strength,false)
-writefilecsv(2,universe.Map.bridgecore(1).strength,false)
-writefilecsv(2,universe.Map.bridgecore(2).strength,false)
-writefilecsv(2,universe.Map.bridgecore(3).strength,false)
-writefilecsv(2,universe.Map.bridgecore(4).strength,false)
-writefilecsv(2,universe.Map.bridgecore(5).strength,false)
-writefilecsv(2,universe.Map.bridgecore(6).strength,false)
-writefilecsv(2,universe.Map.bridgecore(7).strength,false)
-writefilecsv(2,universe.Map.bridgecore(8).strength,false)
-writefilecsv(2,universe.Map.bridgecore(9).strength,false)
-writefilecsv(2,universe.Map.bridgecore(10).strength,true)
+writefilecsv(2,universe.averagefreetime,false)
+writefilecsv(2,universe.averagemovetime,false)
+writefilecsv(2,universe.averageconsump,false)
+writefilecsv(2,universe.averageutilize,true)
 closefilecsv(2)
 */
 if universe.day >= 360 then
@@ -344,6 +353,7 @@ end if
 
 Agt_Init{
 my.Color = COLOR_BLUE
+my.recal = 0
 my.destination = 1
 my.action = 1
 my.check = 0
@@ -355,6 +365,7 @@ my.timecount = 0
 my.timecount_sum = 0
 my.freetime = 0
 my.freetime_sum = 0
+my.utilize = 0
 my.consump = norminv(rnd(),9360,int(rnd()*1000) + 500)
 my.potential = norminv(rnd(),14581,int(rnd()*1000) + 500)
 my.archivement = my.potential
@@ -377,6 +388,21 @@ Agt_Step{
 	dim set as agtset
 	dim one as agt
 	dim CNo as integer
+	dim freetimestd as double
+	dim movetimestd as double
+	dim consumpstd as double
+universe.recalculate = universe.recalculate + my.recal
+// Update Route
+if universe.recalculalteflag =TRUE then
+	for i = 0 to 5
+		my.jobrouteoption(i) = @dijkstra(my.ID, CStr(universe.officelist(i)))
+		my.shoprouteoption(i) = @dijkstra(my.ID, CStr(universe.shoplist(i)))
+	next i
+	my.recal = 1
+elseif universe.recalculalteflag = FALSE then
+	my.recal = 0
+end if
+
 my.timecount = my.timecount + 1
 universe.numberofendagt = universe.numberofendagt + my.nowhome
 universe.day = universe.day + (my.daycount / countagt(universe.Map.Person))
@@ -384,6 +410,12 @@ universe.averagefreetime = universe.averagefreetime + (my.freetime_sum/ 20)
 universe.averagemovetime= universe.averagemovetime + (my.timecount_sum / 20)
 universe.averagearchive = universe.averagearchive + (my.archivement/ 20)
 universe.averageconsump = universe.averageconsump + (my.consump_sum / 20)
+// Calculate Utilize
+freetimestd = (((my.freetime_sum  / 60.5) * 10)) 
+movetimestd = (((my.timecount_sum  / 41.7) * 10))
+consumpstd = (((my.consump_sum  / 6526.4) * 10))
+my.utilize = freetimestd ^ 0.33 + consumpstd ^ 0.33 - movetimestd ^ 0.33
+universe.averageutilize = universe.averageutilize + (my.utilize / 20)
 
 // 日数が30の倍数ならarchivementをmoneyに換算する()
 if universe.checkmode == TRUE then
@@ -648,7 +680,7 @@ include "dijkstra.inc"
 Agt_Init{
 my.X = 25
 my.Y = 25
-
+my.budget = 10000000
 }
 
 Agt_Step{
@@ -656,6 +688,7 @@ dim one as agt
 dim blockagt as agt
 dim set as agtset
 dim i as integer
+dim p as integer
 
 makeoneagtsetaroundown(set,1,universe.Map.Block,false)
 for i = 0 to 8
@@ -668,24 +701,43 @@ next i
 
 // 30日ごとに橋を点検(今は5日ごとに点検を行う)(universeで日付と同期)
 if universe.checkmode == TRUE then
+// 期間ごとに徴税を行う
+	for p = 0 to 19
+		if universe.Map.Person(p).archivement <= 200000 then
+			my.budget = my.budget +  universe.Map.Person(p).money * 0.05
+			 universe.Map.Person(p).money =  universe.Map.Person(p).money*0.95
+		elseif universe.Map.Person(p).archivement <= 278700 then
+			my.budget = my.budget +  universe.Map.Person(p).money * 0.15
+			 universe.Map.Person(p).money =  universe.Map.Person(p).money*0.85
+		elseif universe.Map.Person(p).money <= 303600 then
+			my.budget = my.budget +  universe.Map.Person(p).money * 0.25
+			 universe.Map.Person(p).money =  universe.Map.Person(p).money*0.75
+		elseif universe.Map.Person(p).money <= 332300 then
+			my.budget = my.budget +  universe.Map.Person(p).money * 0.35
+			 universe.Map.Person(p).money =  universe.Map.Person(p).money*0.65
+		elseif universe.Map.Person(p).money <= 400000 then
+			my.budget = my.budget +  universe.Map.Person(p).money * 0.45
+			 universe.Map.Person(p).money =  universe.Map.Person(p).money*0.55
+		else
+			my.budget = my.budget +  universe.Map.Person(p).money * 0.5
+			 universe.Map.Person(p).money =  universe.Map.Person(p).money*0.5
+		end if
+	next p
 	for i = 0 to 10	
-// 今季の減少分から判断して来季には崩壊する橋を通行止めにする
-	if my.bridge_status(i) < my.bridge_damage(i) then
-		universe.Map.bridgecore(i).hasblock = TRUE
-		blockagt = createagt(universe.Map.block)
-		blockagt.x = universe.Map.bridgecore(i).x
-		blockagt.y = universe.Map.bridgecore(i).y
-		update_cost(universe.Map.bridgecore(i).beginpointid,universe.Map.bridgecore(i).endpointid,10000)
-	end if
-	
-// 通行止めにした橋の値が?(今は平均以上なら)なら橋の耐久値を回復し、通行止めを解除する(コストを元に戻す)
-	if universe.Map.bridgecore(i).hasblock == TRUE then
+// 危険域にある橋について
+	if my.bridge_status(i) < 100000 then
+// 危険域にある橋の需要値が(今は平均以上なら)なら橋の耐久値を全て回復し、橋内部の時間を0に戻す。予算が足りなくなった時点で修復を終了する。
 		if  my.bridge_demand(i) >=  my.bridge_averagedemand then
-			universe.Map.bridgecore(i).strength = universe.Map.bridgecore(i).strength + 10000                            update_cost(universe.Map.bridgecore(i).beginpointid,universe.Map.bridgecore(i).endpointid,universe.Map.bridgecore(i).distance)
-			universe.Map.bridgecore(i).bridgetime = 0
-            universe.Map.bridgecore(i).hasblock = FALSE
-// 通行止めにした橋の値が?以下なら通行止めのまま
-        end if
+			if my.budget >= (182500 - universe.Map.bridgecore(i).strength) * 10 then
+				my.budget = my.budget - (182500 - universe.Map.bridgecore(i).strength) * 10
+				universe.Map.bridgecore(i).strength = 182500
+				universe.Map.bridgecore(i).bridgetime = 0
+			end if
+		end if
+// 橋の耐久値が10000以下なら橋(リンク)を消去する
+	elseif my.bridge_status(i) < 10000 then
+		delagt(universe.Link(universe.Map.bridgecore(i).bridgelink))
+		universe.recalculateflag = TRUE
 	end if
 	my.bridge_damage(i) = 0
 	my.bridge_demand(i) = 0
@@ -711,6 +763,7 @@ my.damage = 0
 my.demand = 0
 my.distance = measuredistance(universe.Map.Point(my.beginpointid).x,universe.Map.Point(my.beginpointid).x,universe.Map.Point(my.endpointid).x,universe.Map.Point(my.endpointid).y,universe.Map)
 my.hasblock = FALSE
+my.bridgelink = my.ID + 21
 }
 
 Agt_Step{
@@ -852,7 +905,7 @@ Single_Simulation {
     Step_Max = 0;
     Time_Max = 0;
     End_Condition = "";
-    Exec_Wait = 100;
+    Exec_Wait = 1;
     Exec_Order = Component;
     Exec_Order_Random_First_Step_Only = No;
     Random_Seed = 0;
@@ -899,8 +952,8 @@ Map_Output {
     Title = "Map";
     Disable = No;
     Background_Color = 255, 255, 255;
-    Position_x = 4;
-    Position_y = 59;
+    Position_x = -23;
+    Position_y = 66;
     Size_x = 753;
     Size_y = 522;
     Remarks = No;
@@ -1235,7 +1288,7 @@ Time_Graph {
     Draw_Interval = 1;
     Graph_Name = "endagt";
     Title = "end agt";
-    Disable = No;
+    Disable = Yes;
     Background_Color = 255, 255, 255;
     Remarks = Yes;
     Legend_Pos = Top;
@@ -1616,6 +1669,58 @@ Time_Graph {
 
 
 //-------------------------------------------------------
+// Time Graph Output Definition Division
+//-------------------------------------------------------
+Time_Graph {
+    Font_Name = "Dialog";
+    Font_Char_Set = 81;
+    Font_Size = 12.0;
+    Font_Style = 0;
+    Font_Color = 0, 0, 0;
+    Font_Background_Color = 255, 255, 255;
+    Draw_Timing = Simulation_Step;
+    Draw_Interval = 1;
+    Graph_Name = "utilize";
+    Title = "utilize";
+    Disable = No;
+    Background_Color = 255, 255, 255;
+    Remarks = Yes;
+    Legend_Pos = Top;
+    FastDraw = No;
+    Position_x = 100;
+    Position_y = 100;
+    Size_x = 500;
+    Size_y = 300;
+    Map_Cell_Size = -1;
+    Axis_Label = "", "";
+    Draw_By_JFree_Chart = Yes;
+    Scale = 0, 0.0, 1000, 100.0, 100, 10.0;
+    ScaleAuto = Yes, Yes;
+    Output_Group_Name = "";
+    Output {
+        Graph_Element_Name = "utilize";
+        Line_Color = 255, 0, 0;
+        Line_Width = 2;
+        Marker_Id = 0;
+        Output_Expression = "universe.averageutilize";
+        Expression_Value_Display = No;
+        Effective_Fraction_Figures = 0;
+        Graph_Element_Color = (0, 255, 0);
+    }
+    Output {
+        Graph_Element_Name = "1utilize";
+        Line_Color = 0, 0, 255;
+        Line_Width = 2;
+        Marker_Id = 0;
+        Output_Expression = "universe.Map.Person(1).utilize";
+        Expression_Value_Display = No;
+        Effective_Fraction_Figures = 0;
+        Graph_Element_Color = (153, 0, 153);
+    }
+}
+
+
+//-------------------------------------------------------
 // Control Panel Definition Division
 //-------------------------------------------------------
 Control_Panel {
@@ -1645,10 +1750,10 @@ Others_Data {
     Console_Position_y = 140;
     Console_Size_x = 618;
     Console_Size_y = 689;
-    Componen_Tree_Position_x = 2;
-    Componen_Tree_Position_y = 2;
-    Componen_Tree_Size_x = 262;
-    Componen_Tree_Size_y = 627;
+    Componen_Tree_Position_x = 7;
+    Componen_Tree_Position_y = 14;
+    Componen_Tree_Size_x = 230;
+    Componen_Tree_Size_y = 419;
     Console_Background_Color = 10066329;
     Console_Foreground_Color = 255;
     Console_DisplayLines_Max = 500;
@@ -1784,8 +1889,8 @@ Space_Map_Initial_Value {
 // Window Location Definition Division
 //-------------------------------------------------------
 Window_Rectangle {
-    Window_Name = Main_Window, 0, 0, 1071, 933;
-    Window_Name = Output_Setting_Window, 295, 321, 480, 290;
+    Window_Name = Main_Window, 23, 0, 812, 675;
+    Window_Name = Output_Setting_Window, 155, 272, 480, 290;
 }
 
 
