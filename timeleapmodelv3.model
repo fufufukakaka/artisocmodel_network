@@ -56,9 +56,9 @@ UNIVERSE {
             Dim destination(0, 0) As Integer = (0);
             Dim utilize(0, 0) As Double = (0.0);
             Dim recal(0, 0) As Integer = (0);
-            Dim jobhomerouteoption(0, 0)[6] As String = ();
-            Dim shophomerouteoption(0, 0)[6] As String = ();
-            Dim returnroute(0, 0) As String = ();
+            Dim jobhomerouteoption(0, 0)[6] As String = ("", "", "", "", "", "");
+            Dim shophomerouteoption(0, 0)[6] As String = ("", "", "", "", "", "");
+            Dim returnroute(0, 0) As String = ("");
         }
         AgtType government(0, 0)[1] {
             Dim ID(0, 0) As Integer = (0);
@@ -227,17 +227,13 @@ universe.averageconsump = 0
 universe.averagearchive = 0
 universe.averageutilize = 0
 universe.recalculate = 0
-
-if universe.day == 30 then
-	Terminateagt(universe.Link(26))
-end if
 // 橋が壊れた時にルートが変更されるかどうか実験
-/*
 if Int(cdbl(round(gethistory(universe.day,2)*1000)/1000))  == 100 and cdbl(round(universe.day*1000)/1000)  == 100.5 then
+	update_cost(48,101,1000000)
+	update_cost(100,50,1000000)
 	universe.recalculateflag = TRUE
-	initialize_dijkstra()
 end if
-*/
+
 // 橋の点検モードに入るか否か
 if Int(cdbl(round(gethistory(universe.day,2)*1000)/1000)) mod 30 == 29 and cdbl(round(universe.day*1000)/1000) mod 30 == 0 then
 	universe.checkmode = TRUE
@@ -783,10 +779,7 @@ end if
 //-------------------------------------------------------
 #begin_rule UNIVERSE.LINK
 Agt_Init{
-if my.ID == 26 then
-	println(my.Begin_agt.id)
-		println(my.end_agt.id)
-end if
+
 }
 
 Agt_Step{
@@ -1095,15 +1088,15 @@ Time_Graph {
     Draw_Interval = 1;
     Graph_Name = "bridgecore";
     Title = "core";
-    Disable = Yes;
+    Disable = No;
     Background_Color = 255, 255, 255;
     Remarks = Yes;
     Legend_Pos = Top;
     FastDraw = No;
-    Position_x = 22;
-    Position_y = 17;
-    Size_x = 519;
-    Size_y = 533;
+    Position_x = 97;
+    Position_y = 85;
+    Size_x = 448;
+    Size_y = 488;
     Map_Cell_Size = -1;
     Axis_Label = "", "";
     Draw_By_JFree_Chart = Yes;
@@ -1115,7 +1108,7 @@ Time_Graph {
         Line_Color = 255, 0, 0;
         Line_Width = 2;
         Marker_Id = 0;
-        Output_Expression = "universe.Map.bridgecore(0).strength";
+        Output_Expression = "universe.Map.bridgecore(0).demand";
         Expression_Value_Display = No;
         Effective_Fraction_Figures = 0;
         Graph_Element_Color = (0, 255, 0);
@@ -1125,7 +1118,7 @@ Time_Graph {
         Line_Color = 0, 0, 255;
         Line_Width = 2;
         Marker_Id = 0;
-        Output_Expression = "universe.Map.bridgecore(1).strength";
+        Output_Expression = "universe.Map.bridgecore(1).demand";
         Expression_Value_Display = No;
         Effective_Fraction_Figures = 0;
         Graph_Element_Color = (255, 255, 0);
@@ -1135,7 +1128,7 @@ Time_Graph {
         Line_Color = 0, 255, 0;
         Line_Width = 2;
         Marker_Id = 0;
-        Output_Expression = "universe.Map.bridgecore(2).strength";
+        Output_Expression = "universe.Map.bridgecore(2).demand";
         Expression_Value_Display = No;
         Effective_Fraction_Figures = 0;
         Graph_Element_Color = (255, 102, 0);
@@ -1145,7 +1138,7 @@ Time_Graph {
         Line_Color = 255, 0, 255;
         Line_Width = 2;
         Marker_Id = 0;
-        Output_Expression = "universe.Map.bridgecore(3).strength";
+        Output_Expression = "universe.Map.bridgecore(3).demand";
         Expression_Value_Display = No;
         Effective_Fraction_Figures = 0;
         Graph_Element_Color = (255, 0, 0);
@@ -1155,7 +1148,7 @@ Time_Graph {
         Line_Color = 0, 255, 255;
         Line_Width = 2;
         Marker_Id = 0;
-        Output_Expression = "universe.Map.bridgecore(4).strength";
+        Output_Expression = "universe.Map.bridgecore(4).demand";
         Expression_Value_Display = No;
         Effective_Fraction_Figures = 0;
         Graph_Element_Color = (255, 0, 255);
@@ -1165,7 +1158,7 @@ Time_Graph {
         Line_Color = 255, 255, 0;
         Line_Width = 2;
         Marker_Id = 0;
-        Output_Expression = "universe.Map.bridgecore(5).strength";
+        Output_Expression = "universe.Map.bridgecore(5).demand";
         Expression_Value_Display = No;
         Effective_Fraction_Figures = 0;
         Graph_Element_Color = (0, 0, 255);
@@ -1175,7 +1168,7 @@ Time_Graph {
         Line_Color = 128, 128, 128;
         Line_Width = 2;
         Marker_Id = 0;
-        Output_Expression = "universe.Map.bridgecore(6).strength";
+        Output_Expression = "universe.Map.bridgecore(6).demand";
         Expression_Value_Display = No;
         Effective_Fraction_Figures = 0;
         Graph_Element_Color = (153, 153, 153);
@@ -1185,7 +1178,7 @@ Time_Graph {
         Line_Color = 255, 0, 0;
         Line_Width = 2;
         Marker_Id = 0;
-        Output_Expression = "universe.Map.bridgecore(7).strength";
+        Output_Expression = "universe.Map.bridgecore(7).demand";
         Expression_Value_Display = No;
         Effective_Fraction_Figures = 0;
         Graph_Element_Color = (0, 102, 102);
@@ -1195,10 +1188,30 @@ Time_Graph {
         Line_Color = 128, 128, 128;
         Line_Width = 2;
         Marker_Id = 0;
-        Output_Expression = "universe.Map.bridgecore(8).strength";
+        Output_Expression = "universe.Map.bridgecore(8).demand";
         Expression_Value_Display = No;
         Effective_Fraction_Figures = 0;
         Graph_Element_Color = (0, 153, 153);
+    }
+    Output {
+        Graph_Element_Name = "core10";
+        Line_Color = 255, 255, 0;
+        Line_Width = 2;
+        Marker_Id = 0;
+        Output_Expression = "universe.Map.bridgecore(9).demand";
+        Expression_Value_Display = No;
+        Effective_Fraction_Figures = 0;
+        Graph_Element_Color = (51, 51, 51);
+    }
+    Output {
+        Graph_Element_Name = "core11";
+        Line_Color = 128, 128, 128;
+        Line_Width = 2;
+        Marker_Id = 0;
+        Output_Expression = "universe.Map.bridgecore(10).demand";
+        Expression_Value_Display = No;
+        Effective_Fraction_Figures = 0;
+        Graph_Element_Color = (51, 255, 255);
     }
 }
 
@@ -1692,6 +1705,48 @@ Time_Graph {
 
 
 //-------------------------------------------------------
+// Time Graph Output Definition Division
+//-------------------------------------------------------
+Time_Graph {
+    Font_Name = "Dialog";
+    Font_Char_Set = 81;
+    Font_Size = 12.0;
+    Font_Style = 0;
+    Font_Color = 0, 0, 0;
+    Font_Background_Color = 255, 255, 255;
+    Draw_Timing = Simulation_Step;
+    Draw_Interval = 1;
+    Graph_Name = "link";
+    Title = "link";
+    Disable = Yes;
+    Background_Color = 255, 255, 255;
+    Remarks = Yes;
+    Legend_Pos = Top;
+    FastDraw = No;
+    Position_x = 92;
+    Position_y = 101;
+    Size_x = 500;
+    Size_y = 300;
+    Map_Cell_Size = -1;
+    Axis_Label = "", "";
+    Draw_By_JFree_Chart = Yes;
+    Scale = 0, 0.0, 1000, 100.0, 100, 10.0;
+    ScaleAuto = Yes, Yes;
+    Output_Group_Name = "";
+    Output {
+        Graph_Element_Name = "link";
+        Line_Color = 255, 0, 0;
+        Line_Width = 2;
+        Marker_Id = 0;
+        Output_Expression = "countagt(universe.Link)";
+        Expression_Value_Display = No;
+        Effective_Fraction_Figures = 0;
+        Graph_Element_Color = (0, 255, 0);
+    }
+}
+
+
+//-------------------------------------------------------
 // Control Panel Definition Division
 //-------------------------------------------------------
 Control_Panel {
@@ -1860,8 +1915,8 @@ Space_Map_Initial_Value {
 // Window Location Definition Division
 //-------------------------------------------------------
 Window_Rectangle {
-    Window_Name = Main_Window, 0, 0, 859, 798;
-    Window_Name = Output_Setting_Window, 160, 205, 480, 290;
+    Window_Name = Main_Window, 7, 0, 800, 663;
+    Window_Name = Output_Setting_Window, 160, 186, 480, 290;
 }
 
 
