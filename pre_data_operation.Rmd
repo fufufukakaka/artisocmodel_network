@@ -198,6 +198,9 @@ hist(b$bridge11)
 sum1<-sapply(b,sum)
 sum1<-data.frame(sum1)
 sum1$names<-rownames(sum1)
+average<-c(mean(sum1$sum1),"average")
+sum1<-rbind(sum1,average)
+sum1$sum1<-as.numeric(sum1$sum1)
 g <- ggplot(
   sum1,                    # ggplot 用データフレーム
   aes (                  # ggplot オプション設定
@@ -217,3 +220,14 @@ plot(g)
 ```
 
 5番さんが圧倒的すぎませんかね
+全部まとめて見てみる
+
+```{r}
+bb<-unlist(b)
+summary(bb)
+sd(bb)
+hist(bb)
+```
+
+平均以上になる橋は、特定の橋に需要が集まることを考えるとやはり平均*0.5とかじゃないといけない気がするね。
+実際には選択肢として0~2.0くらいまであたえるつもりではありますが。
