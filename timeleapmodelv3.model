@@ -203,6 +203,9 @@ include"dijkstra.inc"
 
 Univ_Init{
 initialize_dijkstra()
+// open database
+openDB("jdbc:postgresql:db_artisoc","org.postgresql.Driver","db_artisoc","postgres","fukasawa1225")
+
 universe.checkmode = FALSE
 universe.recalculateflag =FALSE
 universe.recalculate = 0
@@ -253,15 +256,9 @@ if universe.recalculate == 20 then
 	universe.recalculateflag = FALSE
 end if
 
-
-openfilecsv("test1102_utilize&budget.csv",2,3)
-writefilecsv(2,universe.day,false)
-writefilecsv(2,universe.Map.government.budget,false)
-writefilecsv(2,universe.averageutilize,true)
-closefilecsv(2)
-
 if universe.day >= 3600 then
 	ExitSimulation()
+	closedb()
 end if
 }
 
@@ -350,14 +347,16 @@ my.potential = norminv(rnd(),14581,int(rnd()*1000) + 500)
 my.archivement = my.potential
 universe.averagearchive = universe.averagearchive + (my.archivement / 20)
 
-// 最初に全部のルートを予め計算しておく
-// 家からオフィスや商業地に向かうルート
+// Get the all route from database
 dim i as integer
 for i = 0 to 5
-	my.jobrouteoption(i) = @dijkstra(my.ID, CStr(universe.officelist(i)))
-	my.shoprouteoption(i) = @dijkstra(my.ID, CStr(universe.shoplist(i)))
-	my.jobhomerouteoption(i) = @dijkstra(universe.officelist(i),CStr(my.ID))
-	my.shophomerouteoption(i) = @dijkstra(universe.shoplist(i),CStr(my.ID))
+	// open table
+	querydb("SELECT personid,listnumber,status,jobroute,shoproute,jobhomeroute,shophomeroute FROM personroute WHERE personid="&my.ID&" and listnumber = "&i&" and status  = 11111111111;")
+	nextdb()
+	my.jobrouteoption(i) = getvalueDB("jobroute")
+	my.shoprouteoption(i) = getvalueDB("shoproute")
+	my.jobhomerouteoption(i) = getvalueDB("jobhomeroute")
+	my.shophomerouteoption(i) = getvalueDB("shophomeroute")
 next i
 }
 
@@ -899,12 +898,12 @@ Map_Output {
     Title = "Map";
     Disable = No;
     Background_Color = 255, 255, 255;
-    Position_x = 96;
-    Position_y = 36;
-    Size_x = 494;
-    Size_y = 470;
+    Position_x = 332;
+    Position_y = 33;
+    Size_x = 707;
+    Size_y = 750;
     Remarks = No;
-    Map_Cell_Size = 0;
+    Map_Cell_Size = 7;
     Legend_Pos = Top;
     Font_Name = "Dialog";
     Font_Char_Set = 81;
@@ -1087,8 +1086,8 @@ Time_Graph {
     FastDraw = No;
     Position_x = 97;
     Position_y = 85;
-    Size_x = 448;
-    Size_y = 488;
+    Size_x = 735;
+    Size_y = 658;
     Map_Cell_Size = -1;
     Axis_Label = "", "";
     Draw_By_JFree_Chart = Yes;
@@ -1697,6 +1696,48 @@ Time_Graph {
 
 
 //-------------------------------------------------------
+// Time Graph Output Definition Division
+//-------------------------------------------------------
+Time_Graph {
+    Font_Name = "Dialog";
+    Font_Char_Set = 81;
+    Font_Size = 12.0;
+    Font_Style = 0;
+    Font_Color = 0, 0, 0;
+    Font_Background_Color = 255, 255, 255;
+    Draw_Timing = Simulation_Step;
+    Draw_Interval = 1;
+    Graph_Name = "core1";
+    Title = "core1";
+    Disable = No;
+    Background_Color = 255, 255, 255;
+    Remarks = Yes;
+    Legend_Pos = Top;
+    FastDraw = No;
+    Position_x = -76;
+    Position_y = 113;
+    Size_x = 500;
+    Size_y = 300;
+    Map_Cell_Size = -1;
+    Axis_Label = "", "";
+    Draw_By_JFree_Chart = Yes;
+    Scale = 0, 0.0, 1000, 100.0, 100, 10.0;
+    ScaleAuto = Yes, Yes;
+    Output_Group_Name = "";
+    Output {
+        Graph_Element_Name = "core1";
+        Line_Color = 0, 255, 0;
+        Line_Width = 2;
+        Marker_Id = 0;
+        Output_Expression = "universe.Map.bridgecore(0).demand";
+        Expression_Value_Display = No;
+        Effective_Fraction_Figures = 0;
+        Graph_Element_Color = (0, 255, 0);
+    }
+}
+
+
+//-------------------------------------------------------
 // Control Panel Definition Division
 //-------------------------------------------------------
 Control_Panel {
@@ -1722,8 +1763,8 @@ Others_Data {
     Debug_Position_y = 10;
     Debug_Size_x = 400;
     Debug_Size_y = 200;
-    Console_Position_x = 297;
-    Console_Position_y = 131;
+    Console_Position_x = 101;
+    Console_Position_y = 265;
     Console_Size_x = 149;
     Console_Size_y = 377;
     Componen_Tree_Position_x = 16;
@@ -1865,8 +1906,8 @@ Space_Map_Initial_Value {
 // Window Location Definition Division
 //-------------------------------------------------------
 Window_Rectangle {
-    Window_Name = Main_Window, 0, 0, 800, 700;
-    Window_Name = Output_Setting_Window, 120, 168, 480, 290;
+    Window_Name = Main_Window, 0, 0, 1143, 919;
+    Window_Name = Output_Setting_Window, 243, 297, 480, 290;
 }
 
 
