@@ -1,0 +1,159 @@
+//====================================================================/
+//　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　/
+// artisoc                                                            /
+//                                                                    /
+//====================================================================/
+
+Version = 3.5;
+
+
+
+//-------------------------------------------------------
+// Component Tree
+//-------------------------------------------------------
+UNIVERSE {
+}
+
+
+//-------------------------------------------------------
+// Agent Variable Initial Data
+//-------------------------------------------------------
+Initial_Value {
+}
+
+
+//-------------------------------------------------------
+// Agent Rule
+//-------------------------------------------------------
+#begin_rule UNIVERSE
+Univ_Init{
+dim query as integer
+dim test as string
+openDB("jdbc:postgresql:db_artisoc","org.postgresql.Driver","db_artisoc","postgres","fukasawa1225")
+println("接続")
+querydb("SELECT personid,listnumber,status,jobroute,shoproute,jobhomeroute,shophomeroute FROM personroute WHERE personid=0 and listnumber = 0 and status  = 11111111111;")
+query = querydb("SELECT personid,listnumber,status,jobroute,shoproute,jobhomeroute,shophomeroute FROM personroute WHERE personid=0 and listnumber = 0 and status  = 11111111111;")
+if query >= 0 then
+do while nextdb() == TRUE
+println(getvalueDB("jobroute"))
+println(getvalueDB("shoproute"))
+loop
+end if
+closedb()
+println("接続終了")
+}
+
+Univ_Step_Begin{
+
+}
+
+Univ_Step_End{
+
+}
+
+Univ_Finish{
+
+}
+#end_rule UNIVERSE
+
+
+
+
+//-------------------------------------------------------
+// Simulation Definition Division
+//-------------------------------------------------------
+Single_Simulation {
+    Step_Max = 0;
+    Time_Max = 0;
+    End_Condition = "";
+    Exec_Wait = 1;
+    Exec_Order = Random;
+    Exec_Order_Random_First_Step_Only = No;
+    Random_Seed = 0;
+    Redraw_Timing = Step;
+    Redraw_Interval = 1;
+    Garbage_Interval = 0;
+}
+
+
+//-------------------------------------------------------
+// Simulation Loop Definition Division
+//-------------------------------------------------------
+Repeat_Simulation {
+    Value_Change = None;
+    Initial_Value_Change_None {
+        Repeat_Max = 1;
+    }
+}
+
+
+//-------------------------------------------------------
+// Control Panel Definition Division
+//-------------------------------------------------------
+Control_Panel {
+    Display_Area = 0, 0, 100, 100;
+}
+
+
+//-------------------------------------------------------
+// Space Initial Value Definition Divsion
+//-------------------------------------------------------
+Space_Initial {
+}
+
+
+//-------------------------------------------------------
+// Other Miscellaneous Data Definition Division
+//-------------------------------------------------------
+Others_Data {
+    Indent = 4;
+    Rule_Colored = Yes;
+    Window_Hide_Run = 1;
+    Debug_Position_x = 75;
+    Debug_Position_y = 75;
+    Debug_Size_x = 400;
+    Debug_Size_y = 200;
+    Console_Position_x = 15;
+    Console_Position_y = 413;
+    Console_Size_x = 600;
+    Console_Size_y = 120;
+    Componen_Tree_Position_x = 2;
+    Componen_Tree_Position_y = 2;
+    Componen_Tree_Size_x = 250;
+    Componen_Tree_Size_y = 400;
+    Console_Background_Color = 16777215;
+    Console_Foreground_Color = 255;
+    Console_DisplayLines_Max = 500;
+    Font_Name = "Dialog";
+    Font_Char_Set = 0;
+    Font_Size = 20.0;
+    Font_Style = 0;
+    Font_Color = 0, 0, 0;
+    Font_Background_Color = 0, 0, 0;
+}
+
+
+//-------------------------------------------------------
+// Network Information Definition Division
+//-------------------------------------------------------
+Network_Info {
+    Global_Space_Area = 0, 0, 100, 100;
+    Local_Space_Info {
+    }
+}
+
+
+//-------------------------------------------------------
+// Window Location Definition Division
+//-------------------------------------------------------
+Window_Rectangle {
+    Window_Name = Main_Window, 0, 0, 800, 700;
+    Window_Name = Artisoc_Help_Window, 55, 34, 679, 400;
+}
+
+
+//-------------------------------------------------------
+// Help Favorite Division
+//-------------------------------------------------------
+Help_Favorite {
+}
