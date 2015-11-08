@@ -13,7 +13,10 @@ tempo text;
 elite text;
 ttt numeric;
 cr integer;
+mu integer;
+mupl integer;
 crossrate numeric;
+mutationrate numeric;
 sumfitness numeric;	
 
 BEGIN
@@ -103,5 +106,19 @@ elsif ttt <= 1 and ttt > 0.75 then
 end if;
 end if;
 end loop;
+
+-- mutation
+for mu in 1 .. 20
+loop
+	mutationrate = random();
+	if mutationrate <= 0.05 then
+	-- define mutation place
+		mupl = round(random() * 3) + 1;
+		select newsons into 
+		-- Replace new gene at mutation place
+		UPDATE randtable set newsons = (select replace(substr()))where eid = mu;
+	end if;
+end loop;
+
 return new;
 end;
