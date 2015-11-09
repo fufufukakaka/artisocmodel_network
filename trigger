@@ -48,7 +48,7 @@ if crossrate >= 0.8 then
 	UPDATE randtable set newsons = g1 where eid = (2*cr - 1);
 	UPDATE randtable set newsons = g3 where eid = 2*cr;
 else
--- tttの位置に合わせて交差す
+-- tttの位置に合わせて交差する
 if ttt >= 2 and ttt <= 9 then
 	select substr(unified,1,beginpoint) into g1 from randtable where eid = (2*cr - 1);
 	select substr(unified,endpoint,(20 - endpoint + 1)) from randtable into g2 where eid = (2*cr - 1);
@@ -71,5 +71,17 @@ end if; -- 交叉終了
 end loop; -- 全個体に関する交叉終了
 
 -- mutation
+for mu in 1 .. 20
+loop
+	mutationrate = random();
+	if mutationrate <= 0.05 then
+	-- define mutation place
+		mupl = round(random() * 3) + 1;
+		select newsons into 
+		-- Replace new gene at mutation place
+		UPDATE randtable set newsons = (select replace(substr()))where eid = mu;
+	end if;
+end loop;
+
 return new;
 end;
