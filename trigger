@@ -3,13 +3,17 @@ g1 text;
 g2 text;
 g3 text;
 g4 text;
+gm1 text;
+gm2 text;
 r integer;
 i integer;
 tempo text;
 elite text;
 ttt integer;
 beginpoint integer;
+mubegin integer;
 endpoint integer;
+muend integer;
 cr integer;
 mu integer;
 mupl integer;
@@ -38,7 +42,7 @@ UPDATE elitetable set elitegene = elite;
 for cr in 1 .. 10
 LOOP
 crossrate = random();
-ttt = round(random()*9 + 1);
+ttt = round(random()*9) + 1;
 beginpoint = 2 * ttt - 2;
 endpoint = 2 * ttt - 1;
 if crossrate >= 0.8 then
@@ -71,15 +75,31 @@ end if; -- 交叉終了
 end loop; -- 全個体に関する交叉終了
 
 -- mutation
+-- 交叉と考え方は同じで、突然変異が起こる場所が決まったら遺伝子を3つ(突然変異以前、突然変異、突然変異以後)に分解して、突然変異部分を生成し、くっつける
 for mu in 1 .. 20
 loop
-	mutationrate = random();
-	if mutationrate <= 0.05 then
-	-- define mutation place
-		mupl = round(random() * 3) + 1;
-		select newsons into 
-		-- Replace new gene at mutation place
-		UPDATE randtable set newsons = (select replace(substr()))where eid = mu;
+mutationrate = random();
+-- define mutation place
+mupl = round(random() * 9) + 1;
+mubegin = 2*(mupl - 1);
+muend = (2*mupl + 1);
+	if mutationrate >= 0.05 then
+	   -- 突然変異率以上ならば、そのまま結合する
+	   select newsons into gm1 from randtable where eid = mu;
+	   UPDATE randtable set newsonsmutation = gm1 where eid = mu;
+    else
+    -- 突然変異率を満たすならば、該当箇所に応じた変異処理をする
+        if mupl >= 2 and mupl <= 9 then
+            select substr(newsons,1,mubegin) into gm1 from randtable where eid = mu;
+            select substr(newsons,muend,(20 - muend + 1)) into gm2 from randtable where eid = mu;
+            UPDATE randtable set newsonsmutation = (gm1 ||  || gm2)
+        elsif mupl = 1 then
+            select substr(newsons,3,18) into gm2 from randtable where eid = mu;
+            UPDATE randtable set newsonsmutation = ( || gm2) where eid = mu;
+        elsif mupl = 10 then
+            select substr(newsons,1,18) into gm1 from randtable where eid = mu;
+            UPDATE randtable set newsonsmutation = (gm1 || ) where eid = mu;
+        end if;
 	end if;
 end loop;
 
