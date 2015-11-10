@@ -14,7 +14,6 @@ randgene text;
 r integer;
 i integer;
 tempo text;
-elite text;
 ttt integer;
 beginpoint integer;
 mubegin integer;
@@ -39,11 +38,11 @@ UPDATE newgeneration set cumlativeprobab = x.probab from
 for r in 1 .. 20
 LOOP	
 	select gene into tempo from newgeneration where cumlativeprobab <= random() order by cumlativeprobab desc limit 1;
-	UPDATE randtable set unified = tempo where eid = r;
+	UPDATE randtable set unified = tempo,generation = oldgene where eid = r;
 end loop;
 -- Elite Choice(2)
-select gene into elite from newgeneration order by fitness desc limit 2;
-UPDATE elitetable set elitegene = elite;
+UPDATE elite set elitegene = x.elite, oldgene = x.oldg from 
+(select generation as oldg,gene as elite from newgeneration order by fitness desc limit 2) as x where id <= 2;
 
 -- Crossing
 for cr in 1 .. 10
