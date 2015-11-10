@@ -5,6 +5,12 @@ g3 text;
 g4 text;
 gm1 text;
 gm2 text;
+rand1 integer;
+rand2 integer;
+gmu1 text;
+gmu2 text;
+characters text;
+randgene text;
 r integer;
 i integer;
 tempo text;
@@ -19,23 +25,24 @@ mu integer;
 mupl integer;
 crossrate numeric;
 mutationrate numeric;
-sumfitness numeric;	
+sumfitness numeric;
+
 
 BEGIN
 -- Probability Calculation and Cumulation
-select sum(fitness) into sumfitness from genelist;
-UPDATE genelist set probability = fitness / sumfitness;
-UPDATE genelist set cumlativeprobab = x.probab from
- (select geneid,(select sum(probability) from genelist where geneid <= x.geneid)
- as probab from genelist as x order by geneid) as x  where genelist.geneid = x.geneid;
+select sum(fitness) into sumfitness from newgeneration;
+UPDATE newgeneration set probability = fitness / sumfitness;
+UPDATE newgeneration set cumlativeprobab = x.probab from
+ (select geneid,(select sum(probability) from newgeneration where geneid <= x.geneid)
+ as probab from newgeneration as x order by geneid) as x  where newgeneration.geneid = x.geneid;
 -- Roulette Choice(48)
 for r in 1 .. 20
 LOOP	
-	select gene into tempo from genelist where cumlativeprobab <= random() order by cumlativeprobab desc limit 1;
+	select gene into tempo from newgeneration where cumlativeprobab <= random() order by cumlativeprobab desc limit 1;
 	UPDATE randtable set unified = tempo where eid = r;
 end loop;
 -- Elite Choice(2)
-select gene into elite from genelist order by fitness desc limit 2;
+select gene into elite from newgeneration order by fitness desc limit 2;
 UPDATE elitetable set elitegene = elite;
 
 -- Crossing
@@ -78,11 +85,19 @@ end loop; -- 全個体に関する交叉終了
 -- 交叉と考え方は同じで、突然変異が起こる場所が決まったら遺伝子を3つ(突然変異以前、突然変異、突然変異以後)に分解して、突然変異部分を生成し、くっつける
 for mu in 1 .. 20
 loop
+-- 突然変異するならば次の遺伝子を挿入する
+rand1 = round(random()*19)+1;
+rand2 = round(random()*19)+1;
+characters = 'abcdefghijklmnopqrstu';
+gmu1 = substr(characters,rand1,1);
+gmu2 = substr(characters,rand2,1);
+randgene = (gmu1 || gmu2);
 mutationrate = random();
 -- define mutation place
 mupl = round(random() * 9) + 1;
 mubegin = 2*(mupl - 1);
 muend = (2*mupl + 1);
+-- テストのため、0.8に設定して挙動を見る
 	if mutationrate >= 0.05 then
 	   -- 突然変異率以上ならば、そのまま結合する
 	   select newsons into gm1 from randtable where eid = mu;
@@ -92,13 +107,13 @@ muend = (2*mupl + 1);
         if mupl >= 2 and mupl <= 9 then
             select substr(newsons,1,mubegin) into gm1 from randtable where eid = mu;
             select substr(newsons,muend,(20 - muend + 1)) into gm2 from randtable where eid = mu;
-            UPDATE randtable set newsonsmutation = (gm1 ||  || gm2)
+            UPDATE randtable set newsonsmutation = (gm1 || randgene || gm2) where eid = mu;
         elsif mupl = 1 then
             select substr(newsons,3,18) into gm2 from randtable where eid = mu;
-            UPDATE randtable set newsonsmutation = ( || gm2) where eid = mu;
+            UPDATE randtable set newsonsmutation = (randgene || gm2) where eid = mu;
         elsif mupl = 10 then
             select substr(newsons,1,18) into gm1 from randtable where eid = mu;
-            UPDATE randtable set newsonsmutation = (gm1 || ) where eid = mu;
+            UPDATE randtable set newsonsmutation = (gm1 || randgene) where eid = mu;
         end if;
 	end if;
 end loop;
