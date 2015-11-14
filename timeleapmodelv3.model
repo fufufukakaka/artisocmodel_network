@@ -135,6 +135,7 @@ UNIVERSE {
     Dim averageutilize(0, 0) As Double = (0.0);
     Dim recalculate(0, 0) As Integer = (0);
     Dim recalculateflag(0, 0) As Boolean = (0);
+    Dim daytimecount(0, 0) As Integer = ();
 }
 
 
@@ -208,6 +209,7 @@ openDB("jdbc:postgresql:db_artisoc","org.postgresql.Driver","db_artisoc","postgr
 
 universe.checkmode = FALSE
 universe.recalculateflag =FALSE
+universe.daytimecount = 1
 universe.recalculate = 0
 universe.officelist(0) = 57
 universe.officelist(1) = 112
@@ -224,7 +226,7 @@ universe.shoplist(5) = 69
 }
 
 Univ_Step_Begin{
-dim five as integer
+universe.daytimecount = universe.daytimecount + 1
 universe.averagefreetime = 0
 universe.averagemovetime = 0
 universe.averageconsump = 0
@@ -254,6 +256,10 @@ Univ_Step_End{
 // 人々エージェントのルート再計算が終わったら解除
 if universe.recalculate == 20 then
 	universe.recalculateflag = FALSE
+end if
+
+if universe.daychange == TRUE then
+	universe.daytimecount = 1
 end if
 
 if universe.day >= 3600 then
@@ -457,9 +463,11 @@ end if
 		My.Color = COLOR_WHITE
 		
 		// 余暇時間とかの計測
+		// 最後に帰宅したエージェントのstep数で基準化する
 		my.timecount = 0
 		my.freetime = my.freetime + 1
 	ElseIf my.nowhome == 0 and My.RouteCount < CountToken(My.RouteArray) Then
+		my.freetime = (my.freetime / universe.daytimecount) * 100
 		my.freetime_sum = my.freetime_sum + my.freetime
 		my.freetime = 0
 		// 経路に沿って進む
@@ -499,6 +507,8 @@ end if
 					my.action = 1
 					my.check = 0
 					my.nowhome = 1
+					// 最後に帰宅したエージェントのstep数で基準化する
+					my.timecount = (my.timecount / universe.daytimecount) * 100
 					my.timecount_sum = my.timecount_sum + my.timecount			
 					my.timecount = 0
 				end if
@@ -1263,15 +1273,15 @@ Time_Graph {
     Draw_Interval = 1;
     Graph_Name = "time";
     Title = "time";
-    Disable = Yes;
+    Disable = No;
     Background_Color = 255, 255, 255;
     Remarks = Yes;
     Legend_Pos = Top;
     FastDraw = No;
-    Position_x = 42;
-    Position_y = 576;
-    Size_x = 510;
-    Size_y = 301;
+    Position_x = 10;
+    Position_y = 24;
+    Size_x = 405;
+    Size_y = 459;
     Map_Cell_Size = -1;
     Axis_Label = "", "";
     Draw_By_JFree_Chart = Yes;
@@ -1280,33 +1290,33 @@ Time_Graph {
     Output_Group_Name = "";
     Output {
         Graph_Element_Name = "timecount";
-        Line_Color = 0, 0, 255;
+        Line_Color = 0, 255, 0;
         Line_Width = 2;
         Marker_Id = 0;
         Output_Expression = "universe.Map.Person(0).timecount";
         Expression_Value_Display = No;
         Effective_Fraction_Figures = 0;
-        Graph_Element_Color = (51, 0, 255);
+        Graph_Element_Color = (0, 102, 204);
     }
     Output {
         Graph_Element_Name = "freetime";
-        Line_Color = 0, 255, 255;
+        Line_Color = 255, 255, 0;
         Line_Width = 2;
         Marker_Id = 0;
         Output_Expression = "universe.Map.Person(0).freetime";
         Expression_Value_Display = No;
         Effective_Fraction_Figures = 0;
-        Graph_Element_Color = (255, 102, 0);
+        Graph_Element_Color = (255, 153, 153);
     }
     Output {
-        Graph_Element_Name = "freetime_sum";
-        Line_Color = 255, 255, 0;
+        Graph_Element_Name = "daycount";
+        Line_Color = 0, 255, 0;
         Line_Width = 2;
         Marker_Id = 0;
-        Output_Expression = "universe.Map.Person(0).freetime_sum";
+        Output_Expression = "universe.daytimecount";
         Expression_Value_Display = No;
         Effective_Fraction_Figures = 0;
-        Graph_Element_Color = (204, 0, 0);
+        Graph_Element_Color = (0, 255, 0);
     }
 }
 
@@ -1323,16 +1333,16 @@ Time_Graph {
     Font_Background_Color = 255, 255, 255;
     Draw_Timing = Simulation_Step;
     Draw_Interval = 1;
-    Graph_Name = "time";
-    Title = "time";
-    Disable = Yes;
+    Graph_Name = "daycount";
+    Title = "daycount";
+    Disable = No;
     Background_Color = 255, 255, 255;
     Remarks = Yes;
     Legend_Pos = Top;
     FastDraw = No;
-    Position_x = 286;
-    Position_y = 125;
-    Size_x = 608;
+    Position_x = 352;
+    Position_y = 18;
+    Size_x = 526;
     Size_y = 396;
     Map_Cell_Size = -1;
     Axis_Label = "", "";
@@ -1341,24 +1351,24 @@ Time_Graph {
     ScaleAuto = Yes, Yes;
     Output_Group_Name = "";
     Output {
-        Graph_Element_Name = "freetime";
-        Line_Color = 0, 255, 0;
-        Line_Width = 2;
-        Marker_Id = 0;
-        Output_Expression = "universe.averagefreetime";
-        Expression_Value_Display = No;
-        Effective_Fraction_Figures = 0;
-        Graph_Element_Color = (204, 102, 0);
-    }
-    Output {
-        Graph_Element_Name = "movetime";
+        Graph_Element_Name = "freetimesum";
         Line_Color = 255, 0, 255;
         Line_Width = 2;
         Marker_Id = 0;
-        Output_Expression = "universe.averagemovetime";
+        Output_Expression = "universe.Map.Person(0).freetime_sum";
         Expression_Value_Display = No;
         Effective_Fraction_Figures = 0;
-        Graph_Element_Color = (0, 255, 255);
+        Graph_Element_Color = (0, 255, 0);
+    }
+    Output {
+        Graph_Element_Name = "movetimesum";
+        Line_Color = 0, 255, 255;
+        Line_Width = 2;
+        Marker_Id = 0;
+        Output_Expression = "universe.Map.Person(0).timecount_sum";
+        Expression_Value_Display = No;
+        Effective_Fraction_Figures = 0;
+        Graph_Element_Color = (51, 102, 0);
     }
 }
 
@@ -1709,7 +1719,7 @@ Time_Graph {
     Draw_Interval = 1;
     Graph_Name = "core1";
     Title = "core1";
-    Disable = No;
+    Disable = Yes;
     Background_Color = 255, 255, 255;
     Remarks = Yes;
     Legend_Pos = Top;
@@ -1906,8 +1916,8 @@ Space_Map_Initial_Value {
 // Window Location Definition Division
 //-------------------------------------------------------
 Window_Rectangle {
-    Window_Name = Main_Window, 0, 0, 1143, 919;
-    Window_Name = Output_Setting_Window, 243, 297, 480, 290;
+    Window_Name = Main_Window, 121, 35, 939, 643;
+    Window_Name = Output_Setting_Window, 229, 176, 480, 290;
 }
 
 
