@@ -666,7 +666,7 @@ dim set as agtset
 dim i as integer
 dim p as integer
 
-for i = 0 to 9
+for i = 0 to 10
 	my.bridge_status(i) = universe.Map.bridgecore(i).strength
 	my.bridge_damage(i) = universe.Map.bridgecore(i).damage
 	my.bridge_demand(i) = universe.Map.bridgecore(i).demand
