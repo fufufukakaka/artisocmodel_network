@@ -141,7 +141,7 @@ UNIVERSE {
     Dim recalculateflag(0, 0) As Boolean = (0);
     Dim daytimecount(0, 0) As Integer = (0);
     Dim monthcheckmode(0, 0) As Boolean = (0);
-    Dim simulationcode(0, 0) As String = ();
+    Dim simulationcode(0, 0) As String = ("");
 }
 
 
@@ -275,11 +275,10 @@ end if
 if universe.daychange == TRUE then
 	universe.daytimecount = 1
 end if
+if universe.day > 180000 then
+	exitsimulation()
+end if
 
-if universe.day
-
-updateDB("insert into test(test) values(1);")
-commitDB()
 }
 
 Univ_Finish{
@@ -425,11 +424,17 @@ universe.averageutilize = universe.averageutilize + (my.utilize / 20)
 if universe.monthcheckmode == TRUE then
 	my.money = my.money + my.archivement
 
-// ここでデータベース更新しないと反映できないので
-UpdateDB("Insert into personlog(simulationcode,personid,utilize,movetime,freetime,consumption,archive,day) values("&universe.simulationcode&","&my.ID&","&my.utilize&","&my.timecount_sum&","&my.freetime_sum&","&my.consump_sum&","&my.archive_sum&","&universe.day&");")
-nextdb()
-commitdb()
-
+// ここでcsvはく
+openfilecsv("persontest1.csv",2,3)
+writefilecsv(2,universe.simulationcode,false)
+writefilecsv(2,my.ID,false)
+writefilecsv(2,my.utilize,false)
+writefilecsv(2,my.timecount_sum,false)
+writefilecsv(2,my.freetime_sum,false)
+writefilecsv(2,my.consump_sum,false)
+writefilecsv(2,my.archive_sum,false)
+writefilecsv(2,universe.day,true)
+closefilecsv(2)
 	my.archivement = 0
 	my.freetime_sum = 0
 	my.consump_sum = 0
@@ -757,11 +762,14 @@ for i = 0 to 10
 	my.bridge_averagedemand = 0
 next i
 end if
-if cdbl(round(universe.day*1000)/1000) == 30 then
+if universe.monthcheckmode == TRUE then
 	// ここでデータベース更新する
-	UpdateDB("Insert into governmentlog(simulationcode,day,budget) values("&universe.simulationcode&","&universe.day&","&my.budget&");")
-	print(UpdateDB("Insert into governmentlog(simulationcode,day,budget) values("&universe.simulationcode&","&universe.day&","&my.budget&");"))
-	commitDB()
+	openfilecsv("governtest1.csv",2,3)
+writefilecsv(2,universe.simulationcode,false)
+writefilecsv(2,my.ID,false)
+writefilecsv(2,my.budget,false)
+writefilecsv(2,universe.day,true)
+closefilecsv(2)
 end if
 }
 #end_rule UNIVERSE.MAP.GOVERNMENT
@@ -817,8 +825,13 @@ if my.strength <= 0 then
 end if
 if universe.monthcheckmode == TRUE then
 	// ここでデータベース更新する
-	UpdateDB("Insert into bridgelog(simulationcode,day,strength,demand,bridgeid) values("&universe.simulationcode&","&universe.day&","&my.strength&","&my.demand&","&my.id&");")
-	CommitDB()
+		openfilecsv("bridgetest1.csv",2,3)
+writefilecsv(2,universe.simulationcode,false)
+writefilecsv(2,universe.day,false)
+writefilecsv(2,my.strength,false)
+writefilecsv(2,my.demand,false)
+writefilecsv(2,my.ID,true)
+closefilecsv(2)
 end if
 }
 #end_rule UNIVERSE.MAP.BRIDGECORE
@@ -959,8 +972,8 @@ Map_Output {
     Title = "Map";
     Disable = No;
     Background_Color = 255, 255, 255;
-    Position_x = 173;
-    Position_y = -6;
+    Position_x = -14;
+    Position_y = 76;
     Size_x = 707;
     Size_y = 750;
     Remarks = No;
@@ -1324,15 +1337,15 @@ Time_Graph {
     Draw_Interval = 1;
     Graph_Name = "time";
     Title = "time";
-    Disable = No;
+    Disable = Yes;
     Background_Color = 255, 255, 255;
     Remarks = Yes;
     Legend_Pos = Top;
     FastDraw = No;
-    Position_x = 10;
-    Position_y = 24;
-    Size_x = 405;
-    Size_y = 459;
+    Position_x = 283;
+    Position_y = 274;
+    Size_x = 610;
+    Size_y = 280;
     Map_Cell_Size = -1;
     Axis_Label = "", "";
     Draw_By_JFree_Chart = Yes;
@@ -1386,15 +1399,15 @@ Time_Graph {
     Draw_Interval = 1;
     Graph_Name = "daycount";
     Title = "daycount";
-    Disable = No;
+    Disable = Yes;
     Background_Color = 255, 255, 255;
     Remarks = Yes;
     Legend_Pos = Top;
     FastDraw = No;
-    Position_x = 356;
-    Position_y = 99;
-    Size_x = 526;
-    Size_y = 396;
+    Position_x = 0;
+    Position_y = 0;
+    Size_x = 1062;
+    Size_y = 856;
     Map_Cell_Size = -1;
     Axis_Label = "", "";
     Draw_By_JFree_Chart = Yes;
@@ -1530,7 +1543,7 @@ Time_Graph {
     Draw_Interval = 1;
     Graph_Name = "day";
     Title = "day";
-    Disable = No;
+    Disable = Yes;
     Background_Color = 255, 255, 255;
     Remarks = Yes;
     Legend_Pos = Top;
@@ -1772,12 +1785,12 @@ Others_Data {
     Debug_Position_y = 10;
     Debug_Size_x = 400;
     Debug_Size_y = 200;
-    Console_Position_x = 701;
-    Console_Position_y = 152;
+    Console_Position_x = 362;
+    Console_Position_y = 31;
     Console_Size_x = 149;
     Console_Size_y = 377;
-    Componen_Tree_Position_x = 47;
-    Componen_Tree_Position_y = 21;
+    Componen_Tree_Position_x = 317;
+    Componen_Tree_Position_y = 59;
     Componen_Tree_Size_x = 253;
     Componen_Tree_Size_y = 489;
     Console_Background_Color = 10066329;
@@ -1807,7 +1820,7 @@ Network_Info {
 //-------------------------------------------------------
 Space_Map_Initial_Value {
     Space_Path_Name = Universe.Map;
-    Background_Image_File_Path_Name = "..\..\Downloads\ph3.jpg";
+    Background_Image_File_Path_Name = "..\Downloads\ph3.jpg";
     Origin_Position = Left_Bottom;
     Position_Agent {
         Agent_Name = Universe.Map.Point;
@@ -1915,8 +1928,8 @@ Space_Map_Initial_Value {
 // Window Location Definition Division
 //-------------------------------------------------------
 Window_Rectangle {
-    Window_Name = Main_Window, -7, 8, 944, 650;
-    Window_Name = Output_Setting_Window, 160, 281, 480, 290;
+    Window_Name = Main_Window, 0, 0, 1028, 923;
+    Window_Name = Output_Setting_Window, 299, 339, 480, 290;
 }
 
 
