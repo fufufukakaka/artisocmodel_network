@@ -59,6 +59,7 @@ UNIVERSE {
             Dim jobhomerouteoption(0, 0)[6] As String = (6*"");
             Dim shophomerouteoption(0, 0)[6] As String = (6*"");
             Dim returnroute(0, 0) As String = ("");
+            Dim archive_sum(0, 0) As Integer = (0);
         }
         AgtType government(0, 0)[1] {
             Dim ID(0, 0) As Integer = (0);
@@ -67,7 +68,6 @@ UNIVERSE {
             Dim Layer(0, 0) As Integer = (0);
             Dim Direction(0, 0) As Double = (0.0);
             Dim bridge_status(0, 0)[11] As Integer = (11*0);
-            Dim bridge_damage(0, 0)[11] As Integer = (11*0);
             Dim bridge_demand(0, 0)[11] As Integer = (11*0);
             Dim bridge_averagedemand(0, 0) As Double = (0.0);
             Dim bridge_distance(0, 0)[11] As Double = (11*0.0);
@@ -81,13 +81,16 @@ UNIVERSE {
             Dim Direction(0, 0) As Double = (0.0);
             Dim demand(0, 0) As Integer = (0);
             Dim strength(0, 0) As Integer = (0);
-            Dim damage(0, 0) As Integer = (0);
             Dim beginpointid(0, 0) As Integer = (0);
             Dim endpointid(0, 0) As Integer = (0);
             Dim distance(0, 0) As Double = (0.0);
             Dim hasblock(0, 0) As Boolean = (0);
             Dim bridgetime(0, 0) As Integer = (0);
             Dim bridgelink(0, 0) As Integer = (0);
+            Dim length(0, 0) As Double = (0.0);
+            Dim iron(0, 0) As Double = (0.0);
+            Dim value(0, 0) As Double = (0.0);
+            Dim repaircost(0, 0) As Double = ();
         }
     }
     AgtType Link(0, 0)[250] {
@@ -135,7 +138,8 @@ UNIVERSE {
     Dim averageutilize(0, 0) As Double = (0.0);
     Dim recalculate(0, 0) As Integer = (0);
     Dim recalculateflag(0, 0) As Boolean = (0);
-    Dim daytimecount(0, 0) As Integer = ();
+    Dim daytimecount(0, 0) As Integer = (0);
+    Dim monthcheckmode(0, 0) As Boolean = (0);
 }
 
 
@@ -184,7 +188,6 @@ Initial_Value {
     UNIVERSE.MAP.BRIDGECORE.DIRECTION = 11(11*0.0);
     UNIVERSE.MAP.BRIDGECORE.DEMAND = 11(11*0);
     UNIVERSE.MAP.BRIDGECORE.STRENGTH = 11(11*0);
-    UNIVERSE.MAP.BRIDGECORE.DAMAGE = 11(11*0);
     UNIVERSE.MAP.BRIDGECORE.BEGINPOINTID = 11(109, 42, 43, 104, 102, 48, 100, 52, 98, 54
 , 96);
     UNIVERSE.MAP.BRIDGECORE.ENDPOINTID = 11(41, 107, 105, 45, 47, 101, 50, 99, 53, 97
@@ -208,6 +211,7 @@ initialize_dijkstra()
 openDB("jdbc:postgresql:db_artisoc","org.postgresql.Driver","db_artisoc","postgres","fukasawa1225")
 
 universe.checkmode = FALSE
+universe.monthcheckmode = FALSE
 universe.recalculateflag =FALSE
 universe.daytimecount = 1
 universe.recalculate = 0
@@ -234,12 +238,19 @@ universe.averagearchive = 0
 universe.averageutilize = 0
 universe.recalculate = 0
 
-// 橋の点検モードに入るか否か
-if Int(cdbl(round(gethistory(universe.day,2)*1000)/1000)) mod 30 == 29 and cdbl(round(universe.day*1000)/1000) mod 30 == 0 then
+// 徴税や点検の処理に入るか否か
+if Int(cdbl(round(gethistory(universe.day,2)*1000)/1000)) mod 360 == 359 and cdbl(round(universe.day*1000)/1000) mod 360 == 0 then
 	universe.checkmode = TRUE
 else
 	universe.checkmode = FALSE
 end if
+// 月々の処理を行うモード
+if Int(cdbl(round(gethistory(universe.day,2)*1000)/1000)) mod 30 == 29 and cdbl(round(universe.day*1000)/1000) mod 30 == 0 then
+	universe.monthcheckmode = TRUE
+else
+	universe.monthcheckmode = FALSE
+end if
+
 
 // 日付が変更されたか否か
 if universe.numberofendagt == 20 then
@@ -406,9 +417,11 @@ consumpstd = (((my.consump_sum  / 6526.4) * 10))
 my.utilize = freetimestd ^ 0.33 + consumpstd ^ 0.33 - movetimestd ^ 0.33
 universe.averageutilize = universe.averageutilize + (my.utilize / 20)
 
-// 日数が30の倍数ならarchivementをmoneyに換算する()
-if universe.checkmode == TRUE then
+// 日数が30の倍数ならarchivementをmoneyに換算する
+// 所得税の計算用に記録する
+if universe.monthcheckmode == TRUE then
 	my.money = my.money + my.archivement
+	my.archive_sum = my.archive_sum + my.archivement
 	my.archivement = 0
 	my.freetime_sum = 0
 	my.consump_sum = 0
@@ -656,7 +669,7 @@ include "dijkstra.inc"
 Agt_Init{
 my.X = 25
 my.Y = 25
-my.budget = 10000000
+my.budget = 100000000
 }
 
 Agt_Step{
@@ -668,44 +681,50 @@ dim p as integer
 
 for i = 0 to 10
 	my.bridge_status(i) = universe.Map.bridgecore(i).strength
-	my.bridge_damage(i) = universe.Map.bridgecore(i).damage
 	my.bridge_demand(i) = universe.Map.bridgecore(i).demand
 	my.bridge_averagedemand = my.bridge_averagedemand + my.bridge_demand(i) / 9
 	my.bridge_distance(i) = universe.Map.bridgecore(i).distance
 next i
 
-// 30日ごとに橋を点検(今は5日ごとに点検を行う)(universeで日付と同期)
+// 1年ごとに橋を点検(universeで日付と同期)
 if universe.checkmode == TRUE then
 // 期間ごとに徴税を行う
 	for p = 0 to 19
-		if universe.Map.Person(p).archivement <= 200000 then
-			my.budget = my.budget +  universe.Map.Person(p).money * 0.05
-			 universe.Map.Person(p).money =  universe.Map.Person(p).money*0.95
-		elseif universe.Map.Person(p).archivement <= 278700 then
+		if universe.Map.Person(p).archive_sum <= 200000*12 then
+			my.budget = my.budget +  universe.Map.Person(p).archive_sum * 0.05
+			 universe.Map.Person(p).money = 
+			 universe.Map.Person(p).money - universe.Map.Person(p).archive_sum * 0.05
+		elseif universe.Map.Person(p).archive_sum <= 278700*12 then
 			my.budget = my.budget +  universe.Map.Person(p).money * 0.15
-			 universe.Map.Person(p).money =  universe.Map.Person(p).money*0.85
-		elseif universe.Map.Person(p).money <= 303600 then
+			universe.Map.Person(p).money = 
+			universe.Map.Person(p).money - universe.Map.Person(p).archive_sum * 0.15
+		elseif universe.Map.Person(p).archive_sum <= 303600*12 then
 			my.budget = my.budget +  universe.Map.Person(p).money * 0.25
-			 universe.Map.Person(p).money =  universe.Map.Person(p).money*0.75
-		elseif universe.Map.Person(p).money <= 332300 then
+			universe.Map.Person(p).money = 
+			universe.Map.Person(p).money - universe.Map.Person(p).archive_sum * 0.25
+		elseif universe.Map.Person(p).archive_sum <= 332300*12 then
 			my.budget = my.budget +  universe.Map.Person(p).money * 0.35
-			 universe.Map.Person(p).money =  universe.Map.Person(p).money*0.65
-		elseif universe.Map.Person(p).money <= 400000 then
+			universe.Map.Person(p).money = 
+			universe.Map.Person(p).money - universe.Map.Person(p).archive_sum * 0.35
+		elseif universe.Map.Person(p).archive_sum <= 400000*12 then
 			my.budget = my.budget +  universe.Map.Person(p).money * 0.45
-			 universe.Map.Person(p).money =  universe.Map.Person(p).money*0.55
+			universe.Map.Person(p).money = 
+			universe.Map.Person(p).money - universe.Map.Person(p).archive_sum * 0.45
 		else
 			my.budget = my.budget +  universe.Map.Person(p).money * 0.5
-			 universe.Map.Person(p).money =  universe.Map.Person(p).money*0.5
+			universe.Map.Person(p).money = 
+			universe.Map.Person(p).money - universe.Map.Person(p).archive_sum * 0.5
 		end if
 	next p
+	universe.Map.Person(p).archive_sum = 0
 	for i = 0 to 10	
 // 危険域にある橋について
-	if my.bridge_status(i) < 100000 then
+	if my.bridge_status(i) < 0.5 then
 // 危険域にある橋の需要値が(今は平均以上なら)なら橋の耐久値を全て回復し、橋内部の時間を0に戻す。予算が足りなくなった時点で修復を終了する。
 		if  my.bridge_demand(i) >=  0.5 * my.bridge_averagedemand then
-			if my.budget >= (182500 - universe.Map.bridgecore(i).strength) * 10 then
-				my.budget = my.budget - (182500 - universe.Map.bridgecore(i).strength) * 10
-				universe.Map.bridgecore(i).strength = 182500
+			if my.budget >= universe.Map.bridgecore(i).repaircost then
+				my.budget = my.budget - universe.Map.bridgecore(i).repaircost
+				universe.Map.bridgecore(i).strength = 1
 				universe.Map.bridgecore(i).bridgetime = 0
 			end if
 		end if
@@ -714,10 +733,8 @@ if universe.checkmode == TRUE then
 		update_cost(universe.Map.bridgecore(i).beginpointid,universe.Map.bridgecore(i).endpointid,1000000)
 		universe.recalculateflag = TRUE
 	end if
-	my.bridge_damage(i) = 0
 	my.bridge_demand(i) = 0
 	universe.Map.bridgecore(i).demand = 0
-	universe.Map.bridgecore(i).damage = 0
 	next i
 end if
 }
@@ -733,10 +750,24 @@ end if
 include"dijkstra.inc"
 
 Agt_Init{
-my.strength = 182500
-my.damage = 0
 my.demand = 0
 my.bridgetime = 100000
+
+// 橋の長さから初期費用を決定する
+if rnd() <= 0.1323 then
+   my.length = rnd()*5+15
+elseif rnd() <=0.2218 then
+   my.length = rnd()*10+20
+elseif rnd() <= 0.2432 then
+   my.length = rnd()*20+30
+elseif rnd() <= 0.25 then
+   my.length = rnd()*50+50
+else 
+   my.length = rnd()*100+100
+end if
+my.iron = 55 * exp(0.03 * my.length) * 0.01
+my.value = my.bridgelength * my.iron * 12 * 60
+
 my.distance = measuredistance(universe.Map.Point(my.beginpointid).x,universe.Map.Point(my.beginpointid).x,universe.Map.Point(my.endpointid).x,universe.Map.Point(my.endpointid).y,universe.Map)
 }
 
@@ -746,8 +777,8 @@ dim blockset as agtset
 dim one as agt
 dim blockagt as agt
 my.bridgetime = my.bridgetime + 1
-my.strength = 182500*(1-(1/(1+10000*exp(-0.008*(my.bridgetime/100)))))
-my.damage = my.damage + 1
+my.strength = 1-(1/(1+10000*exp(-0.008*(my.bridgetime/100))))
+my.repaircost = my.value * my.strength
 
 // personが来たらdemand(経済価値or需要)を増加させる
 makeoneagtsetaroundown(set,2,universe.Map.Person,false)
@@ -759,8 +790,7 @@ for each one in set
 		elseif one.destination == 2 then
 			my.demand = my.demand + one.consump
 		end if
-		my.strength = my.strength - 5
-		my.damage = my.damage + 5
+		my.strength = my.strength - 0.000001
 		one.check = 1
 	end if
 next one
@@ -908,8 +938,8 @@ Map_Output {
     Title = "Map";
     Disable = No;
     Background_Color = 255, 255, 255;
-    Position_x = 332;
-    Position_y = 33;
+    Position_x = 173;
+    Position_y = -6;
     Size_x = 707;
     Size_y = 750;
     Remarks = No;
@@ -1916,7 +1946,7 @@ Space_Map_Initial_Value {
 // Window Location Definition Division
 //-------------------------------------------------------
 Window_Rectangle {
-    Window_Name = Main_Window, 121, 35, 939, 643;
+    Window_Name = Main_Window, 9, 0, 1099, 911;
     Window_Name = Output_Setting_Window, 229, 176, 480, 290;
 }
 
