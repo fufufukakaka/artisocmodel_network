@@ -81,7 +81,7 @@ UNIVERSE {
             Dim Layer(0, 0) As Integer = (0);
             Dim Direction(0, 0) As Double = (0.0);
             Dim demand(0, 0) As Integer = (0);
-            Dim strength(0, 0) As Integer = (0);
+            Dim strength(0, 0) As Double = (0.0);
             Dim beginpointid(0, 0) As Integer = (0);
             Dim endpointid(0, 0) As Integer = (0);
             Dim distance(0, 0) As Double = (0.0);
@@ -189,7 +189,6 @@ Initial_Value {
     UNIVERSE.MAP.BRIDGECORE.LAYER = 11(11*0);
     UNIVERSE.MAP.BRIDGECORE.DIRECTION = 11(11*0.0);
     UNIVERSE.MAP.BRIDGECORE.DEMAND = 11(11*0);
-    UNIVERSE.MAP.BRIDGECORE.STRENGTH = 11(11*0);
     UNIVERSE.MAP.BRIDGECORE.BEGINPOINTID = 11(109, 42, 43, 104, 102, 48, 100, 52, 98, 54
 , 96);
     UNIVERSE.MAP.BRIDGECORE.ENDPOINTID = 11(41, 107, 105, 45, 47, 101, 50, 99, 53, 97
@@ -216,7 +215,7 @@ universe.checkmode = FALSE
 universe.monthcheckmode = FALSE
 universe.recalculateflag =FALSE
 universe.daytimecount = 1
-universe.simulationcode = "2015/11/17littletest"
+universe.simulationcode = "2015/11/19littletest"
 universe.recalculate = 0
 universe.officelist(0) = 57
 universe.officelist(1) = 112
@@ -233,6 +232,7 @@ universe.shoplist(5) = 69
 }
 
 Univ_Step_Begin{
+dim i as integer
 universe.daytimecount = universe.daytimecount + 1
 universe.averagefreetime = 0
 universe.averagemovetime = 0
@@ -250,6 +250,34 @@ end if
 // 月々の処理を行うモード
 if Int(cdbl(round(gethistory(universe.day,2)*1000)/1000)) mod 30 == 29 and cdbl(round(universe.day*1000)/1000) mod 30 == 0 then
 	universe.monthcheckmode = TRUE
+	// csv書き込み
+			openfilecsv("bridgetest1.csv",2,3)
+			for i = 0 to 10
+writefilecsv(2,universe.simulationcode,false)
+writefilecsv(2,universe.day,false)
+writefilecsv(2,universe.Map.bridgecore(i).strength,false)
+writefilecsv(2,universe.Map.bridgecore(i).demand,false)
+writefilecsv(2,universe.Map.bridgecore(i).ID,true)
+	next i
+closefilecsv(2)
+openfilecsv("persontest1.csv",2,3)
+			for i = 0 to 19
+writefilecsv(2,universe.simulationcode,false)
+writefilecsv(2,universe.Map.Person(i).ID,false)
+writefilecsv(2,universe.Map.Person(i).utilize,false)
+writefilecsv(2,universe.Map.Person(i).timecount_sum,false)
+writefilecsv(2,universe.Map.Person(i).freetime_sum,false)
+writefilecsv(2,universe.Map.Person(i).consump_sum,false)
+writefilecsv(2,universe.Map.Person(i).archivement,false)
+writefilecsv(2,universe.day,false)
+writefilecsv(2,universe.Map.Person(i).money,true)
+	next i
+closefilecsv(2)
+openfilecsv("governtest1.csv",2,3)
+writefilecsv(2,universe.simulationcode,false)
+writefilecsv(2,universe.day,false)
+writefilecsv(2,universe.map.government.budget,true)
+closefilecsv(2)
 else
 	universe.monthcheckmode = FALSE
 end if
@@ -275,7 +303,7 @@ end if
 if universe.daychange == TRUE then
 	universe.daytimecount = 1
 end if
-if universe.day > 180000 then
+if universe.day == 18000 then
 	exitsimulation()
 end if
 
@@ -355,7 +383,8 @@ my.check = 0
 my.nowhome = 0
 my.daycount = 1
 my.speed = 1
-my.money = 200000
+// 初期資金は百万円から
+my.money = 1000000
 my.timecount = 0
 my.timecount_sum = 0
 my.freetime = 0
@@ -365,7 +394,7 @@ my.consump = norminv(rnd(),9360,int(rnd()*1000) + 500)
 my.potential = norminv(rnd(),14581,int(rnd()*1000) + 500)
 my.archivement = my.potential
 universe.averagearchive = universe.averagearchive + (my.archivement / 20)
-
+my.archive_sum = 0
 // Get the all route from database
 dim i as integer
 for i = 0 to 5
@@ -423,18 +452,7 @@ universe.averageutilize = universe.averageutilize + (my.utilize / 20)
 // 所得税の計算用に記録する
 if universe.monthcheckmode == TRUE then
 	my.money = my.money + my.archivement
-
-// ここでcsvはく
-openfilecsv("persontest1.csv",2,3)
-writefilecsv(2,universe.simulationcode,false)
-writefilecsv(2,my.ID,false)
-writefilecsv(2,my.utilize,false)
-writefilecsv(2,my.timecount_sum,false)
-writefilecsv(2,my.freetime_sum,false)
-writefilecsv(2,my.consump_sum,false)
-writefilecsv(2,my.archive_sum,false)
-writefilecsv(2,universe.day,true)
-closefilecsv(2)
+	my.archive_sum = my.archive_sum + my.archivement
 	my.archivement = 0
 	my.freetime_sum = 0
 	my.consump_sum = 0
@@ -682,7 +700,8 @@ include "dijkstra.inc"
 Agt_Init{
 my.X = 25
 my.Y = 25
-my.budget = 100000000
+// 予算は百億から
+my.budget = 10000000000
 my.bridgecount = 0
 }
 
@@ -734,13 +753,14 @@ if universe.checkmode == TRUE then
 	next p
 // 危険域にある橋の数を数えてエージェントセット内に入れる
 	for i = 0 to 10	
-	if my.bridge_status(i) < 0.2 then
+	if universe.Map.bridgecore(i).strength <= 0.2 then
 		addagt(repairbridge,universe.Map.bridgecore(i))
 		my.bridgecount = my.bridgecount + 1
 	end if
 	next i
 	// 耐久値が低い順に並び替える
 	sortagtset(repairbridge,"strength",true)
+	if my.bridgecount > 0 then
 	for i = 0 to my.bridgecount
 	one = getagt(repairbridge,i)
 // 危険域にある橋の需要値が(今は平均の半分以上なら)なら橋の耐久値を全て回復し、橋内部の時間を0に戻す。予算が足りなくなった時点で修復を終了する。これは耐久値シナリオでは外す条件です
@@ -756,20 +776,12 @@ if universe.checkmode == TRUE then
 	one.demand = 0
 	my.bridgecount = 0
 	next i
+	end if
 for i = 0 to 10
 	my.bridge_status(i) = 0
 	my.bridge_demand(i) = 0
 	my.bridge_averagedemand = 0
 next i
-end if
-if universe.monthcheckmode == TRUE then
-	// ここでデータベース更新する
-	openfilecsv("governtest1.csv",2,3)
-writefilecsv(2,universe.simulationcode,false)
-writefilecsv(2,my.ID,false)
-writefilecsv(2,my.budget,false)
-writefilecsv(2,universe.day,true)
-closefilecsv(2)
 end if
 }
 #end_rule UNIVERSE.MAP.GOVERNMENT
@@ -790,7 +802,7 @@ my.bridgetime = norminv(rnd(),91250,30000)
 
 // 橋の長さから初期費用を決定する
 my.iron = 55 * exp(0.03 * my.length) * 0.01
-my.value = my.length * my.iron * 12 * 60
+my.value = my.length * my.iron * 12 * 60*10000
 
 my.distance = measuredistance(universe.Map.Point(my.beginpointid).x,universe.Map.Point(my.beginpointid).x,universe.Map.Point(my.endpointid).x,universe.Map.Point(my.endpointid).y,universe.Map)
 my.strength = 1-(1/(1+10000*exp(-0.008*(my.bridgetime/100))))
@@ -803,7 +815,7 @@ dim blockset as agtset
 dim one as agt
 dim blockagt as agt
 my.bridgetime = my.bridgetime + 1
-
+my.strength = 1-(1/(1+10000*exp(-0.001*(my.bridgetime/120))))
 // personが来たらdemand(経済価値or需要)を増加させる
 makeoneagtsetaroundown(set,2,universe.Map.Person,false)
 for each one in set
@@ -822,16 +834,6 @@ next one
 // もし耐久値が負になってしまったら、崩落したと判断して自身のコストを10000にする。
 if my.strength <= 0 then
 	my.strength = 0
-end if
-if universe.monthcheckmode == TRUE then
-	// ここでデータベース更新する
-		openfilecsv("bridgetest1.csv",2,3)
-writefilecsv(2,universe.simulationcode,false)
-writefilecsv(2,universe.day,false)
-writefilecsv(2,my.strength,false)
-writefilecsv(2,my.demand,false)
-writefilecsv(2,my.ID,true)
-closefilecsv(2)
 end if
 }
 #end_rule UNIVERSE.MAP.BRIDGECORE
@@ -972,8 +974,8 @@ Map_Output {
     Title = "Map";
     Disable = No;
     Background_Color = 255, 255, 255;
-    Position_x = -14;
-    Position_y = 76;
+    Position_x = 54;
+    Position_y = 342;
     Size_x = 707;
     Size_y = 750;
     Remarks = No;
@@ -1467,64 +1469,24 @@ Time_Graph {
     ScaleAuto = Yes, Yes;
     Output_Group_Name = "";
     Output {
-        Graph_Element_Name = "consump0";
-        Line_Color = 255, 0, 0;
+        Graph_Element_Name = "archivesum";
+        Line_Color = 255, 255, 0;
         Line_Width = 2;
         Marker_Id = 0;
-        Output_Expression = "universe.Map.Person(0).consump_sum";
+        Output_Expression = "universe.Map.Person(0).archive_sum";
         Expression_Value_Display = No;
         Effective_Fraction_Figures = 0;
         Graph_Element_Color = (0, 255, 0);
     }
     Output {
-        Graph_Element_Name = "consump1";
-        Line_Color = 255, 50, 0;
+        Graph_Element_Name = "archive";
+        Line_Color = 128, 128, 128;
         Line_Width = 2;
         Marker_Id = 0;
-        Output_Expression = "universe.Map.Person(1).consump_sum";
+        Output_Expression = "universe.Map.Person(0).archivement";
         Expression_Value_Display = No;
         Effective_Fraction_Figures = 0;
-        Graph_Element_Color = (0, 204, 0);
-    }
-    Output {
-        Graph_Element_Name = "freetime0";
-        Line_Color = 255, 100, 0;
-        Line_Width = 2;
-        Marker_Id = 0;
-        Output_Expression = "universe.Map.Person(0).freetime_sum";
-        Expression_Value_Display = No;
-        Effective_Fraction_Figures = 0;
-        Graph_Element_Color = (51, 51, 255);
-    }
-    Output {
-        Graph_Element_Name = "freetime1";
-        Line_Color = 255, 150, 0;
-        Line_Width = 2;
-        Marker_Id = 0;
-        Output_Expression = "universe.Map.Person(1).freetime_sum";
-        Expression_Value_Display = No;
-        Effective_Fraction_Figures = 0;
-        Graph_Element_Color = (0, 102, 153);
-    }
-    Output {
-        Graph_Element_Name = "movetime0";
-        Line_Color = 255, 200, 0;
-        Line_Width = 2;
-        Marker_Id = 0;
-        Output_Expression = "universe.Map.Person(0).timecount_sum";
-        Expression_Value_Display = No;
-        Effective_Fraction_Figures = 0;
-        Graph_Element_Color = (255, 51, 51);
-    }
-    Output {
-        Graph_Element_Name = "movetime1";
-        Line_Color = 255, 250, 0;
-        Line_Width = 2;
-        Marker_Id = 0;
-        Output_Expression = "universe.Map.Person(1).timecount_sum";
-        Expression_Value_Display = No;
-        Effective_Fraction_Figures = 0;
-        Graph_Element_Color = (153, 0, 51);
+        Graph_Element_Color = (0, 204, 204);
     }
 }
 
@@ -1736,10 +1698,10 @@ Time_Graph {
     Remarks = Yes;
     Legend_Pos = Top;
     FastDraw = No;
-    Position_x = -76;
-    Position_y = 113;
-    Size_x = 500;
-    Size_y = 300;
+    Position_x = 578;
+    Position_y = 305;
+    Size_x = 598;
+    Size_y = 562;
     Map_Cell_Size = -1;
     Axis_Label = "", "";
     Draw_By_JFree_Chart = Yes;
@@ -1751,10 +1713,72 @@ Time_Graph {
         Line_Color = 0, 255, 0;
         Line_Width = 2;
         Marker_Id = 0;
-        Output_Expression = "universe.Map.bridgecore(0).demand";
+        Output_Expression = "universe.Map.bridgecore(0).strength";
         Expression_Value_Display = No;
         Effective_Fraction_Figures = 0;
         Graph_Element_Color = (0, 255, 0);
+    }
+}
+
+
+//-------------------------------------------------------
+// Numeric Data Window Output Definition Division
+//-------------------------------------------------------
+Numeric_Output {
+    Font_Name = "Dialog";
+    Font_Char_Set = 81;
+    Font_Size = 12.0;
+    Font_Style = 0;
+    Font_Color = 0, 0, 0;
+    Font_Background_Color = 255, 255, 255;
+    Position_x = 93;
+    Position_y = 132;
+    Size_x = 227;
+    Size_y = 224;
+    Map_Cell_Size = -1;
+    Numeric_Name = "day";
+    Title = "day";
+    Disable = No;
+    Output_Group_Name = "";
+    OUTPUT {
+        Output_Element_Name = "day";
+        Figures = 0;
+        Format_Id = 0;
+        Output_Expression = "universe.day";
+    }
+}
+
+
+//-------------------------------------------------------
+// Numeric Data Window Output Definition Division
+//-------------------------------------------------------
+Numeric_Output {
+    Font_Name = "Dialog";
+    Font_Char_Set = 81;
+    Font_Size = 12.0;
+    Font_Style = 0;
+    Font_Color = 0, 0, 0;
+    Font_Background_Color = 255, 255, 255;
+    Position_x = 221;
+    Position_y = 472;
+    Size_x = 500;
+    Size_y = 300;
+    Map_Cell_Size = -1;
+    Numeric_Name = "core1";
+    Title = "core1";
+    Disable = No;
+    Output_Group_Name = "";
+    OUTPUT {
+        Output_Element_Name = "core1";
+        Figures = 8;
+        Format_Id = 0;
+        Output_Expression = "universe.Map.bridgecore(0).strength";
+    }
+    OUTPUT {
+        Output_Element_Name = "core6";
+        Figures = 8;
+        Format_Id = 0;
+        Output_Expression = "universe.Map.bridgecore(5).strength";
     }
 }
 
@@ -1789,8 +1813,8 @@ Others_Data {
     Console_Position_y = 31;
     Console_Size_x = 149;
     Console_Size_y = 377;
-    Componen_Tree_Position_x = 317;
-    Componen_Tree_Position_y = 59;
+    Componen_Tree_Position_x = 4;
+    Componen_Tree_Position_y = 2;
     Componen_Tree_Size_x = 253;
     Componen_Tree_Size_y = 489;
     Console_Background_Color = 10066329;
@@ -1928,8 +1952,8 @@ Space_Map_Initial_Value {
 // Window Location Definition Division
 //-------------------------------------------------------
 Window_Rectangle {
-    Window_Name = Main_Window, 0, 0, 1028, 923;
-    Window_Name = Output_Setting_Window, 299, 339, 480, 290;
+    Window_Name = Main_Window, 0, 0, 800, 993;
+    Window_Name = Output_Setting_Window, 160, 351, 480, 290;
 }
 
 
