@@ -215,7 +215,7 @@ universe.checkmode = FALSE
 universe.monthcheckmode = FALSE
 universe.recalculateflag =FALSE
 universe.daytimecount = 1
-universe.simulationcode = "2015/11/19littlebudgethalftest"
+universe.simulationcode = "2015/11/19bigtest"
 universe.recalculate = 0
 universe.officelist(0) = 57
 universe.officelist(1) = 112
@@ -251,7 +251,7 @@ end if
 if Int(cdbl(round(gethistory(universe.day,2)*1000)/1000)) mod 30 == 29 and cdbl(round(universe.day*1000)/1000) mod 30 == 0 then
 	universe.monthcheckmode = TRUE
 	// csv‘‚«‚İ
-			openfilecsv("bridgetest3.csv",2,3)
+			openfilecsv("bridgetest2.csv",2,3)
 			for i = 0 to 10
 writefilecsv(2,universe.simulationcode,false)
 writefilecsv(2,universe.day,false)
@@ -260,7 +260,7 @@ writefilecsv(2,universe.Map.bridgecore(i).demand,false)
 writefilecsv(2,universe.Map.bridgecore(i).ID,true)
 	next i
 closefilecsv(2)
-openfilecsv("persontest3.csv",2,3)
+openfilecsv("persontest2.csv",2,3)
 			for i = 0 to 19
 writefilecsv(2,universe.simulationcode,false)
 writefilecsv(2,universe.Map.Person(i).ID,false)
@@ -273,7 +273,7 @@ writefilecsv(2,universe.day,false)
 writefilecsv(2,universe.Map.Person(i).money,true)
 	next i
 closefilecsv(2)
-openfilecsv("governtest3.csv",2,3)
+openfilecsv("governtest2.csv",2,3)
 writefilecsv(2,universe.simulationcode,false)
 writefilecsv(2,universe.day,false)
 writefilecsv(2,universe.map.government.budget,true)
@@ -700,8 +700,8 @@ include "dijkstra.inc"
 Agt_Init{
 my.X = 25
 my.Y = 25
-// —\Z‚Í50‰­‚©‚ç(2015/11/19littletestbudgethalf)
-my.budget = 5000000000
+// —\Z‚Í•S‰­‚©‚ç
+my.budget = 10000000000
 my.bridgecount = 0
 }
 
@@ -753,7 +753,7 @@ if universe.checkmode == TRUE then
 	next p
 // ŠëŒ¯ˆæ‚É‚ ‚é‹´‚Ì”‚ğ”‚¦‚ÄƒG[ƒWƒFƒ“ƒgƒZƒbƒg“à‚É“ü‚ê‚é
 	for i = 0 to 10	
-	if universe.Map.bridgecore(i).strength <= 0.2 then
+	if universe.Map.bridgecore(i).strength < 0.8 then
 		addagt(repairbridge,universe.Map.bridgecore(i))
 		my.bridgecount = my.bridgecount + 1
 	end if
@@ -805,7 +805,7 @@ my.iron = 55 * exp(0.03 * my.length) * 0.01
 my.value = my.length * my.iron * 12 * 60*10000
 
 my.distance = measuredistance(universe.Map.Point(my.beginpointid).x,universe.Map.Point(my.beginpointid).x,universe.Map.Point(my.endpointid).x,universe.Map.Point(my.endpointid).y,universe.Map)
-my.strength = 1-(1/(1+10000*exp(-0.008*(my.bridgetime/100))))
+my.strength = 1-(1/(1+10000*exp(-0.001*(my.bridgetime/120))))
 my.repaircost = my.value * my.strength
 }
 
@@ -974,8 +974,8 @@ Map_Output {
     Title = "Map";
     Disable = No;
     Background_Color = 255, 255, 255;
-    Position_x = -221;
-    Position_y = 277;
+    Position_x = 36;
+    Position_y = 75;
     Size_x = 707;
     Size_y = 750;
     Remarks = No;
@@ -1731,10 +1731,10 @@ Numeric_Output {
     Font_Style = 0;
     Font_Color = 0, 0, 0;
     Font_Background_Color = 255, 255, 255;
-    Position_x = 82;
-    Position_y = -1;
-    Size_x = 125;
-    Size_y = 224;
+    Position_x = 33;
+    Position_y = 31;
+    Size_x = 205;
+    Size_y = 95;
     Map_Cell_Size = -1;
     Numeric_Name = "day";
     Title = "day";
@@ -1745,40 +1745,6 @@ Numeric_Output {
         Figures = 0;
         Format_Id = 0;
         Output_Expression = "universe.day";
-    }
-}
-
-
-//-------------------------------------------------------
-// Numeric Data Window Output Definition Division
-//-------------------------------------------------------
-Numeric_Output {
-    Font_Name = "Dialog";
-    Font_Char_Set = 81;
-    Font_Size = 12.0;
-    Font_Style = 0;
-    Font_Color = 0, 0, 0;
-    Font_Background_Color = 255, 255, 255;
-    Position_x = 68;
-    Position_y = 340;
-    Size_x = 500;
-    Size_y = 300;
-    Map_Cell_Size = -1;
-    Numeric_Name = "core1";
-    Title = "core1";
-    Disable = No;
-    Output_Group_Name = "";
-    OUTPUT {
-        Output_Element_Name = "core1";
-        Figures = 8;
-        Format_Id = 0;
-        Output_Expression = "universe.Map.bridgecore(0).strength";
-    }
-    OUTPUT {
-        Output_Element_Name = "core6";
-        Figures = 8;
-        Format_Id = 0;
-        Output_Expression = "universe.Map.bridgecore(5).strength";
     }
 }
 
@@ -1952,8 +1918,8 @@ Space_Map_Initial_Value {
 // Window Location Definition Division
 //-------------------------------------------------------
 Window_Rectangle {
-    Window_Name = Main_Window, 126, 65, 351, 183;
-    Window_Name = Output_Setting_Window, 160, 351, 480, 290;
+    Window_Name = Main_Window, 94, 0, 1065, 684;
+    Window_Name = Output_Setting_Window, 160, 205, 480, 290;
 }
 
 
