@@ -60,6 +60,8 @@ UNIVERSE {
             Dim shophomerouteoption(0, 0)[6] As String = (6*"");
             Dim returnroute(0, 0) As String = ("");
             Dim archive_sum(0, 0) As Integer = (0);
+            Dim positiveline(0, 0) As Double = ();
+            Dim negativeline(0, 0) As Double = ();
         }
         AgtType government(0, 0)[1] {
             Dim ID(0, 0) As Integer = (0);
@@ -73,7 +75,7 @@ UNIVERSE {
             Dim bridge_distance(0, 0)[11] As Double = (11*0.0);
             Dim budget(0, 0) As Double = (0.0);
             Dim bridgecount(0, 0) As Integer = (0);
-            Dim nowbridge(0, 0) As Integer = ();
+            Dim nowbridge(0, 0) As Integer = (0);
         }
         AgtType bridgecore(0, 0)[11] {
             Dim ID(0, 0) As Integer = (0);
@@ -93,8 +95,8 @@ UNIVERSE {
             Dim iron(0, 0) As Double = (0.0);
             Dim value(0, 0) As Double = (0.0);
             Dim repaircost(0, 0) As Double = (0.0);
-            Dim collapse(0, 0) As Boolean = ();
-            Dim collapseflag(0, 0) As Boolean = ();
+            Dim collapse(0, 0) As Boolean = (0);
+            Dim collapseflag(0, 0) As Boolean = (0);
         }
     }
     AgtType Link(0, 0)[250] {
@@ -224,7 +226,7 @@ universe.checkmode = FALSE
 universe.monthcheckmode = FALSE
 universe.recalculateflag =FALSE
 universe.daytimecount = 1
-universe.simulationcode = "2015/11/20littletest"
+universe.simulationcode = "2015/11/21littletest"
 universe.recalculate = 0
 universe.officelist(0) = 57
 universe.officelist(1) = 112
@@ -260,6 +262,7 @@ end if
 if Int(cdbl(round(gethistory(universe.day,2)*1000)/1000)) mod 30 == 29 and cdbl(round(universe.day*1000)/1000) mod 30 == 0 then
 	universe.monthcheckmode = TRUE
 	// csv書き込み
+	/*
 			openfilecsv("bridgetest.csv",2,3)
 			for i = 0 to 10
 writefilecsv(2,universe.simulationcode,false)
@@ -290,6 +293,7 @@ writefilecsv(2,universe.map.government.budget,false)
 writefilecsv(2,universe.map.government.nowbridge,false)
 writefilecsv(2,universe.map.government.bridgecount,true)
 closefilecsv(2)
+*/
 else
 	universe.monthcheckmode = FALSE
 end if
@@ -397,6 +401,8 @@ my.daycount = 1
 my.speed = 1
 // 初期資金は百万円から
 my.money = 1000000
+my.positiveline = my.money * (rnd()*3+2)
+my.negativeline = my.money / (rnd()*3+2)
 my.timecount = 0
 my.timecount_sum = 0
 my.freetime = 0
@@ -404,6 +410,7 @@ my.freetime_sum = 0
 my.utilize = 0
 my.consump = norminv(rnd(),9360,int(rnd()*1000) + 500)
 my.potential = norminv(rnd(),14581,int(rnd()*1000) + 500)
+my.freetime = norminv(rnd(),300,(rnd()*50+100))
 my.archivement = my.potential
 universe.averagearchive = universe.averagearchive + (my.archivement / 20)
 my.archive_sum = 0
@@ -454,6 +461,7 @@ universe.averagemovetime= universe.averagemovetime + (my.timecount_sum / 20)
 universe.averagearchive = universe.averagearchive + (my.archivement/ 20)
 universe.averageconsump = universe.averageconsump + (my.consump_sum / 20)
 // Calculate Utilize
+// 修正が必要な部分標準偏差を計算しなおし
 freetimestd = (((my.freetime_sum  / 60.5) * 10)) 
 movetimestd = (((my.timecount_sum  / 41.7) * 10))
 consumpstd = (((my.consump_sum  / 6526.4) * 10))
@@ -521,11 +529,7 @@ end if
 		// 余暇時間とかの計測
 		// 最後に帰宅したエージェントのstep数で基準化する
 		my.timecount = 0
-		my.freetime = my.freetime + 1
 	ElseIf my.nowhome == 0 and My.RouteCount < CountToken(My.RouteArray) Then
-		my.freetime = (my.freetime / universe.daytimecount) * 100
-		my.freetime_sum = my.freetime_sum + my.freetime
-		my.freetime = 0
 		// 経路に沿って進む
 		targetPointAgt = Universe.Map.Point(CInt(GetToken(My.RouteArray, My.RouteCount)))
 		distance = Pursue(targetPointAgt, my.speed)
@@ -549,8 +553,16 @@ end if
 				if my.action == 1 then
 					// 店なら消費して効用を得る
 					if universe.Map.Point(my.goalpointid).site == 3 then
-						my.consump_sum = my.consump_sum + my.consump
-						my.money = my.money - my.consump
+					// 消費額と余暇時間は所得に応じて変化する
+						if my.money >= my.positiveline then
+							my.consump_sum = my.consump_sum + my.consump*2
+							my.money = my.money - my.consump*2
+							my.freetime_sum = my.freetime_sum + my.freetime*2
+						elseif my.money <= my.negativeline then
+							my.consump_sum = my.consump_sum + my.consump*0.5
+							my.money = my.money - my.consump*0.5
+							my.freetime_sum = my.freetime_sum + my.freetime*0.5
+						end if
 					// オフィスなら将来受け取る成果を積み上げる
 					elseif universe.Map.Point(my.goalpointid).site == 2 then
 						my.archivement = my.archivement + my.potential
@@ -1961,7 +1973,7 @@ Space_Map_Initial_Value {
 // Window Location Definition Division
 //-------------------------------------------------------
 Window_Rectangle {
-    Window_Name = Main_Window, 117, 13, 1414, 920;
+    Window_Name = Main_Window, 0, 0, 800, 700;
     Window_Name = Output_Setting_Window, 430, 275, 480, 290;
 }
 
