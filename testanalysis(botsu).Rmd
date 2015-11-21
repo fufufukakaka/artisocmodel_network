@@ -166,4 +166,12 @@ gp <- gp + geom_line()
 plot(gp)
 ```
 
-橋の修繕費めちゃめちゃ高くしてみたらどうなるだろうか
+橋の修繕に費用が掛かっていなかったことが原因の模様
+
+ということで修正したのがコード"2015/11/20littletest"
+
+```{r}
+bridge<- dbGetQuery(con,"SELECT * FROM bridgelog where simulationcode ='2015/11/20littletest'")
+go<- dbGetQuery(con,"SELECT * FROM governmentlog where simulationcode ='2015/11/20littletest'")
+pe<- dbGetQuery(con,"SELECT * FROM personlog where simulationcode ='2015/11/20littletest'")
+```
