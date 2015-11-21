@@ -262,8 +262,7 @@ end if
 if Int(cdbl(round(gethistory(universe.day,2)*1000)/1000)) mod 30 == 29 and cdbl(round(universe.day*1000)/1000) mod 30 == 0 then
 	universe.monthcheckmode = TRUE
 	// csvèëÇ´çûÇ›
-	/*
-			openfilecsv("bridgetest.csv",2,3)
+			openfilecsv("bridgetest1.csv",2,3)
 			for i = 0 to 10
 writefilecsv(2,universe.simulationcode,false)
 writefilecsv(2,universe.day,false)
@@ -273,7 +272,7 @@ writefilecsv(2,universe.Map.bridgecore(i).ID,false)
 writefilecsv(2,universe.Map.bridgecore(i).collapse,true)
 	next i
 closefilecsv(2)
-openfilecsv("persontest.csv",2,3)
+openfilecsv("persontest1.csv",2,3)
 			for i = 0 to 19
 writefilecsv(2,universe.simulationcode,false)
 writefilecsv(2,universe.Map.Person(i).ID,false)
@@ -286,14 +285,13 @@ writefilecsv(2,universe.day,false)
 writefilecsv(2,universe.Map.Person(i).money,true)
 	next i
 closefilecsv(2)
-openfilecsv("governtest.csv",2,3)
+openfilecsv("governtest1.csv",2,3)
 writefilecsv(2,universe.simulationcode,false)
 writefilecsv(2,universe.day,false)
 writefilecsv(2,universe.map.government.budget,false)
 writefilecsv(2,universe.map.government.nowbridge,false)
 writefilecsv(2,universe.map.government.bridgecount,true)
 closefilecsv(2)
-*/
 else
 	universe.monthcheckmode = FALSE
 end if
@@ -1784,22 +1782,28 @@ Numeric_Output {
         Output_Expression = "universe.day";
     }
     OUTPUT {
-        Output_Element_Name = "repaircost0";
-        Figures = 4;
+        Output_Element_Name = "strength5";
+        Figures = 8;
         Format_Id = 0;
-        Output_Expression = "universe.Map.bridgecore(0).repaircost";
+        Output_Expression = "universe.Map.bridgecore(5).strength";
     }
     OUTPUT {
-        Output_Element_Name = "strength0";
-        Figures = 4;
+        Output_Element_Name = "positiveline0";
+        Figures = 3;
         Format_Id = 0;
-        Output_Expression = "universe.Map.bridgecore(0).strength";
+        Output_Expression = "universe.Map.Person(0).positiveline";
     }
     OUTPUT {
-        Output_Element_Name = "value0";
-        Figures = 4;
+        Output_Element_Name = "negativeline0";
+        Figures = 3;
         Format_Id = 0;
-        Output_Expression = "universe.Map.bridgecore(0).value";
+        Output_Expression = "universe.Map.Person(0).negativeline";
+    }
+    OUTPUT {
+        Output_Element_Name = "money0";
+        Figures = 0;
+        Format_Id = 0;
+        Output_Expression = "universe.Map.Person(0).money";
     }
 }
 
@@ -1974,7 +1978,7 @@ Space_Map_Initial_Value {
 //-------------------------------------------------------
 Window_Rectangle {
     Window_Name = Main_Window, 0, 0, 800, 700;
-    Window_Name = Output_Setting_Window, 430, 275, 480, 290;
+    Window_Name = Output_Setting_Window, 160, 205, 480, 290;
 }
 
 
