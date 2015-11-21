@@ -189,6 +189,7 @@ Initial_Value {
     UNIVERSE.MAP.BRIDGECORE.LAYER = 11(11*0);
     UNIVERSE.MAP.BRIDGECORE.DIRECTION = 11(11*0.0);
     UNIVERSE.MAP.BRIDGECORE.DEMAND = 11(11*0);
+    UNIVERSE.MAP.BRIDGECORE.STRENGTH = 11(11*0.0);
     UNIVERSE.MAP.BRIDGECORE.BEGINPOINTID = 11(109, 42, 43, 104, 102, 48, 100, 52, 98, 54
 , 96);
     UNIVERSE.MAP.BRIDGECORE.ENDPOINTID = 11(41, 107, 105, 45, 47, 101, 50, 99, 53, 97
@@ -197,6 +198,11 @@ Initial_Value {
     UNIVERSE.MAP.BRIDGECORE.HASBLOCK = 11(11*0);
     UNIVERSE.MAP.BRIDGECORE.BRIDGETIME = 11(11*0);
     UNIVERSE.MAP.BRIDGECORE.BRIDGELINK = 11(11*0);
+    UNIVERSE.MAP.BRIDGECORE.LENGTH = 11(16.63, 58.57, 18.51, 81.56, 42.11, 178.78, 71.87, 18.86, 39.56, 33.06
+, 17.48);
+    UNIVERSE.MAP.BRIDGECORE.IRON = 11(11*0.0);
+    UNIVERSE.MAP.BRIDGECORE.VALUE = 11(11*0.0);
+    UNIVERSE.MAP.BRIDGECORE.REPAIRCOST = 11(11*0.0);
 }
 
 
@@ -215,7 +221,7 @@ universe.checkmode = FALSE
 universe.monthcheckmode = FALSE
 universe.recalculateflag =FALSE
 universe.daytimecount = 1
-universe.simulationcode = "2015/11/19bigtest"
+universe.simulationcode = "2015/11/20littletest"
 universe.recalculate = 0
 universe.officelist(0) = 57
 universe.officelist(1) = 112
@@ -251,7 +257,8 @@ end if
 if Int(cdbl(round(gethistory(universe.day,2)*1000)/1000)) mod 30 == 29 and cdbl(round(universe.day*1000)/1000) mod 30 == 0 then
 	universe.monthcheckmode = TRUE
 	// csv書き込み
-			openfilecsv("bridgetest2.csv",2,3)
+	/*
+			openfilecsv("bridgetest3.csv",2,3)
 			for i = 0 to 10
 writefilecsv(2,universe.simulationcode,false)
 writefilecsv(2,universe.day,false)
@@ -260,7 +267,7 @@ writefilecsv(2,universe.Map.bridgecore(i).demand,false)
 writefilecsv(2,universe.Map.bridgecore(i).ID,true)
 	next i
 closefilecsv(2)
-openfilecsv("persontest2.csv",2,3)
+openfilecsv("persontest3.csv",2,3)
 			for i = 0 to 19
 writefilecsv(2,universe.simulationcode,false)
 writefilecsv(2,universe.Map.Person(i).ID,false)
@@ -273,11 +280,12 @@ writefilecsv(2,universe.day,false)
 writefilecsv(2,universe.Map.Person(i).money,true)
 	next i
 closefilecsv(2)
-openfilecsv("governtest2.csv",2,3)
+openfilecsv("governtest3.csv",2,3)
 writefilecsv(2,universe.simulationcode,false)
 writefilecsv(2,universe.day,false)
 writefilecsv(2,universe.map.government.budget,true)
 closefilecsv(2)
+*/
 else
 	universe.monthcheckmode = FALSE
 end if
@@ -700,8 +708,8 @@ include "dijkstra.inc"
 Agt_Init{
 my.X = 25
 my.Y = 25
-// 予算は百億から
-my.budget = 10000000000
+// 予算は50億から(2015/11/19littletestbudgethalf)
+my.budget = 5000000000
 my.bridgecount = 0
 }
 
@@ -753,7 +761,7 @@ if universe.checkmode == TRUE then
 	next p
 // 危険域にある橋の数を数えてエージェントセット内に入れる
 	for i = 0 to 10	
-	if universe.Map.bridgecore(i).strength < 0.8 then
+	if universe.Map.bridgecore(i).strength <= 0.2 then
 		addagt(repairbridge,universe.Map.bridgecore(i))
 		my.bridgecount = my.bridgecount + 1
 	end if
@@ -798,15 +806,15 @@ include"dijkstra.inc"
 Agt_Init{
 my.demand = 0
 // 橋の残存年数は0.5を平均として正規分布乱数で散らす
-my.bridgetime = norminv(rnd(),91250,30000)
+my.bridgetime = norminv(rnd(),901250,100000)
 
 // 橋の長さから初期費用を決定する
 my.iron = 55 * exp(0.03 * my.length) * 0.01
-my.value = my.length * my.iron * 12 * 60*10000
+my.value = my.length * my.iron * 12 * 60 * 10000
 
 my.distance = measuredistance(universe.Map.Point(my.beginpointid).x,universe.Map.Point(my.beginpointid).x,universe.Map.Point(my.endpointid).x,universe.Map.Point(my.endpointid).y,universe.Map)
-my.strength = 1-(1/(1+10000*exp(-0.001*(my.bridgetime/120))))
-my.repaircost = my.value * my.strength
+my.strength = 1-(1/(1+10000*exp(-0.008*(my.bridgetime/100))))
+my.repaircost = my.value * (1 - my.strength)
 }
 
 Agt_Step{
@@ -816,6 +824,7 @@ dim one as agt
 dim blockagt as agt
 my.bridgetime = my.bridgetime + 1
 my.strength = 1-(1/(1+10000*exp(-0.001*(my.bridgetime/120))))
+my.repaircost = my.value * (1 - my.strength)
 // personが来たらdemand(経済価値or需要)を増加させる
 makeoneagtsetaroundown(set,2,universe.Map.Person,false)
 for each one in set
@@ -974,8 +983,8 @@ Map_Output {
     Title = "Map";
     Disable = No;
     Background_Color = 255, 255, 255;
-    Position_x = 36;
-    Position_y = 75;
+    Position_x = 405;
+    Position_y = 70;
     Size_x = 707;
     Size_y = 750;
     Remarks = No;
@@ -1731,13 +1740,13 @@ Numeric_Output {
     Font_Style = 0;
     Font_Color = 0, 0, 0;
     Font_Background_Color = 255, 255, 255;
-    Position_x = 33;
-    Position_y = 31;
-    Size_x = 205;
-    Size_y = 95;
+    Position_x = 82;
+    Position_y = -1;
+    Size_x = 233;
+    Size_y = 224;
     Map_Cell_Size = -1;
-    Numeric_Name = "day";
-    Title = "day";
+    Numeric_Name = "day.etc";
+    Title = "day.etc";
     Disable = No;
     Output_Group_Name = "";
     OUTPUT {
@@ -1745,6 +1754,24 @@ Numeric_Output {
         Figures = 0;
         Format_Id = 0;
         Output_Expression = "universe.day";
+    }
+    OUTPUT {
+        Output_Element_Name = "repaircost0";
+        Figures = 4;
+        Format_Id = 0;
+        Output_Expression = "universe.Map.bridgecore(0).repaircost";
+    }
+    OUTPUT {
+        Output_Element_Name = "strength0";
+        Figures = 4;
+        Format_Id = 0;
+        Output_Expression = "universe.Map.bridgecore(0).strength";
+    }
+    OUTPUT {
+        Output_Element_Name = "value0";
+        Figures = 4;
+        Format_Id = 0;
+        Output_Expression = "universe.Map.bridgecore(0).value";
     }
 }
 
@@ -1810,7 +1837,7 @@ Network_Info {
 //-------------------------------------------------------
 Space_Map_Initial_Value {
     Space_Path_Name = Universe.Map;
-    Background_Image_File_Path_Name = "..\Downloads\ph3.jpg";
+    Background_Image_File_Path_Name = "..\Github\Downloads\ph3.jpg";
     Origin_Position = Left_Bottom;
     Position_Agent {
         Agent_Name = Universe.Map.Point;
@@ -1918,8 +1945,8 @@ Space_Map_Initial_Value {
 // Window Location Definition Division
 //-------------------------------------------------------
 Window_Rectangle {
-    Window_Name = Main_Window, 94, 0, 1065, 684;
-    Window_Name = Output_Setting_Window, 160, 205, 480, 290;
+    Window_Name = Main_Window, 0, 0, 800, 700;
+    Window_Name = Output_Setting_Window, 430, 275, 480, 290;
 }
 
 

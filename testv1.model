@@ -89,9 +89,9 @@ UNIVERSE {
             Dim bridgetime(0, 0) As Integer = (0);
             Dim bridgelink(0, 0) As Integer = (0);
             Dim length(0, 0) As Double = (0.0);
-            Dim iron(0, 0) As Double = ();
-            Dim value(0, 0) As Double = ();
-            Dim repaircost(0, 0) As Double = ();
+            Dim iron(0, 0) As Double = (0.0);
+            Dim value(0, 0) As Double = (0.0);
+            Dim repaircost(0, 0) As Double = (0.0);
         }
     }
     AgtType Link(0, 0)[250] {
@@ -221,7 +221,7 @@ universe.checkmode = FALSE
 universe.monthcheckmode = FALSE
 universe.recalculateflag =FALSE
 universe.daytimecount = 1
-universe.simulationcode = "2015/11/19littlebudgethalftest"
+universe.simulationcode = "2015/11/20littletest"
 universe.recalculate = 0
 universe.officelist(0) = 57
 universe.officelist(1) = 112
@@ -257,7 +257,6 @@ end if
 if Int(cdbl(round(gethistory(universe.day,2)*1000)/1000)) mod 30 == 29 and cdbl(round(universe.day*1000)/1000) mod 30 == 0 then
 	universe.monthcheckmode = TRUE
 	// csvèëÇ´çûÇ›
-	/*
 			openfilecsv("bridgetest3.csv",2,3)
 			for i = 0 to 10
 writefilecsv(2,universe.simulationcode,false)
@@ -285,7 +284,6 @@ writefilecsv(2,universe.simulationcode,false)
 writefilecsv(2,universe.day,false)
 writefilecsv(2,universe.map.government.budget,true)
 closefilecsv(2)
-*/
 else
 	universe.monthcheckmode = FALSE
 end if
@@ -708,7 +706,7 @@ include "dijkstra.inc"
 Agt_Init{
 my.X = 25
 my.Y = 25
-// ó\éZÇÕ50â≠Ç©ÇÁ(2015/11/19littletestbudgethalf)
+// ó\éZÇÕ100â≠Ç©ÇÁ
 my.budget = 5000000000
 my.bridgecount = 0
 }
@@ -983,8 +981,8 @@ Map_Output {
     Title = "Map";
     Disable = No;
     Background_Color = 255, 255, 255;
-    Position_x = 405;
-    Position_y = 70;
+    Position_x = -3;
+    Position_y = 224;
     Size_x = 707;
     Size_y = 750;
     Remarks = No;
@@ -1740,8 +1738,8 @@ Numeric_Output {
     Font_Style = 0;
     Font_Color = 0, 0, 0;
     Font_Background_Color = 255, 255, 255;
-    Position_x = 82;
-    Position_y = -1;
+    Position_x = 79;
+    Position_y = 59;
     Size_x = 233;
     Size_y = 224;
     Map_Cell_Size = -1;
@@ -1945,7 +1943,7 @@ Space_Map_Initial_Value {
 // Window Location Definition Division
 //-------------------------------------------------------
 Window_Rectangle {
-    Window_Name = Main_Window, 340, 150, 1341, 841;
+    Window_Name = Main_Window, 61, 62, 478, 789;
     Window_Name = Output_Setting_Window, 430, 275, 480, 290;
 }
 
