@@ -97,6 +97,7 @@ UNIVERSE {
             Dim repaircost(0, 0) As Double = (0.0);
             Dim collapse(0, 0) As Boolean = (0);
             Dim collapseflag(0, 0) As Boolean = (0);
+            Dim transport(0, 0) As Integer = ();
         }
     }
     AgtType Link(0, 0)[250] {
@@ -849,9 +850,9 @@ dim set as agtset
 dim blockset as agtset
 dim one as agt
 dim blockagt as agt
+my.transport = 0
 my.bridgetime = my.bridgetime + 1
 my.strength = 1-(1/(1+10000*exp(-0.001*(my.bridgetime/120))))
-my.repaircost = my.value * (1 - my.strength)
 // personが来たらdemand(経済価値or需要)を増加させる
 makeoneagtsetaroundown(set,2,universe.Map.Person,false)
 for each one in set
@@ -862,11 +863,12 @@ for each one in set
 		elseif one.destination == 2 then
 			my.demand = my.demand + one.consump
 		end if
-		my.strength = my.strength - 0.000001
+		my.transport = my.transport + 1
 		one.check = 1
 	end if
 next one
-
+my.strength = my.strength - my.transport
+my.repaircost = my.value * (1 - my.strength)
 // 耐久値が負になったら無条件で次の点検時に通行止めにする
 if my.strength <= 0 then
 	my.strength = 0
@@ -1979,7 +1981,7 @@ Space_Map_Initial_Value {
 // Window Location Definition Division
 //-------------------------------------------------------
 Window_Rectangle {
-    Window_Name = Main_Window, 0, 0, 800, 700;
+    Window_Name = Main_Window, 0, 0, 897, 764;
     Window_Name = Output_Setting_Window, 160, 205, 480, 290;
 }
 
