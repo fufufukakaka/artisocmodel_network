@@ -13,12 +13,11 @@ PostgreSQLに研究室のMacからつなげられないもんかなあ
 require(RPostgreSQL)
 con <- dbConnect(PostgreSQL(),host="localhost",user="postgres",password="fukasawa1225",dbname="db_artisoc")
 bridge <- dbGetQuery(con,"SELECT * FROM bridgelog where simulationcode ='2015/11/19littletest'")
+govern <- dbGetQuery(con,"SELECT * FROM governmentlog where simulationcode ='2015/11/19littletest'")
 ```
 
 ```{r}
 require(ggplot2)
-bridge<-read.csv("bridgetest1.csv")
-bridge<-bridge[,c(-1,-2)]
 g<-ggplot(
   bridge,
   aes(
@@ -34,8 +33,6 @@ plot(g)
 橋が全く潰れていない模様
 
 ```{r}
-govern<-read.csv("governtest1.csv")
-govern<-govern[,c(-1,-2)]
 g<-ggplot(
   govern,
   aes(
@@ -171,9 +168,9 @@ plot(gp)
 ということで修正したのがコード"2015/11/20littletest"
 
 ```{r}
-# br<- dbGetQuery(con,"SELECT * FROM bridgelog where simulationcode ='2015/11/20littletest'")
-# go<- dbGetQuery(con,"SELECT * FROM governmentlog where simulationcode ='2015/11/20littletest'")
-# pe<- dbGetQuery(con,"SELECT * FROM personlog where simulationcode ='2015/11/20littletest'")
+ br<- dbGetQuery(con,"SELECT * FROM bridgelog where simulationcode ='2015/11/20littletest'")
+ go<- dbGetQuery(con,"SELECT * FROM governmentlog where simulationcode ='2015/11/20littletest'")
+ pe<- dbGetQuery(con,"SELECT * FROM personlog where simulationcode ='2015/11/20littletest'")
 
 # PostgreSQLとリモートで繋げられるようになったらね
 
@@ -255,9 +252,9 @@ plot(gp)
 フラグ立てたり、positivelineいれたり、余暇の取り扱いを替えたのが"2015/11/21littletest"
 
 ```{r}
-# br<- dbGetQuery(con,"SELECT * FROM bridgelog where simulationcode ='2015/11/20littletest'")
-# go<- dbGetQuery(con,"SELECT * FROM governmentlog where simulationcode ='2015/11/20littletest'")
-# pe<- dbGetQuery(con,"SELECT * FROM personlog where simulationcode ='2015/11/20littletest'")
+ br<- dbGetQuery(con,"SELECT * FROM bridgelog where simulationcode ='2015/11/21littletest'")
+ go<- dbGetQuery(con,"SELECT * FROM governmentlog where simulationcode ='2015/11/21littletest'")
+ pe<- dbGetQuery(con,"SELECT * FROM personlog where simulationcode ='2015/11/21littletest'")
 
 # まずは橋から見てみる
 gbr<-ggplot(
@@ -304,19 +301,6 @@ plot(gbr1)
 0番が急に利用されているのが分かるのはいいもんだね
 collapseフラグで見るとはっきりわかるよ
 
-```{r}
-gbr1<-ggplot(
-br,
-aes(
-x = day,
-y = collapse,
-colour=factor(bridgeid)
-)
-)
-gbr1 <- gbr1 + geom_line()
-plot(gbr1)
-```
-
 結局subsetで見たんですけどね
 壊れた橋は順番に
 6(7590日目),4(11910日目),9(13350日目),5(14430日目)
@@ -332,8 +316,8 @@ x = day,
 y = budget
 )
 )
-ggo <- ggo + geom_line()
-plot(ggo)
+goo <- goo + geom_line()
+plot(goo)
 ```
 
 ```{r}
@@ -395,8 +379,10 @@ positivelineとnegativelineの出力も必要やなと
 ```{r}
 summary(pe$freetime)
 summary(pe$consumtion)
+summary(pe$movetime)
 sd(pe$freetime)
 sd(pe$consumtion)
+sd(pe$movetime)
 ```
 
 ということでこの標準偏差に更新し直します
