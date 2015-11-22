@@ -325,6 +325,18 @@ plot(gbr1)
 まあ後で価値を掛け算すればいいだけか
 
 ```{r}
+goo<-ggplot(
+go,
+aes(
+x = day,
+y = budget
+)
+)
+ggo <- ggo + geom_line()
+plot(ggo)
+```
+
+```{r}
 gp<-ggplot(
 pe,
 aes(

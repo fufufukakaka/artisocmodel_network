@@ -226,7 +226,7 @@ universe.checkmode = FALSE
 universe.monthcheckmode = FALSE
 universe.recalculateflag =FALSE
 universe.daytimecount = 1
-universe.simulationcode = "2015/11/21littletest"
+universe.simulationcode = "2015/11/22bigtest"
 universe.recalculate = 0
 universe.officelist(0) = 57
 universe.officelist(1) = 112
@@ -269,7 +269,8 @@ writefilecsv(2,universe.day,false)
 writefilecsv(2,universe.Map.bridgecore(i).strength,false)
 writefilecsv(2,universe.Map.bridgecore(i).demand,false)
 writefilecsv(2,universe.Map.bridgecore(i).ID,false)
-writefilecsv(2,universe.Map.bridgecore(i).collapse,true)
+writefilecsv(2,universe.Map.bridgecore(i).collapse,false)
+writefilecsv(2,universe.Map.bridgecore(i).repaircost,true)
 	next i
 closefilecsv(2)
 openfilecsv("persontest1.csv",2,3)
@@ -282,15 +283,16 @@ writefilecsv(2,universe.Map.Person(i).freetime_sum,false)
 writefilecsv(2,universe.Map.Person(i).consump_sum,false)
 writefilecsv(2,universe.Map.Person(i).archivement,false)
 writefilecsv(2,universe.day,false)
-writefilecsv(2,universe.Map.Person(i).money,true)
+writefilecsv(2,universe.Map.Person(i).money,false)
+writefilecsv(2,universe.Map.Person(i).positiveline,false)
+writefilecsv(2,universe.Map.Person(i).negativeline,true)
 	next i
 closefilecsv(2)
 openfilecsv("governtest1.csv",2,3)
 writefilecsv(2,universe.simulationcode,false)
 writefilecsv(2,universe.day,false)
 writefilecsv(2,universe.map.government.budget,false)
-writefilecsv(2,universe.map.government.nowbridge,false)
-writefilecsv(2,universe.map.government.bridgecount,true)
+writefilecsv(2,universe.map.government.nowbridge,true)
 closefilecsv(2)
 else
 	universe.monthcheckmode = FALSE
@@ -781,7 +783,7 @@ if universe.checkmode == TRUE then
 	next p
 // 危険域にある橋の数を数えてエージェントセット内に入れる
 	for i = 0 to 10	
-	if universe.Map.bridgecore(i).strength <= 0.2 then
+	if universe.Map.bridgecore(i).strength <= 0.8 then
 		addagt(repairbridge,universe.Map.bridgecore(i))
 		my.bridgecount = my.bridgecount + 1
 	end if
@@ -1977,7 +1979,7 @@ Space_Map_Initial_Value {
 // Window Location Definition Division
 //-------------------------------------------------------
 Window_Rectangle {
-    Window_Name = Main_Window, 0, 0, 420, 382;
+    Window_Name = Main_Window, 0, 0, 800, 700;
     Window_Name = Output_Setting_Window, 160, 205, 480, 290;
 }
 
