@@ -386,3 +386,17 @@ sd(pe$movetime)
 ```
 
 ということでこの標準偏差に更新し直します
+
+11/22は三回ほど計算を行いました
+まとめてみていきましょう
+```{r}
+b1<-dbGetQuery(con,"SELECT * FROM bridgelog where simulationcode ='2015/11/22bigtest'")
+b2<-dbGetQuery(con,"SELECT * FROM bridgelog where simulationcode ='2015/11/22littletesthyakuoku'")
+b3<-dbGetQuery(con,"SELECT * FROM bridgelog where simulationcode ='2015/11/22bigtesthyakuoku'")
+g1<-dbGetQuery(con,"SELECT * FROM governmentlog where simulationcode ='2015/11/22bigtest'")
+g2<-dbGetQuery(con,"SELECT * FROM governmentlog where simulationcode ='2015/11/22littletesthyakuoku'")
+g3<-dbGetQuery(con,"SELECT * FROM governmentlog where simulationcode ='2015/11/22bigtesthyakuoku'")
+p1<-dbGetQuery(con,"SELECT * FROM personlog where simulationcode ='2015/11/22bigtest'")
+p2<-dbGetQuery(con,"SELECT * FROM personlog where simulationcode ='2015/11/22littletesthyakuoku'")
+p3<-dbGetQuery(con,"SELECT * FROM personlog where simulationcode ='2015/11/22bigtesthyakuoku'")
+```
