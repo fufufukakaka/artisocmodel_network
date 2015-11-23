@@ -462,10 +462,10 @@ universe.averagemovetime= universe.averagemovetime + (my.timecount_sum / 20)
 universe.averagearchive = universe.averagearchive + (my.archivement/ 20)
 universe.averageconsump = universe.averageconsump + (my.consump_sum / 20)
 // Calculate Utilize
-// 修正が必要な部分標準偏差を計算しなおし
-freetimestd = (((my.freetime_sum  / 1605.13) * 10)) 
-movetimestd = (((my.timecount_sum  / 4.72) * 10))
-consumpstd = (((my.consump_sum  / 49905.17) * 10))
+// 平均値で割ってみる
+freetimestd = (((my.freetime_sum / 4557.138))) 
+movetimestd = (((my.timecount_sum / 3032.69)))
+consumpstd = (((my.consump_sum  / 153435.9)))
 my.utilize = freetimestd ^ 0.33 + consumpstd ^ 0.33 - movetimestd ^ 0.33
 universe.averageutilize = universe.averageutilize + (my.utilize / 20)
 
