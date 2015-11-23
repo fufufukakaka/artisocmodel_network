@@ -650,15 +650,15 @@ Sub jobroute(targetPointAgt As Agt)
 	// 現在地点から経路を再探索する
 	// どのofficeに向かうかidによってあらかじめ決定される
 	// 予め計算してある値を使用(jobrouteoption)
-	if my.ID ==1 or my.ID == 3 or my.ID or my.ID == 10 then
+	if my.ID ==1 or my.ID == 3 or  my.ID == 10 then
 		m = 0
-	elseif my.ID ==0 or my.ID == 8 or my.ID or my.ID == 5 or my.ID == 19 then
+	elseif my.ID ==0 or my.ID == 8 or my.ID == 5 or my.ID == 19 then
 		m = 1
-	elseif my.ID ==2 or my.ID == 4 or my.ID or my.ID == 7 then
+	elseif my.ID ==2 or my.ID == 4 or my.ID == 7 then
 		m = 2
-	elseif my.ID ==6 or my.ID == 9 or my.ID or my.ID == 11 or my.ID == 18 then
+	elseif my.ID ==6 or my.ID == 9 or my.ID == 11 or my.ID == 18 then
 		m = 3
-	elseif my.ID ==12 or my.ID == 17 or my.ID or my.ID == 14 then
+	elseif my.ID ==12 or my.ID == 17 or my.ID == 14 then
 		m = 4
 	else
 		m = 5
@@ -1016,12 +1016,12 @@ Map_Output {
     Title = "Map";
     Disable = No;
     Background_Color = 255, 255, 255;
-    Position_x = -3;
-    Position_y = 224;
+    Position_x = 221;
+    Position_y = 44;
     Size_x = 707;
     Size_y = 750;
     Remarks = No;
-    Map_Cell_Size = 7;
+    Map_Cell_Size = 0;
     Legend_Pos = Top;
     Font_Name = "Dialog";
     Font_Char_Set = 81;
