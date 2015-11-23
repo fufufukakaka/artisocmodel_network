@@ -202,13 +202,17 @@ Initial_Value {
 , 55);
     UNIVERSE.MAP.BRIDGECORE.DISTANCE = 11(11*0.0);
     UNIVERSE.MAP.BRIDGECORE.HASBLOCK = 11(11*0);
-    UNIVERSE.MAP.BRIDGECORE.BRIDGETIME = 11(11*0);
+    UNIVERSE.MAP.BRIDGECORE.BRIDGETIME = 11(1071873, 896648, 905880, 837182, 834575, 886187, 1406801, 756371, 1082602, 831646
+, 334964);
     UNIVERSE.MAP.BRIDGECORE.BRIDGELINK = 11(11*0);
     UNIVERSE.MAP.BRIDGECORE.LENGTH = 11(16.63, 58.57, 18.51, 81.56, 42.11, 178.78, 71.87, 18.86, 39.56, 33.06
 , 17.48);
     UNIVERSE.MAP.BRIDGECORE.IRON = 11(11*0.0);
     UNIVERSE.MAP.BRIDGECORE.VALUE = 11(11*0.0);
     UNIVERSE.MAP.BRIDGECORE.REPAIRCOST = 11(11*0.0);
+    UNIVERSE.MAP.BRIDGECORE.COLLAPSE = 11(11*0);
+    UNIVERSE.MAP.BRIDGECORE.COLLAPSEFLAG = 11(11*0);
+    UNIVERSE.MAP.BRIDGECORE.TRANSPORT = 11(11*0);
 }
 
 
@@ -644,17 +648,17 @@ Sub jobroute(targetPointAgt As Agt)
 	dim m as integer
 	
 	// 現在地点から経路を再探索する
-	// どのshopに向かうかをランダムに決める
+	// どのofficeに向かうかidによってあらかじめ決定される
 	// 予め計算してある値を使用(jobrouteoption)
-	if rnd() < 0.16 then
+	if my.ID ==1 or my.ID == 3 or my.ID or my.ID == 10 then
 		m = 0
-	elseif rnd() < 0.32 then
+	elseif my.ID ==0 or my.ID == 8 or my.ID or my.ID == 5 or my.ID == 19 then
 		m = 1
-	elseif rnd() < 0.48 then
+	elseif my.ID ==2 or my.ID == 4 or my.ID or my.ID == 7 then
 		m = 2
-	elseif rnd() < 0.64 then
+	elseif my.ID ==6 or my.ID == 9 or my.ID or my.ID == 11 or my.ID == 18 then
 		m = 3
-	elseif rnd() < 0.8 then
+	elseif my.ID ==12 or my.ID == 17 or my.ID or my.ID == 14 then
 		m = 4
 	else
 		m = 5
@@ -834,8 +838,7 @@ Agt_Init{
 my.demand = 0
 my.collapse = FALSE
 my.collapseflag = FALSE
-// 橋の残存年数は0.5を平均として正規分布乱数で散らす？ランダム性を除くために最初から決めるかもしれない
-my.bridgetime = norminv(rnd(),901250,100000)
+// 橋の残存年数は最初から決める
 
 // 橋の長さから初期費用を決定する
 my.iron = 55 * exp(0.03 * my.length) * 0.01
@@ -1981,7 +1984,7 @@ Space_Map_Initial_Value {
 // Window Location Definition Division
 //-------------------------------------------------------
 Window_Rectangle {
-    Window_Name = Main_Window, 19, 27, 800, 700;
+    Window_Name = Main_Window, 19, 27, 1146, 969;
     Window_Name = Output_Setting_Window, 160, 205, 480, 290;
 }
 
