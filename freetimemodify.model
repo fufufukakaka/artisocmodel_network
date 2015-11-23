@@ -148,6 +148,9 @@ UNIVERSE {
     Dim daytimecount(0, 0) As Integer = (0);
     Dim monthcheckmode(0, 0) As Boolean = (0);
     Dim simulationcode(0, 0) As String = ("");
+    Dim univbudget(0, 0) As Double = ();
+    Dim threshold(0, 0) As Double = ();
+    Dim testnumber(0, 0) As Integer = ();
 }
 
 
@@ -155,6 +158,7 @@ UNIVERSE {
 // Agent Variable Initial Data
 //-------------------------------------------------------
 Initial_Value {
+    UNIVERSE.SIMULATIONCODE = 1(" \"2015/11/23bigtesthyakuoku\"");
     UNIVERSE.MAP.POINT.X = 114(44.99105546, 42.48658318, 43.20214669, 46.86940966, 45.16994633, 40.96601073, 43.82826476, 45.52772809, 48.21109123, 47.49552773
 , 42.03935599, 46.69051878, 41.77101968, 43.47048301, 46.60107335, 44.72271914, 41.94991055, 47.13774597, 49.28443649, 48.8372093
 , 43.38103757, 37.20930233, 36.76207513, 38.46153846, 41.5921288, 37.47763864, 33.72093023, 35.33094812, 38.5509839, 39.80322004
@@ -231,7 +235,6 @@ universe.checkmode = FALSE
 universe.monthcheckmode = FALSE
 universe.recalculateflag =FALSE
 universe.daytimecount = 1
-universe.simulationcode = "2015/11/23littletesthyakuoku"
 universe.recalculate = 0
 universe.officelist(0) = 57
 universe.officelist(1) = 112
@@ -267,7 +270,7 @@ end if
 if Int(cdbl(round(gethistory(universe.day,2)*1000)/1000)) mod 30 == 29 and cdbl(round(universe.day*1000)/1000) mod 30 == 0 then
 	universe.monthcheckmode = TRUE
 	// csv書き込み
-			openfilecsv("bridgetest1.csv",2,3)
+			openfilecsv("bridgetest"&universe.testnumber&".csv",2,3)
 			for i = 0 to 10
 writefilecsv(2,universe.simulationcode,false)
 writefilecsv(2,universe.day,false)
@@ -278,7 +281,7 @@ writefilecsv(2,universe.Map.bridgecore(i).collapse,false)
 writefilecsv(2,universe.Map.bridgecore(i).repaircost,true)
 	next i
 closefilecsv(2)
-openfilecsv("persontest1.csv",2,3)
+openfilecsv("persontest"&universe.testnumber&".csv",2,3)
 			for i = 0 to 19
 writefilecsv(2,universe.simulationcode,false)
 writefilecsv(2,universe.Map.Person(i).ID,false)
@@ -293,7 +296,7 @@ writefilecsv(2,universe.Map.Person(i).positiveline,false)
 writefilecsv(2,universe.Map.Person(i).negativeline,true)
 	next i
 closefilecsv(2)
-openfilecsv("governtest1.csv",2,3)
+openfilecsv("governtest"&universe.testnumber&".csv",2,3)
 writefilecsv(2,universe.simulationcode,false)
 writefilecsv(2,universe.day,false)
 writefilecsv(2,universe.map.government.budget,false)
@@ -730,7 +733,7 @@ Agt_Init{
 my.X = 25
 my.Y = 25
 // 予算は100億から
-my.budget = 10000000000
+my.budget = universe.univbudget * 100000000
 my.bridgecount = 0
 }
 
@@ -788,7 +791,7 @@ if universe.checkmode == TRUE then
 	next p
 // 危険域にある橋の数を数えてエージェントセット内に入れる
 	for i = 0 to 10	
-	if universe.Map.bridgecore(i).strength <= 0.2 then
+	if universe.Map.bridgecore(i).strength <= universe.threshold then
 		addagt(repairbridge,universe.Map.bridgecore(i))
 		my.bridgecount = my.bridgecount + 1
 	end if
@@ -1016,12 +1019,12 @@ Map_Output {
     Title = "Map";
     Disable = No;
     Background_Color = 255, 255, 255;
-    Position_x = 221;
-    Position_y = 44;
+    Position_x = -65;
+    Position_y = 111;
     Size_x = 707;
     Size_y = 750;
     Remarks = No;
-    Map_Cell_Size = 0;
+    Map_Cell_Size = 13;
     Legend_Pos = Top;
     Font_Name = "Dialog";
     Font_Char_Set = 81;
@@ -1773,8 +1776,8 @@ Numeric_Output {
     Font_Style = 0;
     Font_Color = 0, 0, 0;
     Font_Background_Color = 255, 255, 255;
-    Position_x = 51;
-    Position_y = 0;
+    Position_x = 31;
+    Position_y = 25;
     Size_x = 253;
     Size_y = 157;
     Map_Cell_Size = -1;
@@ -1819,7 +1822,65 @@ Numeric_Output {
 // Control Panel Definition Division
 //-------------------------------------------------------
 Control_Panel {
-    Display_Area = 0, 0, 100, 100;
+    Display_Area = 319, 112, 437, 215;
+    Panel_Item {
+        Item_Type = Edit_Box;
+        Item_Name = "simulationcode";
+        Display_Area = 0, 0, 0, 0;
+        Font_Name = "";
+        Font_Char_Set = 0;
+        Font_Size = 0.0;
+        Font_Style = 0;
+        Font_Color = 0, 0, 0;
+        Font_Background_Color = 0, 0, 0;
+        Var_Name = "Universe.simulationcode";
+        Text_Data = " \"2015/11/23bigtesthyakuoku\"";
+    }
+    Panel_Item {
+        Item_Type = Slider;
+        Item_Name = "budget";
+        Display_Area = 0, 0, 0, 0;
+        Font_Name = "";
+        Font_Char_Set = 0;
+        Font_Size = 0.0;
+        Font_Style = 0;
+        Font_Color = 0, 0, 0;
+        Font_Background_Color = 0, 0, 0;
+        Var_Name = "Universe.univbudget";
+        Slider_Range_Max = 99;
+        Slider_Value_Min = 10.0;
+        Slider_Value_Step = 10.0;
+        Slider_Value = "9";
+    }
+    Panel_Item {
+        Item_Type = Slider;
+        Item_Name = "threshold";
+        Display_Area = 0, 0, 0, 0;
+        Font_Name = "";
+        Font_Char_Set = 0;
+        Font_Size = 0.0;
+        Font_Style = 0;
+        Font_Color = 0, 0, 0;
+        Font_Background_Color = 0, 0, 0;
+        Var_Name = "Universe.threshold";
+        Slider_Range_Max = 8;
+        Slider_Value_Min = 0.1;
+        Slider_Value_Step = 0.1;
+        Slider_Value = "7";
+    }
+    Panel_Item {
+        Item_Type = Edit_Box;
+        Item_Name = "testnumber";
+        Display_Area = 0, 0, 0, 0;
+        Font_Name = "";
+        Font_Char_Set = 0;
+        Font_Size = 0.0;
+        Font_Style = 0;
+        Font_Color = 0, 0, 0;
+        Font_Background_Color = 0, 0, 0;
+        Var_Name = "Universe.testnumber";
+        Text_Data = "2";
+    }
 }
 
 
@@ -1984,7 +2045,7 @@ Space_Map_Initial_Value {
 // Window Location Definition Division
 //-------------------------------------------------------
 Window_Rectangle {
-    Window_Name = Main_Window, 19, 27, 1146, 969;
+    Window_Name = Main_Window, 28, 8, 790, 366;
     Window_Name = Output_Setting_Window, 160, 205, 480, 290;
 }
 
