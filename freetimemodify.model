@@ -97,7 +97,7 @@ UNIVERSE {
             Dim repaircost(0, 0) As Double = (0.0);
             Dim collapse(0, 0) As Boolean = (0);
             Dim collapseflag(0, 0) As Boolean = (0);
-            Dim transport(0, 0) As Integer = ();
+            Dim transport(0, 0) As Integer = (0);
         }
     }
     AgtType Link(0, 0)[250] {
@@ -227,7 +227,7 @@ universe.checkmode = FALSE
 universe.monthcheckmode = FALSE
 universe.recalculateflag =FALSE
 universe.daytimecount = 1
-universe.simulationcode = "2015/11/22bigtest"
+universe.simulationcode = "2015/11/22littletesthyakuoku"
 universe.recalculate = 0
 universe.officelist(0) = 57
 universe.officelist(1) = 112
@@ -263,7 +263,7 @@ end if
 if Int(cdbl(round(gethistory(universe.day,2)*1000)/1000)) mod 30 == 29 and cdbl(round(universe.day*1000)/1000) mod 30 == 0 then
 	universe.monthcheckmode = TRUE
 	// csv書き込み
-			openfilecsv("bridgetest1.csv",2,3)
+			openfilecsv("bridgetest3.csv",2,3)
 			for i = 0 to 10
 writefilecsv(2,universe.simulationcode,false)
 writefilecsv(2,universe.day,false)
@@ -274,7 +274,7 @@ writefilecsv(2,universe.Map.bridgecore(i).collapse,false)
 writefilecsv(2,universe.Map.bridgecore(i).repaircost,true)
 	next i
 closefilecsv(2)
-openfilecsv("persontest1.csv",2,3)
+openfilecsv("persontest3.csv",2,3)
 			for i = 0 to 19
 writefilecsv(2,universe.simulationcode,false)
 writefilecsv(2,universe.Map.Person(i).ID,false)
@@ -289,7 +289,7 @@ writefilecsv(2,universe.Map.Person(i).positiveline,false)
 writefilecsv(2,universe.Map.Person(i).negativeline,true)
 	next i
 closefilecsv(2)
-openfilecsv("governtest1.csv",2,3)
+openfilecsv("governtest3.csv",2,3)
 writefilecsv(2,universe.simulationcode,false)
 writefilecsv(2,universe.day,false)
 writefilecsv(2,universe.map.government.budget,false)
@@ -411,7 +411,7 @@ my.freetime_sum = 0
 my.utilize = 0
 my.consump = norminv(rnd(),9360,int(rnd()*1000) + 500)
 my.potential = norminv(rnd(),14581,int(rnd()*1000) + 500)
-my.freetime = norminv(rnd(),300,(rnd()*50+100))
+my.freetime = norminv(rnd(),300,int(rnd()*50)+100)
 my.archivement = my.potential
 universe.averagearchive = universe.averagearchive + (my.archivement / 20)
 my.archive_sum = 0
@@ -725,8 +725,8 @@ include "dijkstra.inc"
 Agt_Init{
 my.X = 25
 my.Y = 25
-// 予算は50億から
-my.budget = 5000000000
+// 予算は100億から
+my.budget = 10000000000
 my.bridgecount = 0
 }
 
@@ -784,7 +784,7 @@ if universe.checkmode == TRUE then
 	next p
 // 危険域にある橋の数を数えてエージェントセット内に入れる
 	for i = 0 to 10	
-	if universe.Map.bridgecore(i).strength <= 0.8 then
+	if universe.Map.bridgecore(i).strength <= 0.2 then
 		addagt(repairbridge,universe.Map.bridgecore(i))
 		my.bridgecount = my.bridgecount + 1
 	end if
@@ -1770,10 +1770,10 @@ Numeric_Output {
     Font_Style = 0;
     Font_Color = 0, 0, 0;
     Font_Background_Color = 255, 255, 255;
-    Position_x = 56;
-    Position_y = 32;
-    Size_x = 233;
-    Size_y = 224;
+    Position_x = 51;
+    Position_y = 0;
+    Size_x = 253;
+    Size_y = 157;
     Map_Cell_Size = -1;
     Numeric_Name = "day.etc";
     Title = "day.etc";
@@ -1981,7 +1981,7 @@ Space_Map_Initial_Value {
 // Window Location Definition Division
 //-------------------------------------------------------
 Window_Rectangle {
-    Window_Name = Main_Window, 0, 0, 897, 764;
+    Window_Name = Main_Window, 0, 0, 800, 700;
     Window_Name = Output_Setting_Window, 160, 205, 480, 290;
 }
 
