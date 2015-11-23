@@ -231,7 +231,7 @@ universe.checkmode = FALSE
 universe.monthcheckmode = FALSE
 universe.recalculateflag =FALSE
 universe.daytimecount = 1
-universe.simulationcode = "2015/11/22littletesthyakuoku"
+universe.simulationcode = "2015/11/23littletesthyakuoku"
 universe.recalculate = 0
 universe.officelist(0) = 57
 universe.officelist(1) = 112
@@ -267,7 +267,7 @@ end if
 if Int(cdbl(round(gethistory(universe.day,2)*1000)/1000)) mod 30 == 29 and cdbl(round(universe.day*1000)/1000) mod 30 == 0 then
 	universe.monthcheckmode = TRUE
 	// csvèëÇ´çûÇ›
-			openfilecsv("bridgetest3.csv",2,3)
+			openfilecsv("bridgetest1.csv",2,3)
 			for i = 0 to 10
 writefilecsv(2,universe.simulationcode,false)
 writefilecsv(2,universe.day,false)
@@ -278,7 +278,7 @@ writefilecsv(2,universe.Map.bridgecore(i).collapse,false)
 writefilecsv(2,universe.Map.bridgecore(i).repaircost,true)
 	next i
 closefilecsv(2)
-openfilecsv("persontest3.csv",2,3)
+openfilecsv("persontest1.csv",2,3)
 			for i = 0 to 19
 writefilecsv(2,universe.simulationcode,false)
 writefilecsv(2,universe.Map.Person(i).ID,false)
@@ -293,7 +293,7 @@ writefilecsv(2,universe.Map.Person(i).positiveline,false)
 writefilecsv(2,universe.Map.Person(i).negativeline,true)
 	next i
 closefilecsv(2)
-openfilecsv("governtest3.csv",2,3)
+openfilecsv("governtest1.csv",2,3)
 writefilecsv(2,universe.simulationcode,false)
 writefilecsv(2,universe.day,false)
 writefilecsv(2,universe.map.government.budget,false)
