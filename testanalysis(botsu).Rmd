@@ -724,3 +724,175 @@ mean(pinfo$f)
 mean(pinfo$m)
 mean(pinfo$c)
 ```
+
+
+いろいろ固定化したりしてみたのが23日
+
+```{r}
+b2<-dbGetQuery(con,"SELECT * FROM bridgelog where simulationcode ='2015/11/23bigtesthyakuoku'")
+b1<-dbGetQuery(con,"SELECT * FROM bridgelog where simulationcode ='2015/11/23littletesthyakuoku'")
+g2<-dbGetQuery(con,"SELECT * FROM governmentlog where simulationcode ='2015/11/23bigtesthyakuoku'")
+g1<-dbGetQuery(con,"SELECT * FROM governmentlog where simulationcode ='2015/11/23littletesthyakuoku'")
+p2<-dbGetQuery(con,"SELECT * FROM personlog where simulationcode ='2015/11/23bigtesthyakuoku'")
+p1<-dbGetQuery(con,"SELECT * FROM personlog where simulationcode ='2015/11/23littletesthyakuoku'")
+```
+
+```{r}
+gbr<-ggplot(
+b1,
+aes(
+x = day,
+y = strength,
+colour=factor(bridgeid)
+)
+)
+gbr <- gbr + geom_line()
+plot(gbr)
+
+gbr1<-ggplot(
+b1,
+aes(
+x = day,
+y = demand,
+colour=factor(bridgeid)
+)
+)
+gbr1 <- gbr1 + geom_line()
+plot(gbr1)
+gp<-ggplot(
+p1,
+aes(
+x = day,
+y = utilize,
+colour=factor(personid)
+)
+)
+gp <- gp + geom_line()
+plot(gp)
+gp<-ggplot(
+p1,
+aes(
+x = day,
+y = freetime,
+colour=factor(personid)
+)
+)
+gp <- gp + geom_line()
+plot(gp)
+gp<-ggplot(
+p1,
+aes(
+x = day,
+y = movetime,
+colour=factor(personid)
+)
+)
+gp <- gp + geom_line()
+plot(gp)
+gp<-ggplot(
+p1,
+aes(
+x = day,
+y = consumtion,
+colour=factor(personid)
+)
+)
+gp <- gp + geom_line()
+plot(gp)
+gp<-ggplot(
+p1,
+aes(
+x = day,
+y = money,
+colour=factor(personid)
+)
+)
+gp <- gp + geom_line()
+plot(gp)
+```
+
+```{r}
+gbr<-ggplot(
+b2,
+aes(
+x = day,
+y = strength,
+colour=factor(bridgeid)
+)
+)
+gbr <- gbr + geom_line()
+plot(gbr)
+gbr1<-ggplot(
+b2,
+aes(
+x = day,
+y = demand,
+colour=factor(bridgeid)
+)
+)
+gbr1 <- gbr1 + geom_line()
+plot(gbr1)
+ggo<-ggplot(
+g2,
+aes(
+x = day,
+y = budget
+)
+)
+ggo<- ggo + geom_line()
+plot(ggo)
+gp<-ggplot(
+p2,
+aes(
+x = day,
+y = utilize,
+colour=factor(personid)
+)
+)
+gp <- gp + geom_line()
+plot(gp)
+gp<-ggplot(
+p2,
+aes(
+x = day,
+y = freetime,
+colour=factor(personid)
+)
+)
+gp <- gp + geom_line()
+plot(gp)
+gp<-ggplot(
+p2,
+aes(
+x = day,
+y = movetime,
+colour=factor(personid)
+)
+)
+gp <- gp + geom_line()
+plot(gp)
+gp<-ggplot(
+p2,
+aes(
+x = day,
+y = consumtion,
+colour=factor(personid)
+)
+)
+gp <- gp + geom_line()
+plot(gp)
+gp<-ggplot(
+p2,
+aes(
+x = day,
+y = money,
+colour=factor(personid)
+)
+)
+gp <- gp + geom_line()
+plot(gp)
+```
+
+＊costが100000にupdateされているなら、strengthを0にしてわかりやすくする
+＊bridgeid5の修繕費用がさすがに高すぎるので、長さを100mにする
+＊人々の効用が橋の数が少なくなったことを受けても一向に減らないので、もう少し下限を小さくする
