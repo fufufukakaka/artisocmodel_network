@@ -148,9 +148,9 @@ UNIVERSE {
     Dim daytimecount(0, 0) As Integer = (0);
     Dim monthcheckmode(0, 0) As Boolean = (0);
     Dim simulationcode(0, 0) As String = ("");
-    Dim univbudget(0, 0) As Double = ();
-    Dim threshold(0, 0) As Double = ();
-    Dim testnumber(0, 0) As Integer = ();
+    Dim univbudget(0, 0) As Double = (0.0);
+    Dim threshold(0, 0) As Double = (0.0);
+    Dim testnumber(0, 0) As Integer = (0);
 }
 
 
@@ -158,7 +158,10 @@ UNIVERSE {
 // Agent Variable Initial Data
 //-------------------------------------------------------
 Initial_Value {
-    UNIVERSE.SIMULATIONCODE = 1(" \"2015/11/23bigtesthyakuoku\"");
+    UNIVERSE.SIMULATIONCODE = 1(" \"2015/11/24bigtesthyakuoku\"");
+    UNIVERSE.UNIVBUDGET = 1(100.0);
+    UNIVERSE.THRESHOLD = 1(0.8);
+    UNIVERSE.TESTNUMBER = 1(3);
     UNIVERSE.MAP.POINT.X = 114(44.99105546, 42.48658318, 43.20214669, 46.86940966, 45.16994633, 40.96601073, 43.82826476, 45.52772809, 48.21109123, 47.49552773
 , 42.03935599, 46.69051878, 41.77101968, 43.47048301, 46.60107335, 44.72271914, 41.94991055, 47.13774597, 49.28443649, 48.8372093
 , 43.38103757, 37.20930233, 36.76207513, 38.46153846, 41.5921288, 37.47763864, 33.72093023, 35.33094812, 38.5509839, 39.80322004
@@ -209,7 +212,7 @@ Initial_Value {
     UNIVERSE.MAP.BRIDGECORE.BRIDGETIME = 11(1071873, 896648, 905880, 837182, 834575, 886187, 1406801, 756371, 1082602, 831646
 , 334964);
     UNIVERSE.MAP.BRIDGECORE.BRIDGELINK = 11(11*0);
-    UNIVERSE.MAP.BRIDGECORE.LENGTH = 11(16.63, 58.57, 18.51, 81.56, 42.11, 178.78, 71.87, 18.86, 39.56, 33.06
+    UNIVERSE.MAP.BRIDGECORE.LENGTH = 11(16.63, 58.57, 18.51, 81.56, 42.11, 100.0, 71.87, 18.86, 39.56, 33.06
 , 17.48);
     UNIVERSE.MAP.BRIDGECORE.IRON = 11(11*0.0);
     UNIVERSE.MAP.BRIDGECORE.VALUE = 11(11*0.0);
@@ -514,9 +517,9 @@ elseif CNo == 0 then //誰もいないなら最高速度(2)で
 	my.speed = 2
 end if
 
-//下限界は0.333(10km/hのイメージ)
-if my.speed < 0.333 then
-	my.speed = 0.333
+//下限は0.2(10km/hのイメージ)
+if my.speed < 0.2 then
+	my.speed = 0.2
 end if
 
 //ダイクストラ法に基づいて進む
@@ -879,6 +882,9 @@ my.repaircost = my.value * (1 - my.strength)
 if my.strength <= 0 then
 	my.strength = 0
 	my.collapseflag = TRUE
+end if
+if my.collapse == true then
+	my.strength = 0
 end if
 }
 #end_rule UNIVERSE.MAP.BRIDGECORE
@@ -1834,7 +1840,7 @@ Control_Panel {
         Font_Color = 0, 0, 0;
         Font_Background_Color = 0, 0, 0;
         Var_Name = "Universe.simulationcode";
-        Text_Data = " \"2015/11/23bigtesthyakuoku\"";
+        Text_Data = " \"2015/11/24bigtesthyakuoku\"";
     }
     Panel_Item {
         Item_Type = Slider;
@@ -1879,7 +1885,7 @@ Control_Panel {
         Font_Color = 0, 0, 0;
         Font_Background_Color = 0, 0, 0;
         Var_Name = "Universe.testnumber";
-        Text_Data = "2";
+        Text_Data = "3";
     }
 }
 
@@ -2045,7 +2051,7 @@ Space_Map_Initial_Value {
 // Window Location Definition Division
 //-------------------------------------------------------
 Window_Rectangle {
-    Window_Name = Main_Window, 28, 8, 790, 366;
+    Window_Name = Main_Window, 0, 0, 1023, 939;
     Window_Name = Output_Setting_Window, 160, 205, 480, 290;
 }
 
