@@ -896,3 +896,13 @@ plot(gp)
 ＊costが100000にupdateされているなら、strengthを0にしてわかりやすくする
 ＊bridgeid5の修繕費用がさすがに高すぎるので、長さを100mにする
 ＊人々の効用が橋の数が少なくなったことを受けても一向に減らないので、もう少し下限を小さくする
+
+次は2015/11/24/little(big)testhyakuokummです
+```{r}
+b2<-dbGetQuery(con,"SELECT * FROM bridgelog where simulationcode ='2015/11/24bigtesthyakuokumm'")
+b1<-dbGetQuery(con,"SELECT * FROM bridgelog where simulationcode ='2015/11/24littletesthyakuokumm'")
+g2<-dbGetQuery(con,"SELECT * FROM governmentlog where simulationcode ='2015/11/24bigtesthyakuokumm'")
+g1<-dbGetQuery(con,"SELECT * FROM governmentlog where simulationcode ='2015/11/24littletesthyakuokumm'")
+p2<-dbGetQuery(con,"SELECT * FROM personlog where simulationcode ='2015/11/24bigtesthyakuokumm'")
+p1<-dbGetQuery(con,"SELECT * FROM personlog where simulationcode ='2015/11/24littletesthyakuokumm'")
+```
