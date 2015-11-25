@@ -440,10 +440,6 @@ y = budget
 )
 ggo<- ggo + geom_line()
 plot(ggo)
-gpp<- ggplot(NULL)
-gpp<- gpp + geom_line(g1,aes(day,budget,colour=factor()))
-gpp<- gpp + geom_line(data=b1,aes(x=day,y=repaircost,colour=factor(bridgeid)))
-plot(gpp)
 ```
 
 政府予算とrepaicostを見比べてみても直されない理由が見つからない
@@ -559,10 +555,6 @@ y = budget
 )
 ggo<- ggo + geom_line()
 plot(ggo)
-gpp<- ggplot(NULL)
-gpp<- gpp + geom_line(g2,aes(day,budget,colour=factor()))
-gpp<- gpp + geom_line(data=b2,aes(x=day,y=repaircost,colour=factor(bridgeid)))
-plot(gpp)
 gp<-ggplot(
 p2,
 aes(
@@ -654,10 +646,6 @@ y = budget
 )
 ggo<- ggo + geom_line()
 plot(ggo)
-gpp<- ggplot(NULL)
-gpp<- gpp + geom_line(g3,aes(day,budget,colour=factor()))
-gpp<- gpp + geom_line(data=b3,aes(x=day,y=repaircost,colour=factor(bridgeid)))
-plot(gpp)
 gp<-ggplot(
 p3,
 aes(
@@ -737,6 +725,8 @@ p2<-dbGetQuery(con,"SELECT * FROM personlog where simulationcode ='2015/11/23big
 p1<-dbGetQuery(con,"SELECT * FROM personlog where simulationcode ='2015/11/23littletesthyakuoku'")
 ```
 
+littletesthyakuoku
+
 ```{r}
 gbr<-ggplot(
 b1,
@@ -810,6 +800,8 @@ colour=factor(personid)
 gp <- gp + geom_line()
 plot(gp)
 ```
+
+bigtesthyakuoku
 
 ```{r}
 gbr<-ggplot(
@@ -905,4 +897,173 @@ g2<-dbGetQuery(con,"SELECT * FROM governmentlog where simulationcode ='2015/11/2
 g1<-dbGetQuery(con,"SELECT * FROM governmentlog where simulationcode ='2015/11/24littletesthyakuokumm'")
 p2<-dbGetQuery(con,"SELECT * FROM personlog where simulationcode ='2015/11/24bigtesthyakuokumm'")
 p1<-dbGetQuery(con,"SELECT * FROM personlog where simulationcode ='2015/11/24littletesthyakuokumm'")
+```
+
+littletesthyakuokumm
+
+```{r}
+gbr<-ggplot(
+b1,
+aes(
+x = day,
+y = strength,
+colour=factor(bridgeid)
+)
+)
+gbr <- gbr + geom_line()
+plot(gbr)
+
+gbr1<-ggplot(
+b1,
+aes(
+x = day,
+y = demand,
+colour=factor(bridgeid)
+)
+)
+ggo<-ggplot(
+g1,
+aes(
+x = day,
+y = budget
+)
+)
+ggo<- ggo + geom_line()
+plot(ggo)
+gbr1 <- gbr1 + geom_line()
+plot(gbr1)
+gp<-ggplot(
+p1,
+aes(
+x = day,
+y = utilize,
+colour=factor(personid)
+)
+)
+gp <- gp + geom_line()
+plot(gp)
+gp<-ggplot(
+p1,
+aes(
+x = day,
+y = freetime,
+colour=factor(personid)
+)
+)
+gp <- gp + geom_line()
+plot(gp)
+gp<-ggplot(
+p1,
+aes(
+x = day,
+y = movetime,
+colour=factor(personid)
+)
+)
+gp <- gp + geom_line()
+plot(gp)
+gp<-ggplot(
+p1,
+aes(
+x = day,
+y = consumtion,
+colour=factor(personid)
+)
+)
+gp <- gp + geom_line()
+plot(gp)
+gp<-ggplot(
+p1,
+aes(
+x = day,
+y = money,
+colour=factor(personid)
+)
+)
+gp <- gp + geom_line()
+plot(gp)
+```
+
+bigtesthyakuokumm
+
+```{r}
+gbr<-ggplot(
+b2,
+aes(
+x = day,
+y = strength,
+colour=factor(bridgeid)
+)
+)
+gbr <- gbr + geom_line()
+plot(gbr)
+gbr1<-ggplot(
+b2,
+aes(
+x = day,
+y = demand,
+colour=factor(bridgeid)
+)
+)
+gbr1 <- gbr1 + geom_line()
+plot(gbr1)
+ggo<-ggplot(
+g2,
+aes(
+x = day,
+y = budget
+)
+)
+ggo<- ggo + geom_line()
+plot(ggo)
+gp<-ggplot(
+p2,
+aes(
+x = day,
+y = utilize,
+colour=factor(personid)
+)
+)
+gp <- gp + geom_line()
+plot(gp)
+gp<-ggplot(
+p2,
+aes(
+x = day,
+y = freetime,
+colour=factor(personid)
+)
+)
+gp <- gp + geom_line()
+plot(gp)
+gp<-ggplot(
+p2,
+aes(
+x = day,
+y = movetime,
+colour=factor(personid)
+)
+)
+gp <- gp + geom_line()
+plot(gp)
+gp<-ggplot(
+p2,
+aes(
+x = day,
+y = consumtion,
+colour=factor(personid)
+)
+)
+gp <- gp + geom_line()
+plot(gp)
+gp<-ggplot(
+p2,
+aes(
+x = day,
+y = money,
+colour=factor(personid)
+)
+)
+gp <- gp + geom_line()
+plot(gp)
 ```
