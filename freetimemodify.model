@@ -158,7 +158,7 @@ UNIVERSE {
 // Agent Variable Initial Data
 //-------------------------------------------------------
 Initial_Value {
-    UNIVERSE.SIMULATIONCODE = 1(" \"2015/11/24littletesthyakuoku\"");
+    UNIVERSE.SIMULATIONCODE = 1(" 2015/11/24littletesthyakuoku");
     UNIVERSE.UNIVBUDGET = 1(100.0);
     UNIVERSE.THRESHOLD = 1(0.2);
     UNIVERSE.TESTNUMBER = 1(4);
@@ -273,6 +273,7 @@ end if
 if Int(cdbl(round(gethistory(universe.day,2)*1000)/1000)) mod 30 == 29 and cdbl(round(universe.day*1000)/1000) mod 30 == 0 then
 	universe.monthcheckmode = TRUE
 	// csv書き込み
+	/*
 			openfilecsv("bridgetest"&universe.testnumber&".csv",2,3)
 			for i = 0 to 10
 writefilecsv(2,universe.simulationcode,false)
@@ -303,8 +304,12 @@ openfilecsv("governtest"&universe.testnumber&".csv",2,3)
 writefilecsv(2,universe.simulationcode,false)
 writefilecsv(2,universe.day,false)
 writefilecsv(2,universe.map.government.budget,false)
-writefilecsv(2,universe.map.government.nowbridge,true)
+writefilecsv(2,universe.averageutilize,false)
+writefilecsv(2,universe.averageconsump,false)
+writefilecsv(2,universe.averagemovetime,false)
+writefilecsv(2,universe.averagefreetime,true)
 closefilecsv(2)
+*/
 else
 	universe.monthcheckmode = FALSE
 end if
@@ -508,18 +513,18 @@ if CNo >= 1 then
 	one = getagt(set,0)
 	
 	// 車間距離に応じたスピードの定義
-	if abs(one.direction - my.Direction) == 180 then // 反対車線にいる場合は平均速度(1)で
-		my.speed = 1
+	if abs(one.direction - my.Direction) == 180 then // 反対車線にいる場合は平均速度(2)で
+		my.speed = 2
 	else
 		my.speed = 30*(tanh((one.dist-10)/3)+tanh(10/3)) //GithubのIssuesを参考に
 	end if
-elseif CNo == 0 then //誰もいないなら最高速度(2)で
-	my.speed = 2
+elseif CNo == 0 then //誰もいないなら最高速度(4)で
+	my.speed = 4
 end if
 
-//下限は0.2(10km/hのイメージ)
+//下限は0.1(10km/hのイメージ)
 if my.speed < 0.2 then
-	my.speed = 0.2
+	my.speed = 0.1
 end if
 
 //ダイクストラ法に基づいて進む
@@ -527,7 +532,7 @@ if  universe.daychange == TRUE  then
 	my.nowhome = 0
 	targetPointAgt = Universe.Map.Point(CInt(GetToken(My.RouteArray, My.RouteCount)))
 	my.daycount = my.daycount + 0.5
-	if rnd() < 2/7  or my.money <= 50000 then
+	if rnd() <= 2/7 then
 		shoproute(targetpointagt)
 	else
 		jobroute(targetpointagt)
@@ -573,6 +578,10 @@ end if
 							my.consump_sum = my.consump_sum + my.consump*0.5
 							my.money = my.money - my.consump*0.5
 							my.freetime_sum = my.freetime_sum + my.freetime*0.5
+						else
+							my.consump_sum = my.consump_sum + my.consump
+							my.money = my.money - my.consump
+							my.freetime_sum = my.freetime_sum + my.freetime
 						end if
 					// オフィスなら将来受け取る成果を積み上げる
 					elseif universe.Map.Point(my.goalpointid).site == 2 then
@@ -1025,8 +1034,8 @@ Map_Output {
     Title = "Map";
     Disable = No;
     Background_Color = 255, 255, 255;
-    Position_x = -58;
-    Position_y = 325;
+    Position_x = 67;
+    Position_y = 271;
     Size_x = 707;
     Size_y = 750;
     Remarks = No;
@@ -1502,58 +1511,6 @@ Time_Graph {
     Font_Background_Color = 255, 255, 255;
     Draw_Timing = Simulation_Step;
     Draw_Interval = 1;
-    Graph_Name = "stat_consump&freetime&movetime";
-    Title = "consump,freetime,movetime";
-    Disable = Yes;
-    Background_Color = 255, 255, 255;
-    Remarks = Yes;
-    Legend_Pos = Top;
-    FastDraw = No;
-    Position_x = 72;
-    Position_y = 67;
-    Size_x = 655;
-    Size_y = 472;
-    Map_Cell_Size = -1;
-    Axis_Label = "", "";
-    Draw_By_JFree_Chart = Yes;
-    Scale = 0, 0.0, 1000, 100.0, 100, 10.0;
-    ScaleAuto = Yes, Yes;
-    Output_Group_Name = "";
-    Output {
-        Graph_Element_Name = "archivesum";
-        Line_Color = 255, 255, 0;
-        Line_Width = 2;
-        Marker_Id = 0;
-        Output_Expression = "universe.Map.Person(0).archive_sum";
-        Expression_Value_Display = No;
-        Effective_Fraction_Figures = 0;
-        Graph_Element_Color = (0, 255, 0);
-    }
-    Output {
-        Graph_Element_Name = "archive";
-        Line_Color = 128, 128, 128;
-        Line_Width = 2;
-        Marker_Id = 0;
-        Output_Expression = "universe.Map.Person(0).archivement";
-        Expression_Value_Display = No;
-        Effective_Fraction_Figures = 0;
-        Graph_Element_Color = (0, 204, 204);
-    }
-}
-
-
-//-------------------------------------------------------
-// Time Graph Output Definition Division
-//-------------------------------------------------------
-Time_Graph {
-    Font_Name = "Dialog";
-    Font_Char_Set = 81;
-    Font_Size = 12.0;
-    Font_Style = 0;
-    Font_Color = 0, 0, 0;
-    Font_Background_Color = 255, 255, 255;
-    Draw_Timing = Simulation_Step;
-    Draw_Interval = 1;
     Graph_Name = "day";
     Title = "day";
     Disable = Yes;
@@ -1782,10 +1739,10 @@ Numeric_Output {
     Font_Style = 0;
     Font_Color = 0, 0, 0;
     Font_Background_Color = 255, 255, 255;
-    Position_x = 31;
-    Position_y = 25;
-    Size_x = 253;
-    Size_y = 157;
+    Position_x = 380;
+    Position_y = 386;
+    Size_x = 280;
+    Size_y = 217;
     Map_Cell_Size = -1;
     Numeric_Name = "day.etc";
     Title = "day.etc";
@@ -1804,22 +1761,28 @@ Numeric_Output {
         Output_Expression = "universe.Map.bridgecore(5).strength";
     }
     OUTPUT {
-        Output_Element_Name = "positiveline0";
-        Figures = 3;
+        Output_Element_Name = "consump0";
+        Figures = 2;
         Format_Id = 0;
-        Output_Expression = "universe.Map.Person(0).positiveline";
+        Output_Expression = "universe.Map.Person(0).consump_sum";
     }
     OUTPUT {
-        Output_Element_Name = "negativeline0";
-        Figures = 3;
+        Output_Element_Name = "freetime0";
+        Figures = 2;
         Format_Id = 0;
-        Output_Expression = "universe.Map.Person(0).negativeline";
+        Output_Expression = "universe.Map.Person(0).freetime_sum";
     }
     OUTPUT {
-        Output_Element_Name = "money0";
+        Output_Element_Name = "movetime0";
+        Figures = 2;
+        Format_Id = 0;
+        Output_Expression = "universe.Map.Person(0).timecount_sum";
+    }
+    OUTPUT {
+        Output_Element_Name = "destination";
         Figures = 0;
         Format_Id = 0;
-        Output_Expression = "universe.Map.Person(0).money";
+        Output_Expression = "universe.Map.Person(0).destination";
     }
 }
 
@@ -1828,7 +1791,7 @@ Numeric_Output {
 // Control Panel Definition Division
 //-------------------------------------------------------
 Control_Panel {
-    Display_Area = 1938, 602, 437, 215;
+    Display_Area = 1424, 572, 437, 223;
     Panel_Item {
         Item_Type = Edit_Box;
         Item_Name = "simulationcode";
@@ -1840,7 +1803,7 @@ Control_Panel {
         Font_Color = 0, 0, 0;
         Font_Background_Color = 0, 0, 0;
         Var_Name = "Universe.simulationcode";
-        Text_Data = " \"2015/11/24littletesthyakuoku\"";
+        Text_Data = " 2015/11/24littletesthyakuoku";
     }
     Panel_Item {
         Item_Type = Slider;
@@ -2051,8 +2014,8 @@ Space_Map_Initial_Value {
 // Window Location Definition Division
 //-------------------------------------------------------
 Window_Rectangle {
-    Window_Name = Main_Window, 1920, 4, 1130, 946;
-    Window_Name = Output_Setting_Window, 160, 205, 480, 290;
+    Window_Name = Main_Window, 266, 59, 1269, 884;
+    Window_Name = Output_Setting_Window, 394, 297, 480, 290;
 }
 
 
