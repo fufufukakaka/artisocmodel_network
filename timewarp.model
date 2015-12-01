@@ -55,7 +55,6 @@ UNIVERSE {
             Dim shoprouteoption(0, 0)[6] As String = (6*"");
             Dim destination(0, 0) As Integer = (0);
             Dim utilize(0, 0) As Double = (0.0);
-            Dim recal(0, 0) As Integer = (0);
             Dim jobhomerouteoption(0, 0)[6] As String = (6*"");
             Dim shophomerouteoption(0, 0)[6] As String = (6*"");
             Dim returnroute(0, 0) As String = ("");
@@ -77,6 +76,8 @@ UNIVERSE {
             Dim budget(0, 0) As Double = (0.0);
             Dim bridgecount(0, 0) As Integer = (0);
             Dim nowbridge(0, 0) As Integer = (0);
+            Dim bridgepeoplewatch(0, 0) As Boolean = (0);
+            Dim collapsebridge(0, 0) As Integer = (0);
         }
         AgtType bridgecore(0, 0)[11] {
             Dim ID(0, 0) As Integer = (0);
@@ -146,8 +147,6 @@ UNIVERSE {
     Dim averagemovetime(0, 0) As Double = (0.0);
     Dim averageconsump(0, 0) As Double = (0.0);
     Dim averageutilize(0, 0) As Double = (0.0);
-    Dim recalculate(0, 0) As Integer = (0);
-    Dim recalculateflag(0, 0) As Boolean = (0);
     Dim daytimecount(0, 0) As Integer = (0);
     Dim monthcheckmode(0, 0) As Boolean = (0);
     Dim simulationcode(0, 0) As String = ("");
@@ -155,6 +154,11 @@ UNIVERSE {
     Dim threshold(0, 0) As Double = (0.0);
     Dim testnumber(0, 0) As Integer = (0);
     Dim situation(0, 0) As String = ("");
+    Dim daymode(0, 0) As Integer = (0);
+    Dim warpday(0, 0) <10>  As Double = (0.0);
+    Dim daycalc(0, 0) As Integer = (0);
+    Dim recalculate(0, 0) As Boolean = (0);
+    Dim strengthlimit(0, 0) As Double = (0.0);
 }
 
 
@@ -162,10 +166,11 @@ UNIVERSE {
 // Agent Variable Initial Data
 //-------------------------------------------------------
 Initial_Value {
-    UNIVERSE.SIMULATIONCODE = 1(" 2015/11/26ittletestroute");
-    UNIVERSE.UNIVBUDGET = 1(500.0);
+    UNIVERSE.SIMULATIONCODE = 1("2015/11/30littletestwarp4");
+    UNIVERSE.UNIVBUDGET = 1(50.0);
     UNIVERSE.THRESHOLD = 1(0.2);
-    UNIVERSE.TESTNUMBER = 1(5);
+    UNIVERSE.TESTNUMBER = 1(4);
+    UNIVERSE.STRENGTHLIMIT = 1(0.01);
     UNIVERSE.MAP.POINT.X = 114(44.99105546, 42.48658318, 43.20214669, 46.86940966, 45.16994633, 40.96601073, 43.82826476, 45.52772809, 48.21109123, 47.49552773
 , 42.03935599, 46.69051878, 41.77101968, 43.47048301, 46.60107335, 44.72271914, 41.94991055, 47.13774597, 49.28443649, 48.8372093
 , 43.38103757, 37.20930233, 36.76207513, 38.46153846, 41.5921288, 37.47763864, 33.72093023, 35.33094812, 38.5509839, 39.80322004
@@ -213,8 +218,8 @@ Initial_Value {
 , 55);
     UNIVERSE.MAP.BRIDGECORE.DISTANCE = 11(11*0.0);
     UNIVERSE.MAP.BRIDGECORE.HASBLOCK = 11(11*0);
-    UNIVERSE.MAP.BRIDGECORE.BRIDGETIME = 11(1071873, 896648, 905880, 837182, 834575, 886187, 1406801, 756371, 1082602, 831646
-, 334964);
+    UNIVERSE.MAP.BRIDGECORE.BRIDGETIME = 11(1831188, 1884841, 1882124, 1903035, 1903839, 1887778, 1710057, 1927965, 1827867, 1904743
+, 2085240);
     UNIVERSE.MAP.BRIDGECORE.BRIDGELINK = 11(11*0);
     UNIVERSE.MAP.BRIDGECORE.LENGTH = 11(16.63, 58.57, 18.51, 81.56, 42.11, 100.0, 71.87, 18.86, 39.56, 33.06
 , 17.48);
@@ -242,9 +247,8 @@ openDB("jdbc:postgresql:db_artisoc","org.postgresql.Driver","db_artisoc","postgr
 
 universe.checkmode = FALSE
 universe.monthcheckmode = FALSE
-universe.recalculateflag =FALSE
+universe.recalculate = FALSE
 universe.daytimecount = 1
-universe.recalculate = 0
 universe.officelist(0) = 57
 universe.officelist(1) = 112
 universe.officelist(2) = 111
@@ -257,17 +261,19 @@ universe.shoplist(2) = 59
 universe.shoplist(3) = 63
 universe.shoplist(4) = 67
 universe.shoplist(5) = 69
+universe.warpday = 0
+
+dim streetagtset as agtset
+dim streetagt as agt
+dim i as integer
+
 }
 
 Univ_Step_Begin{
-dim i as integer
-universe.daytimecount = universe.daytimecount + 1
-universe.averagefreetime = 0
-universe.averagemovetime = 0
-universe.averageconsump = 0
-universe.averagearchive = 0
-universe.averageutilize = 0
-universe.recalculate = 0
+dim k as integer
+dim i  as integer
+dim streetagtset as agtset
+dim streetagt as agt
 
 universe.situation = 
 universe.Map.bridgecore(0).sign&
@@ -282,20 +288,60 @@ universe.Map.bridgecore(8).sign&
 universe.Map.bridgecore(9).sign&
 universe.Map.bridgecore(10).sign
 
+if universe.recalculate == TRUE then
+	for k = 0 to 99
+				for i = 0 to 5
+					universe.Map.Person(k).jobrouteoption(i) = @dijkstra(universe.Map.Person(k).homeid, CStr(universe.officelist(i)))
+					universe.Map.Person(k).shoprouteoption(i) = @dijkstra(universe.Map.Person(k).homeid, CStr(universe.shoplist(i)))
+					universe.Map.Person(k).jobhomerouteoption(i) = @dijkstra(universe.officelist(i),CStr(universe.Map.Person(k).homeid))
+					universe.Map.Person(k).shophomerouteoption(i) = @dijkstra(universe.shoplist(i),CStr(universe.Map.Person(k).homeid))
+					/*
+					openfilecsv("routeofperson.csv",2,3)
+					writefilecsv(2,universe.Map.Person(k).id,false)
+					writefilecsv(2,i,false)
+					writefilecsv(2,universe.situation,false)
+					writefilecsv(2,universe.Map.Person(k).jobrouteoption(i),false)
+					writefilecsv(2,universe.Map.Person(k).shoprouteoption(i),false)
+					writefilecsv(2,universe.Map.Person(k).jobhomerouteoption(i),false)
+					writefilecsv(2,universe.Map.Person(k).shophomerouteoption(i),true)
+					closefilecsv(2)
+							*/
+				next i
+		next k
+	universe.recalculate = FALSE
+end if
+
+// 平日か休日か
+if Int(cdbl(round(universe.day*1000)/1000)) mod 2 == 1 then
+// 平日
+	universe.daymode = 1
+else
+// 休日
+	universe.daymode = 0
+end if
+
+universe.daytimecount = universe.daytimecount + 1
+if universe.daymode == 1 then
+	 universe.warpday = 15*((Int(cdbl(round(universe.day*1000)/1000))) - 1) + 21 
+elseif universe.daymode == 0 then
+	universe.warpday = 15*(Int(cdbl(round(universe.day*1000)/1000)))
+end if
+
 // 徴税や点検の処理に入るか否か
-if Int(cdbl(round(gethistory(universe.day,2)*1000)/1000)) mod 360 == 359 and cdbl(round(universe.day*1000)/1000) mod 360 == 0 then
+if Int(cdbl(round(gethistory(universe.warpday,1)*1000)/1000)) mod 360 == 351 and Int(cdbl(round(universe.warpday*1000)/1000)) mod 360 == 0 then
 	universe.checkmode = TRUE
 else
 	universe.checkmode = FALSE
+	universe.Map.government.bridgepeoplewatch = FALSE
 end if
 // 月々の処理を行うモード
-if Int(cdbl(round(gethistory(universe.day,2)*1000)/1000)) mod 30 == 29 and cdbl(round(universe.day*1000)/1000) mod 30 == 0 then
+if Int(cdbl(round(gethistory(universe.warpday,1)*1000)/1000)) mod 30 == 21 and int(cdbl(round(universe.warpday*1000)/1000)) mod 30 == 0 then
 	universe.monthcheckmode = TRUE
 	// csv書き込み
 			openfilecsv("bridgetest"&universe.testnumber&".csv",2,3)
 			for i = 0 to 10
 writefilecsv(2,universe.simulationcode,false)
-writefilecsv(2,universe.day,false)
+writefilecsv(2,universe.warpday,false)
 writefilecsv(2,universe.Map.bridgecore(i).strength,false)
 writefilecsv(2,universe.Map.bridgecore(i).demand,false)
 writefilecsv(2,universe.Map.bridgecore(i).ID,false)
@@ -304,7 +350,7 @@ writefilecsv(2,universe.Map.bridgecore(i).repaircost,true)
 	next i
 closefilecsv(2)
 openfilecsv("persontest"&universe.testnumber&".csv",2,3)
-			for i = 0 to 19
+			for i = 0 to 99
 writefilecsv(2,universe.simulationcode,false)
 writefilecsv(2,universe.Map.Person(i).ID,false)
 writefilecsv(2,universe.Map.Person(i).utilize,false)
@@ -312,13 +358,13 @@ writefilecsv(2,universe.Map.Person(i).timecount_sum,false)
 writefilecsv(2,universe.Map.Person(i).freetime_sum,false)
 writefilecsv(2,universe.Map.Person(i).consump_sum,false)
 writefilecsv(2,universe.Map.Person(i).archivement,false)
-writefilecsv(2,universe.day,false)
+writefilecsv(2,universe.warpday,false)
 writefilecsv(2,universe.Map.Person(i).money,true)
 	next i
 closefilecsv(2)
 openfilecsv("governtest"&universe.testnumber&".csv",2,3)
 writefilecsv(2,universe.simulationcode,false)
-writefilecsv(2,universe.day,false)
+writefilecsv(2,universe.warpday,false)
 writefilecsv(2,universe.map.government.budget,false)
 writefilecsv(2,universe.averageutilize,false)
 writefilecsv(2,universe.averageconsump,false)
@@ -328,7 +374,11 @@ closefilecsv(2)
 else
 	universe.monthcheckmode = FALSE
 end if
-
+universe.averagefreetime = 0
+universe.averagemovetime = 0
+universe.averageconsump = 0
+universe.averagearchive = 0
+universe.averageutilize = 0
 
 // 日付が変更されたか否か
 if universe.numberofendagt == 100 then
@@ -342,15 +392,10 @@ universe.numberofendagt = 0
 }
 
 Univ_Step_End{
-// 人々エージェントのルート再計算が終わったら解除
-if universe.recalculate == 100 then
-	universe.recalculateflag = FALSE
-end if
-
 if universe.daychange == TRUE then
 	universe.daytimecount = 1
 end if
-if universe.day == 18000 then
+if universe.day == 1200 then
 	exitsimulation()
 end if
 
@@ -436,7 +481,6 @@ for k = 0 to 19
 next k
 
 my.Color = COLOR_BLUE
-my.recal = 0
 my.destination = 1
 my.action = 1
 my.check = 0
@@ -469,7 +513,6 @@ for i = 0 to 5
 	my.shoprouteoption(i) = getvalueDB("shoproute")
 	my.jobhomerouteoption(i) = getvalueDB("jobhomeroute")
 	my.shophomerouteoption(i) = getvalueDB("shophomeroute")
-	println(my.jobhomerouteoption(i))
 next i
 }
 
@@ -485,28 +528,6 @@ Agt_Step{
 	dim movetimestd as double
 	dim consumpstd as double
 	dim i as integer
-universe.recalculate = universe.recalculate + my.recal
-// Update Route
-if universe.recalculateflag == TRUE then
-	for i = 0 to 5
-		my.jobrouteoption(i) = @dijkstra(my.homeid, CStr(universe.officelist(i)))
-		my.shoprouteoption(i) = @dijkstra(my.homeid, CStr(universe.shoplist(i)))
-		my.jobhomerouteoption(i) = @dijkstra(universe.officelist(i),CStr(my.homeid))
-		my.shophomerouteoption(i) = @dijkstra(universe.shoplist(i),CStr(my.homeid))
-openfilecsv("routeofperson"&my.ID&".csv",2,3)
-writefilecsv(2,my.ID,false)
-writefilecsv(2,i,false)
-writefilecsv(2,universe.situation,false)
-writefilecsv(2,my.jobrouteoption(i),false)
-writefilecsv(2,my.shoprouteoption(i),false)
-writefilecsv(2,my.jobhomerouteoption(i),false)
-writefilecsv(2,my.shophomerouteoption(i),true)
-closefilecsv(2)
-	next i
-	my.recal = 1
-elseif universe.recalculateflag == FALSE then
-	my.recal = 0
-end if
 
 my.timecount = my.timecount + 1
 universe.numberofendagt = universe.numberofendagt + my.nowhome
@@ -557,12 +578,12 @@ if CNo >= 1 then
 	else
 		my.speed = 30*(tanh((one.dist-10)/3)+tanh(10/3)) //GithubのIssuesを参考に
 	end if
-elseif CNo == 0 then //誰もいないなら最高速度(4)で
+elseif CNo == 0 then //誰もいないなら最高速度(60)で
 	my.speed = 4
 end if
 
 //下限は0.3(10km/hのイメージ)
-if my.speed < 0.3 then
+if my.speed <= 0.3 then
 	my.speed = 0.3
 end if
 
@@ -571,7 +592,7 @@ if  universe.daychange == TRUE  then
 	my.nowhome = 0
 	targetPointAgt = Universe.Map.Point(CInt(GetToken(My.RouteArray, My.RouteCount)))
 	my.daycount = my.daycount + 0.5
-	if rnd() <= 2/7 then
+	if universe.daymode == 0 then
 		shoproute(targetpointagt)
 	else
 		jobroute(targetpointagt)
@@ -599,6 +620,7 @@ end if
 				If streetAgt.Cost >= 100000 Then
 					// StreetのCostが10000の場合は経路を再探索する
 					reroute(targetPointAgt)
+					println("reroute"&my.ID)
 				Else
 					// 余剰分、次のPointへ向かう
 					Pursue(targetPointAgt, distance)
@@ -609,22 +631,22 @@ end if
 					// 店なら消費して効用を得る
 					if universe.Map.Point(my.goalpointid).site == 3 then
 					// 消費額と余暇時間は移動時間に応じて変化する
-						if my.timecount <= 40 then
-							my.consump_sum = my.consump_sum + my.consump*2
-							my.money = my.money - my.consump*2
-							my.freetime_sum = my.freetime_sum + my.freetime*2
-						elseif my.timecount >= 60 then
-							my.consump_sum = my.consump_sum + my.consump*0.5
-							my.money = my.money - my.consump*0.5
-							my.freetime_sum = my.freetime_sum + my.freetime*0.5
+						if my.timecount <= 80 then
+							my.consump_sum = my.consump_sum + my.consump*2*9
+							my.money = my.money - my.consump*2*9
+							my.freetime_sum = my.freetime_sum + my.freetime*2*9
+						elseif my.timecount >= 120 then
+							my.consump_sum = my.consump_sum + my.consump*0.5*9
+							my.money = my.money - my.consump*0.5*9
+							my.freetime_sum = my.freetime_sum + my.freetime*0.5*9
 						else 
-							my.consump_sum = my.consump_sum + my.consump
-							my.money = my.money - my.consump
-							my.freetime_sum = my.freetime_sum + my.freetime						
+							my.consump_sum = my.consump_sum + my.consump*9
+							my.money = my.money - my.consump*9
+							my.freetime_sum = my.freetime_sum + my.freetime*9
 						end if
 					// オフィスなら将来受け取る成果を積み上げる
 					elseif universe.Map.Point(my.goalpointid).site == 2 then
-						my.archivement = my.archivement + my.potential
+						my.archivement = my.archivement + my.potential*21
 					end if
 					my.action = 0
 					my.check = 0
@@ -636,7 +658,12 @@ end if
 					my.nowhome = 1
 					// 最後に帰宅したエージェントのstep数で基準化する
 					my.timecount = (my.timecount / universe.daytimecount) * 200
-					my.timecount_sum = my.timecount_sum + my.timecount			
+					// 平日or休日？
+					if universe.daymode == 1 then
+						my.timecount_sum = my.timecount_sum + my.timecount	*	21
+					else
+						my.timecount_sum = my.timecount_sum * my.timecount * 9
+					end if
 					my.timecount = 0
 				end if
 			End If
@@ -783,9 +810,9 @@ include "dijkstra.inc"
 Agt_Init{
 my.X = 25
 my.Y = 25
-// 予算は100億から
 my.budget = universe.univbudget * 100000000
 my.bridgecount = 0
+my.bridgepeoplewatch = FALSE
 }
 
 Agt_Step{
@@ -794,6 +821,7 @@ dim one as agt
 dim blockagt as agt
 dim set as agtset
 dim i as integer
+dim k as integer
 dim p as integer
 my.nowbridge = 0
 for i = 0 to 10 
@@ -810,7 +838,7 @@ for i = 0 to 10
 next i
 
 // 1年ごとに橋を点検(universeで日付と同期)
-if universe.checkmode == TRUE then
+if universe.checkmode == TRUE and my.bridgepeoplewatch == FALSE then
 // 期間ごとに徴税を行う
 	for p = 0 to 19
 		if universe.Map.Person(p).archive_sum <= 200000*12 then
@@ -842,7 +870,7 @@ if universe.checkmode == TRUE then
 	next p
 // 危険域にある橋の数を数えてエージェントセット内に入れる
 	for i = 0 to 10	
-	if universe.Map.bridgecore(i).strength <= universe.threshold then
+	if universe.Map.bridgecore(i).strength <= universe.threshold and universe.Map.bridgecore(i).collapse == FALSE then
 		addagt(repairbridge,universe.Map.bridgecore(i))
 		my.bridgecount = my.bridgecount + 1
 	end if
@@ -850,7 +878,7 @@ if universe.checkmode == TRUE then
 	// 耐久値が低い順に並び替える
 	sortagtset(repairbridge,"strength",true)
 	if my.bridgecount > 0 then
-	for i = 0 to my.bridgecount
+	for i = 0 to (my.bridgecount - 1)
 	one = getagt(repairbridge,i)
 // 危険域にある橋の需要値が(今は平均の半分以上なら)なら橋の耐久値を全て回復し、橋内部の時間を0に戻す。予算が足りなくなった時点で修復を終了する。これは耐久値シナリオでは外す条件です
 			if my.budget >= one.repaircost then
@@ -858,24 +886,35 @@ if universe.checkmode == TRUE then
 				one.strength = 1
 				one.bridgetime = 0
 				one.collapseflag = FALSE
-// 予算が足りず修復できなかった橋の耐久値が0.0000005以下なら橋を通れなくする
-		elseif one.strength < 0.0000005 and one.collapse == FALSE or one.collapseflag == TRUE then
+				update_cost(one.beginpointid,one.endpointid,one.distance)
+				println(one.id&" is repaired")
+// 予算が足りず修復できなかった橋の耐久値がlimit以下なら橋を通れなくする
+		elseif one.strength <= universe.strengthlimit and one.collapse == FALSE or one.collapseflag == TRUE then
 			update_cost(one.beginpointid,one.endpointid,1000000)
+			println(one.id&" is clashed")
 			one.collapse = TRUE
+			one.sign = 0
 			one.collapseflag = FALSE
-			universe.recalculateflag = TRUE
-	end if
+			my.collapsebridge = 1
+		end if
 	one.demand = 0
-	my.bridgecount = 0
-	my.nowbridge = 0
 	next i
+	for i = 0 to 10
+		universe.Map.bridgecore(i).demand = 0
+		my.bridge_status(i) = 0
+		my.bridge_demand(i) = 0
+		my.bridge_averagedemand = 0
+	next i
+		if my.collapsebridge == 1 then
+			universe.situation = universe.Map.bridgecore(0).sign&universe.Map.bridgecore(1).sign&universe.Map.bridgecore(2).sign&
+universe.Map.bridgecore(3).sign&universe.Map.bridgecore(4).sign&universe.Map.bridgecore(5).sign&universe.Map.bridgecore(6).sign&universe.Map.bridgecore(7).sign&universe.Map.bridgecore(8).sign&universe.Map.bridgecore(9).sign&universe.Map.bridgecore(10).sign
+			// 人々エージェントに再計算させる
+			universe.recalculate = TRUE
+			my.collapsebridge = 0
+		end if
+		my.bridgecount = 0
 	end if
-for i = 0 to 10
-	universe.Map.bridgecore(i).demand = 0
-	my.bridge_status(i) = 0
-	my.bridge_demand(i) = 0
-	my.bridge_averagedemand = 0
-next i
+	my.bridgepeoplewatch = TRUE
 end if
 }
 #end_rule UNIVERSE.MAP.GOVERNMENT
@@ -900,8 +939,20 @@ my.collapseflag = FALSE
 my.iron = 55 * exp(0.03 * my.length) * 0.01
 my.value = my.length * my.iron * 12 * 60 * 10000
 
-my.distance = measuredistance(universe.Map.Point(my.beginpointid).x,universe.Map.Point(my.beginpointid).x,universe.Map.Point(my.endpointid).x,universe.Map.Point(my.endpointid).y,universe.Map)
-my.strength = 1
+my.strength = (1-(1/(1+1000000*exp((-0.0011)*((my.bridgetime)/150)))))
+
+dim streetagt as agt
+dim streetagtset as agtset
+dim i as integer
+
+MakeAgtSet(streetAgtSet, Universe.Street)
+	For Each streetAgt In streetAgtSet
+		for i = 0 to 10
+		if streetAgt.Points == universe.Map.bridgecore(i).beginpointid&","&universe.Map.bridgecore(i).endpointid then
+			my.distance = streetagt.Cost
+		end if
+		next i
+	Next streetAgt
 }
 
 Agt_Step{
@@ -909,36 +960,52 @@ dim set as agtset
 dim blockset as agtset
 dim one as agt
 dim blockagt as agt
-if my.collapse == true then
-	my.sign = "0"
-end if
 my.transport = 0
-my.bridgetime = my.bridgetime + 1
-// なんで100かけないといけないの
-my.nextdamage = 100*(1000000*(-0.0011)/150)*EXP((-0.0011)*my.bridgetime/150)/((1+1000000*EXP(-0.0011*my.bridgetime/150))^2)
+
+// 平日or休日？
+if universe.daymode == 1then
+	my.bridgetime = my.bridgetime + 21
+elseif universe.daymode == 0 then
+	my.bridgetime = my.bridgetime +9
+end if
+
+// 平日or休日？
+if universe.daymode == 1 then
+	my.nextdamage = (1-(1/(1+1000000*exp(-0.0011*((my.bridgetime)/150))))) - (1-(1/(1+1000000*exp(-0.0011*((my.bridgetime - 21)/150)))))
+else
+	my.nextdamage = (1-(1/(1+1000000*exp(-0.0011*((my.bridgetime)/150))))) - (1-(1/(1+1000000*exp(-0.0011*((my.bridgetime - 9)/150)))))
+end if
 // personが来たらdemand(寄与度)を増加させる
 makeoneagtsetaroundown(set,2,universe.Map.Person,false)
 for each one in set
 	if one.check == 0 then
 		// エージェントの目的に合わせて取得する値を変更する
 		if one.destination == 1 then
-			my.demand = my.demand + one.potential
+			my.demand = my.demand + one.potential * 21
 		elseif one.destination == 2 then
-			my.demand = my.demand + one.consump
+			my.demand = my.demand + one.consump * 9
 		end if
-		my.transport = my.transport + 0.00001
+		// 平日or休日？
+		if universe.daymode == 1 then
+			my.transport = my.transport + 0.000001 * 21
+		else
+			my.transport = my.transport + 0.000001 * 9
+		end if
 		one.check = 1
 	end if
 next one
 my.strength = my.strength + my.nextdamage - my.transport
 my.repaircost = my.value * (1 - my.strength)
 // 耐久値が負になったら無条件で次の点検時に通行止めにする
-if my.strength <= 0 then
+if my.strength <= 0 and my.collapse == FALSE then
 	my.strength = 0
 	my.collapseflag = TRUE
+	update_cost(my.beginpointid,my.endpointid,1000000)
+	println(my.ID&" is naturally clashed")
 end if
 if my.collapse == true then
 	my.strength = 0
+	my.collapseflag = FALSE
 end if
 }
 #end_rule UNIVERSE.MAP.BRIDGECORE
@@ -1058,14 +1125,14 @@ Repeat_Simulation {
 // Executing Order By Agent Component Definition Division
 //-------------------------------------------------------
 Executing_Order_Component {
-    Component_Priority = "Universe.Map.Point", 1;
     Component_Priority = "Universe.Map.government", 1;
     Component_Priority = "Universe.Map.bridgecore", 1;
-    Component_Priority = "Universe.Link", 1;
-    Component_Priority = "Universe.Street", 1;
-    Component_Priority = "Universe.DijkstraStreet", 1;
-    Component_Priority = "Universe.StreetBackup", 1;
-    Component_Priority = "Universe.PointBackup", 1;
+    Component_Priority = "Universe.Map.Point", 1;
+    Component_Priority = "Universe.Link", 2;
+    Component_Priority = "Universe.Street", 2;
+    Component_Priority = "Universe.DijkstraStreet", 2;
+    Component_Priority = "Universe.StreetBackup", 2;
+    Component_Priority = "Universe.PointBackup", 2;
     Component_Priority = "Universe.Map.Person", 3;
 }
 
@@ -1079,10 +1146,10 @@ Map_Output {
     Title = "Map";
     Disable = No;
     Background_Color = 255, 255, 255;
-    Position_x = 418;
-    Position_y = 32;
-    Size_x = 707;
-    Size_y = 750;
+    Position_x = 903;
+    Position_y = 6;
+    Size_x = 542;
+    Size_y = 470;
     Remarks = No;
     Map_Cell_Size = 13;
     Legend_Pos = Top;
@@ -1265,8 +1332,8 @@ Time_Graph {
     Remarks = Yes;
     Legend_Pos = Top;
     FastDraw = No;
-    Position_x = 97;
-    Position_y = 85;
+    Position_x = 448;
+    Position_y = 197;
     Size_x = 735;
     Size_y = 658;
     Map_Cell_Size = -1;
@@ -1402,13 +1469,13 @@ Time_Graph {
     Draw_Interval = 1;
     Graph_Name = "endagt";
     Title = "end agt";
-    Disable = Yes;
+    Disable = No;
     Background_Color = 255, 255, 255;
     Remarks = Yes;
     Legend_Pos = Top;
     FastDraw = No;
-    Position_x = 285;
-    Position_y = 389;
+    Position_x = 768;
+    Position_y = 125;
     Size_x = 536;
     Size_y = 502;
     Map_Cell_Size = -1;
@@ -1558,15 +1625,15 @@ Time_Graph {
     Draw_Interval = 1;
     Graph_Name = "day";
     Title = "day";
-    Disable = No;
+    Disable = Yes;
     Background_Color = 255, 255, 255;
     Remarks = Yes;
     Legend_Pos = Top;
     FastDraw = Yes;
-    Position_x = -464;
-    Position_y = 326;
-    Size_x = 1024;
-    Size_y = 885;
+    Position_x = 382;
+    Position_y = 249;
+    Size_x = 758;
+    Size_y = 618;
     Map_Cell_Size = -1;
     Axis_Label = "", "";
     Draw_By_JFree_Chart = Yes;
@@ -1702,59 +1769,17 @@ Time_Graph {
     Font_Background_Color = 255, 255, 255;
     Draw_Timing = Simulation_Step;
     Draw_Interval = 1;
-    Graph_Name = "recalculate";
-    Title = "recalculate";
+    Graph_Name = "strength";
+    Title = "strength";
     Disable = Yes;
     Background_Color = 255, 255, 255;
     Remarks = Yes;
     Legend_Pos = Top;
     FastDraw = No;
-    Position_x = 100;
-    Position_y = 100;
-    Size_x = 500;
-    Size_y = 300;
-    Map_Cell_Size = -1;
-    Axis_Label = "", "";
-    Draw_By_JFree_Chart = Yes;
-    Scale = 0, 0.0, 1000, 100.0, 100, 10.0;
-    ScaleAuto = Yes, Yes;
-    Output_Group_Name = "";
-    Output {
-        Graph_Element_Name = "recal";
-        Line_Color = 255, 0, 0;
-        Line_Width = 2;
-        Marker_Id = 0;
-        Output_Expression = "universe.recalculate";
-        Expression_Value_Display = No;
-        Effective_Fraction_Figures = 0;
-        Graph_Element_Color = (0, 255, 0);
-    }
-}
-
-
-//-------------------------------------------------------
-// Time Graph Output Definition Division
-//-------------------------------------------------------
-Time_Graph {
-    Font_Name = "Dialog";
-    Font_Char_Set = 81;
-    Font_Size = 12.0;
-    Font_Style = 0;
-    Font_Color = 0, 0, 0;
-    Font_Background_Color = 255, 255, 255;
-    Draw_Timing = Simulation_Step;
-    Draw_Interval = 1;
-    Graph_Name = "core1";
-    Title = "core1";
-    Disable = No;
-    Background_Color = 255, 255, 255;
-    Remarks = Yes;
-    Legend_Pos = Top;
-    FastDraw = No;
-    Position_x = 426;
-    Position_y = 411;
-    Size_x = 598;
-    Size_y = 562;
+    Position_x = 273;
+    Position_y = 381;
+    Size_x = 1313;
+    Size_y = 520;
     Map_Cell_Size = -1;
     Axis_Label = "", "";
     Draw_By_JFree_Chart = Yes;
@@ -1767,6 +1792,106 @@ Time_Graph {
         Line_Width = 2;
         Marker_Id = 0;
         Output_Expression = "universe.Map.bridgecore(5).strength";
+        Expression_Value_Display = No;
+        Effective_Fraction_Figures = 0;
+        Graph_Element_Color = (0, 255, 0);
+    }
+    Output {
+        Graph_Element_Name = "core0";
+        Line_Color = 0, 255, 0;
+        Line_Width = 2;
+        Marker_Id = 0;
+        Output_Expression = "universe.Map.bridgecore(0).strength";
+        Expression_Value_Display = No;
+        Effective_Fraction_Figures = 0;
+        Graph_Element_Color = (0, 0, 0);
+    }
+    Output {
+        Graph_Element_Name = "core1";
+        Line_Color = 255, 0, 255;
+        Line_Width = 2;
+        Marker_Id = 0;
+        Output_Expression = "universe.Map.bridgecore(1).strength";
+        Expression_Value_Display = No;
+        Effective_Fraction_Figures = 0;
+        Graph_Element_Color = (0, 153, 153);
+    }
+    Output {
+        Graph_Element_Name = "core2";
+        Line_Color = 0, 255, 255;
+        Line_Width = 2;
+        Marker_Id = 0;
+        Output_Expression = "universe.Map.bridgecore(2).strength";
+        Expression_Value_Display = No;
+        Effective_Fraction_Figures = 0;
+        Graph_Element_Color = (51, 204, 255);
+    }
+    Output {
+        Graph_Element_Name = "core3";
+        Line_Color = 255, 255, 0;
+        Line_Width = 2;
+        Marker_Id = 0;
+        Output_Expression = "universe.Map.bridgecore(3).strength";
+        Expression_Value_Display = No;
+        Effective_Fraction_Figures = 0;
+        Graph_Element_Color = (102, 102, 255);
+    }
+    Output {
+        Graph_Element_Name = "core4";
+        Line_Color = 128, 128, 128;
+        Line_Width = 2;
+        Marker_Id = 0;
+        Output_Expression = "universe.Map.bridgecore(4).strength";
+        Expression_Value_Display = No;
+        Effective_Fraction_Figures = 0;
+        Graph_Element_Color = (204, 204, 255);
+    }
+    Output {
+        Graph_Element_Name = "core6";
+        Line_Color = 0, 255, 0;
+        Line_Width = 2;
+        Marker_Id = 0;
+        Output_Expression = "universe.Map.bridgecore(6).strength";
+        Expression_Value_Display = No;
+        Effective_Fraction_Figures = 0;
+        Graph_Element_Color = (0, 255, 0);
+    }
+    Output {
+        Graph_Element_Name = "core7";
+        Line_Color = 0, 255, 0;
+        Line_Width = 2;
+        Marker_Id = 0;
+        Output_Expression = "universe.Map.bridgecore(7).strength";
+        Expression_Value_Display = No;
+        Effective_Fraction_Figures = 0;
+        Graph_Element_Color = (0, 255, 0);
+    }
+    Output {
+        Graph_Element_Name = "core8";
+        Line_Color = 0, 255, 0;
+        Line_Width = 2;
+        Marker_Id = 0;
+        Output_Expression = "universe.Map.bridgecore(8).strength";
+        Expression_Value_Display = No;
+        Effective_Fraction_Figures = 0;
+        Graph_Element_Color = (0, 255, 0);
+    }
+    Output {
+        Graph_Element_Name = "core9";
+        Line_Color = 0, 255, 0;
+        Line_Width = 2;
+        Marker_Id = 0;
+        Output_Expression = "universe.Map.bridgecore(9).strength";
+        Expression_Value_Display = No;
+        Effective_Fraction_Figures = 0;
+        Graph_Element_Color = (0, 255, 0);
+    }
+    Output {
+        Graph_Element_Name = "core10";
+        Line_Color = 0, 255, 0;
+        Line_Width = 2;
+        Marker_Id = 0;
+        Output_Expression = "universe.Map.bridgecore(10).strength";
         Expression_Value_Display = No;
         Effective_Fraction_Figures = 0;
         Graph_Element_Color = (0, 255, 0);
@@ -1784,10 +1909,10 @@ Numeric_Output {
     Font_Style = 0;
     Font_Color = 0, 0, 0;
     Font_Background_Color = 255, 255, 255;
-    Position_x = 130;
-    Position_y = 266;
-    Size_x = 280;
-    Size_y = 230;
+    Position_x = 613;
+    Position_y = 6;
+    Size_x = 253;
+    Size_y = 607;
     Map_Cell_Size = -1;
     Numeric_Name = "day.etc";
     Title = "day.etc";
@@ -1798,6 +1923,12 @@ Numeric_Output {
         Figures = 0;
         Format_Id = 0;
         Output_Expression = "universe.day";
+    }
+    OUTPUT {
+        Output_Element_Name = "warpday";
+        Figures = 0;
+        Format_Id = 0;
+        Output_Expression = "universe.warpday";
     }
     OUTPUT {
         Output_Element_Name = "strength5";
@@ -1812,10 +1943,190 @@ Numeric_Output {
         Output_Expression = "universe.situation";
     }
     OUTPUT {
-        Output_Element_Name = "transport";
+        Output_Element_Name = "checkmode";
         Figures = 0;
         Format_Id = 0;
-        Output_Expression = "universe.Map.bridgecore(5).transport";
+        Output_Expression = "universe.checkmode";
+    }
+    OUTPUT {
+        Output_Element_Name = "collapse5";
+        Figures = 0;
+        Format_Id = 0;
+        Output_Expression = "universe.Map.bridgecore(5).collapse";
+    }
+    OUTPUT {
+        Output_Element_Name = "governmentcollapsebridge";
+        Figures = 0;
+        Format_Id = 0;
+        Output_Expression = "universe.Map.government.collapsebridge";
+    }
+    OUTPUT {
+        Output_Element_Name = "collapse0";
+        Figures = 0;
+        Format_Id = 0;
+        Output_Expression = "universe.Map.bridgecore(0).collapse";
+    }
+    OUTPUT {
+        Output_Element_Name = "collapse1";
+        Figures = 0;
+        Format_Id = 0;
+        Output_Expression = "universe.Map.bridgecore(1).collapse";
+    }
+    OUTPUT {
+        Output_Element_Name = "collapse2";
+        Figures = 0;
+        Format_Id = 0;
+        Output_Expression = "universe.Map.bridgecore(2).collapse";
+    }
+    OUTPUT {
+        Output_Element_Name = "collapse3";
+        Figures = 0;
+        Format_Id = 0;
+        Output_Expression = "universe.Map.bridgecore(3).collapse";
+    }
+    OUTPUT {
+        Output_Element_Name = "collapse4";
+        Figures = 0;
+        Format_Id = 0;
+        Output_Expression = "universe.Map.bridgecore(4).collapse";
+    }
+    OUTPUT {
+        Output_Element_Name = "collapse6";
+        Figures = 0;
+        Format_Id = 0;
+        Output_Expression = "universe.Map.bridgecore(6).collapse";
+    }
+    OUTPUT {
+        Output_Element_Name = "collapse7";
+        Figures = 0;
+        Format_Id = 0;
+        Output_Expression = "universe.Map.bridgecore(7).collapse";
+    }
+    OUTPUT {
+        Output_Element_Name = "collapse8";
+        Figures = 0;
+        Format_Id = 0;
+        Output_Expression = "universe.Map.bridgecore(8).collapse";
+    }
+    OUTPUT {
+        Output_Element_Name = "collapse9";
+        Figures = 0;
+        Format_Id = 0;
+        Output_Expression = "universe.Map.bridgecore(9).collapse";
+    }
+    OUTPUT {
+        Output_Element_Name = "collapse10";
+        Figures = 0;
+        Format_Id = 0;
+        Output_Expression = "universe.Map.bridgecore(10).collapse";
+    }
+    OUTPUT {
+        Output_Element_Name = "recalculate";
+        Figures = 0;
+        Format_Id = 0;
+        Output_Expression = "universe.recalculate";
+    }
+    OUTPUT {
+        Output_Element_Name = "strength0";
+        Figures = 5;
+        Format_Id = 0;
+        Output_Expression = "universe.Map.bridgecore(0).strength";
+    }
+    OUTPUT {
+        Output_Element_Name = "strength1";
+        Figures = 5;
+        Format_Id = 0;
+        Output_Expression = "universe.Map.bridgecore(1).strength";
+    }
+    OUTPUT {
+        Output_Element_Name = "strength2";
+        Figures = 5;
+        Format_Id = 0;
+        Output_Expression = "universe.Map.bridgecore(2).strength";
+    }
+    OUTPUT {
+        Output_Element_Name = "strength3";
+        Figures = 5;
+        Format_Id = 0;
+        Output_Expression = "universe.Map.bridgecore(3).strength";
+    }
+    OUTPUT {
+        Output_Element_Name = "strength4";
+        Figures = 5;
+        Format_Id = 0;
+        Output_Expression = "universe.Map.bridgecore(4).strength";
+    }
+    OUTPUT {
+        Output_Element_Name = "strength6";
+        Figures = 5;
+        Format_Id = 0;
+        Output_Expression = "universe.Map.bridgecore(6).strength";
+    }
+    OUTPUT {
+        Output_Element_Name = "strength7";
+        Figures = 5;
+        Format_Id = 0;
+        Output_Expression = "universe.Map.bridgecore(7).strength";
+    }
+    OUTPUT {
+        Output_Element_Name = "strength8";
+        Figures = 5;
+        Format_Id = 0;
+        Output_Expression = "universe.Map.bridgecore(8).strength";
+    }
+    OUTPUT {
+        Output_Element_Name = "strength9";
+        Figures = 5;
+        Format_Id = 0;
+        Output_Expression = "universe.Map.bridgecore(9).strength";
+    }
+    OUTPUT {
+        Output_Element_Name = "strength10";
+        Figures = 5;
+        Format_Id = 0;
+        Output_Expression = "universe.Map.bridgecore(10).strength";
+    }
+}
+
+
+//-------------------------------------------------------
+// Time Graph Output Definition Division
+//-------------------------------------------------------
+Time_Graph {
+    Font_Name = "Dialog";
+    Font_Char_Set = 81;
+    Font_Size = 12.0;
+    Font_Style = 0;
+    Font_Color = 0, 0, 0;
+    Font_Background_Color = 255, 255, 255;
+    Draw_Timing = Simulation_Step;
+    Draw_Interval = 1;
+    Graph_Name = "warpday";
+    Title = "warpday";
+    Disable = Yes;
+    Background_Color = 255, 255, 255;
+    Remarks = Yes;
+    Legend_Pos = Top;
+    FastDraw = No;
+    Position_x = 120;
+    Position_y = 120;
+    Size_x = 500;
+    Size_y = 300;
+    Map_Cell_Size = -1;
+    Axis_Label = "", "";
+    Draw_By_JFree_Chart = Yes;
+    Scale = 0, 0.0, 1000, 100.0, 100, 10.0;
+    ScaleAuto = Yes, Yes;
+    Output_Group_Name = "";
+    Output {
+        Graph_Element_Name = "warpday";
+        Line_Color = 255, 0, 0;
+        Line_Width = 2;
+        Marker_Id = 0;
+        Output_Expression = "universe.warpday";
+        Expression_Value_Display = No;
+        Effective_Fraction_Figures = 0;
+        Graph_Element_Color = (0, 255, 0);
     }
 }
 
@@ -1824,7 +2135,7 @@ Numeric_Output {
 // Control Panel Definition Division
 //-------------------------------------------------------
 Control_Panel {
-    Display_Area = 1483, 299, 437, 223;
+    Display_Area = 3492, 550, 265, 394;
     Panel_Item {
         Item_Type = Edit_Box;
         Item_Name = "simulationcode";
@@ -1836,7 +2147,7 @@ Control_Panel {
         Font_Color = 0, 0, 0;
         Font_Background_Color = 0, 0, 0;
         Var_Name = "Universe.simulationcode";
-        Text_Data = " 2015/11/26ittletestroute";
+        Text_Data = "2015/11/30littletestwarp4";
     }
     Panel_Item {
         Item_Type = Slider;
@@ -1852,7 +2163,7 @@ Control_Panel {
         Slider_Range_Max = 99;
         Slider_Value_Min = 10.0;
         Slider_Value_Step = 10.0;
-        Slider_Value = "49";
+        Slider_Value = "4";
     }
     Panel_Item {
         Item_Type = Slider;
@@ -1881,7 +2192,20 @@ Control_Panel {
         Font_Color = 0, 0, 0;
         Font_Background_Color = 0, 0, 0;
         Var_Name = "Universe.testnumber";
-        Text_Data = "5";
+        Text_Data = "4";
+    }
+    Panel_Item {
+        Item_Type = Edit_Box;
+        Item_Name = "strengthlimit";
+        Display_Area = 0, 0, 0, 0;
+        Font_Name = "";
+        Font_Char_Set = 0;
+        Font_Size = 0.0;
+        Font_Style = 0;
+        Font_Color = 0, 0, 0;
+        Font_Background_Color = 0, 0, 0;
+        Var_Name = "Universe.strengthlimit";
+        Text_Data = "0.01";
     }
 }
 
@@ -1900,18 +2224,18 @@ Others_Data {
     Indent = 4;
     Rule_Colored = Yes;
     Window_Hide_Run = 1;
-    Debug_Position_x = 245;
-    Debug_Position_y = 10;
+    Debug_Position_x = 263;
+    Debug_Position_y = 7;
     Debug_Size_x = 400;
     Debug_Size_y = 200;
-    Console_Position_x = 157;
-    Console_Position_y = 296;
-    Console_Size_x = 484;
-    Console_Size_y = 377;
-    Componen_Tree_Position_x = 4;
-    Componen_Tree_Position_y = 2;
-    Componen_Tree_Size_x = 253;
-    Componen_Tree_Size_y = 489;
+    Console_Position_x = 249;
+    Console_Position_y = 2;
+    Console_Size_x = 358;
+    Console_Size_y = 761;
+    Componen_Tree_Position_x = 3;
+    Componen_Tree_Position_y = 5;
+    Componen_Tree_Size_x = 250;
+    Componen_Tree_Size_y = 408;
     Console_Background_Color = 10066329;
     Console_Foreground_Color = 255;
     Console_DisplayLines_Max = 500;
@@ -2047,7 +2371,7 @@ Space_Map_Initial_Value {
 // Window Location Definition Division
 //-------------------------------------------------------
 Window_Rectangle {
-    Window_Name = Main_Window, 0, 0, 1293, 1035;
+    Window_Name = Main_Window, 1912, -8, 1936, 1056;
     Window_Name = Output_Setting_Window, 728, 383, 480, 290;
 }
 
