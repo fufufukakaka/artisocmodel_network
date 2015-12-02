@@ -1,0 +1,237 @@
+---
+title: "test analysis2"
+author: "Yusuke Fukasawa"
+date: "2015年12月1日"
+output: html_document
+---
+
+百人、timewarpにしてからの奴は新しくファイルを作りました。
+基本やることはおんなじなんだけど。
+
+12/1の4つについて
+
+```{r}
+#PostgreSQLにつなぐためのコード
+require(RPostgreSQL)
+con <- dbConnect(PostgreSQL(),host="localhost",user="postgres",password="fukasawa1225",dbname="db_artisoc")
+b1 <- dbGetQuery(con,"SELECT * FROM bridgelog where simulationcode ='2015/12/01littletestwarp1'")
+g1 <- dbGetQuery(con,"SELECT * FROM governmentlog where simulationcode ='2015/12/01littletestwarp1'")
+p1<-dbGetQuery(con,"SELECT * FROM personlog where simulationcode ='2015/12/01littletestwarp1'")
+b2 <- dbGetQuery(con,"SELECT * FROM bridgelog where simulationcode ='2015/12/01littletestwarp2'")
+g2 <- dbGetQuery(con,"SELECT * FROM governmentlog where simulationcode ='2015/12/01littletestwarp2'")
+p2<-dbGetQuery(con,"SELECT * FROM personlog where simulationcode ='2015/12/01littletestwarp2'")
+b3 <- dbGetQuery(con,"SELECT * FROM bridgelog where simulationcode ='2015/12/01littletestwarp3'")
+g3 <- dbGetQuery(con,"SELECT * FROM governmentlog where simulationcode ='2015/12/01littletestwarp3'")
+p3<-dbGetQuery(con,"SELECT * FROM personlog where simulationcode ='2015/12/01littletestwarp3'")
+b4 <- dbGetQuery(con,"SELECT * FROM bridgelog where simulationcode ='2015/12/01littletestwarp4'")
+g4 <- dbGetQuery(con,"SELECT * FROM governmentlog where simulationcode ='2015/12/01littletestwarp4'")
+p4<-dbGetQuery(con,"SELECT * FROM personlog where simulationcode ='2015/12/01littletestwarp4'")
+```
+
+このテンプレで変化が出ない限り深堀はしませんぞ
+
+1ばん
+```{r}
+gbr<-ggplot(
+b1,
+aes(
+x = day,
+y = strength,
+colour=factor(bridgeid)
+)
+)
+gbr <- gbr + geom_line()
+plot(gbr)
+
+gbr1<-ggplot(
+b1,
+aes(
+x = day,
+y = demand,
+colour=factor(bridgeid)
+)
+)
+ggo<-ggplot(
+g1,
+aes(
+x = day,
+y = budget
+)
+)
+ggo<- ggo + geom_line()
+plot(ggo)
+ggo<-ggplot(
+g1,
+aes(
+x = day,
+y = averageutilize
+)
+)
+ggo<- ggo + geom_line()
+plot(ggo)
+ggo<-ggplot(
+g1,
+aes(
+x = day,
+y = averagemovetime
+)
+)
+ggo<- ggo + geom_line()
+plot(ggo)
+```
+
+2ばん
+```{r}
+gbr<-ggplot(
+b2,
+aes(
+x = day,
+y = strength,
+colour=factor(bridgeid)
+)
+)
+gbr <- gbr + geom_line()
+plot(gbr)
+
+gbr1<-ggplot(
+b2,
+aes(
+x = day,
+y = demand,
+colour=factor(bridgeid)
+)
+)
+gbr1 <- gbr1 + geom_line()
+plot(gbr1)
+ggo<-ggplot(
+g2,
+aes(
+x = day,
+y = budget
+)
+)
+ggo<- ggo + geom_line()
+plot(ggo)
+ggo<-ggplot(
+g2,
+aes(
+x = day,
+y = averageutilize
+)
+)
+ggo<- ggo + geom_line()
+plot(ggo)
+ggo<-ggplot(
+g2,
+aes(
+x = day,
+y = averagemovetime
+)
+)
+ggo<- ggo + geom_line()
+plot(ggo)
+```
+
+3ばん
+```{r}
+gbr<-ggplot(
+b3,
+aes(
+x = day,
+y = strength,
+colour=factor(bridgeid)
+)
+)
+gbr <- gbr + geom_line()
+plot(gbr)
+
+gbr1<-ggplot(
+b3,
+aes(
+x = day,
+y = demand,
+colour=factor(bridgeid)
+)
+)
+ggo<-ggplot(
+g3,
+aes(
+x = day,
+y = budget
+)
+)
+ggo<- ggo + geom_line()
+plot(ggo)
+ggo<-ggplot(
+g3,
+aes(
+x = day,
+y = averageutilize
+)
+)
+ggo<- ggo + geom_line()
+plot(ggo)
+ggo<-ggplot(
+g3,
+aes(
+x = day,
+y = averagemovetime
+)
+)
+ggo<- ggo + geom_line()
+plot(ggo)
+```
+
+4ばん
+```{r}
+gbr<-ggplot(
+b4,
+aes(
+x = day,
+y = strength,
+colour=factor(bridgeid)
+)
+)
+gbr <- gbr + geom_line()
+plot(gbr)
+
+gbr1<-ggplot(
+b4,
+aes(
+x = day,
+y = demand,
+colour=factor(bridgeid)
+)
+)
+ggo<-ggplot(
+g4,
+aes(
+x = day,
+y = budget
+)
+)
+ggo<- ggo + geom_line()
+plot(ggo)
+ggo<-ggplot(
+g4,
+aes(
+x = day,
+y = averageutilize
+)
+)
+ggo<- ggo + geom_line()
+plot(ggo)
+ggo<-ggplot(
+g4,
+aes(
+x = day,
+y = averagemovetime
+)
+)
+ggo<- ggo + geom_line()
+plot(ggo)
+```
+
+demandがマイナスになっちゃうのをどうにかしないと、、、
+
+政府予算は

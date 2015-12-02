@@ -131,12 +131,12 @@ UNIVERSE {
         Dim Cost(0, 0) As Double = (0.0);
         Dim ReverseStreetAgt(0, 0) As Agt = (0);
     }
-    Dim TemporaryStreetAgtset(0, 0) As AgtSet = ();
     AgtType PointBackup(0, 0)[0] {
         Dim ID(0, 0) As Integer = (0);
         Dim PointAgt(0, 0) As Agt = (0);
         Dim StreetAgt(0, 0) As Agt = (0);
     }
+    Dim TemporaryStreetAgtset(0, 0) As AgtSet = ();
     Dim shoplist(0, 0)[6] As Integer = (6*0);
     Dim officelist(0, 0)[6] As Integer = (6*0);
     Dim numberofendagt(0, 0) <5>  As Integer = (0);
@@ -160,6 +160,7 @@ UNIVERSE {
     Dim daycalc(0, 0) As Integer = (0);
     Dim recalculate(0, 0) As Boolean = (0);
     Dim strengthlimit(0, 0) As Double = (0.0);
+    Dim averagespeed(0, 0) As Double = (0.0);
 }
 
 
@@ -167,9 +168,9 @@ UNIVERSE {
 // Agent Variable Initial Data
 //-------------------------------------------------------
 Initial_Value {
-    UNIVERSE.SIMULATIONCODE = 1("2015/12/01littletestwarp4");
-    UNIVERSE.UNIVBUDGET = 1(50.0);
-    UNIVERSE.THRESHOLD = 1(0.8);
+    UNIVERSE.SIMULATIONCODE = 1("2015/12/01delaytestwarp0");
+    UNIVERSE.UNIVBUDGET = 1(100.0);
+    UNIVERSE.THRESHOLD = 1(0.2);
     UNIVERSE.TESTNUMBER = 1(0);
     UNIVERSE.STRENGTHLIMIT = 1(0.01);
     UNIVERSE.MAP.POINT.X = 114(44.99105546, 42.48658318, 43.20214669, 46.86940966, 45.16994633, 40.96601073, 43.82826476, 45.52772809, 48.21109123, 47.49552773
@@ -397,7 +398,7 @@ universe.averagefreetime = 0
 universe.averagemovetime = 0
 universe.averageconsump = 0
 universe.averagearchive = 0
-universe.averageutilize = 0
+universe.averagespeed = 0
 
 // 日付が変更されたか否か
 if universe.numberofendagt == 100 then
@@ -414,7 +415,7 @@ Univ_Step_End{
 if universe.daychange == TRUE then
 	universe.daytimecount = 1
 end if
-if universe.warpday == 360 then
+if universe.warpday == 1000 then
 	exitsimulation()
 end if
 
@@ -508,18 +509,17 @@ my.daycount = 1
 my.speed = 1
 // 初期資金は百万円から
 my.money = 1000000
-my.positiveline = my.money * (rnd()*3+2)
-my.negativeline = my.money / (rnd()*3+2)
 my.timecount = 0
 my.timecount_sum = 0
 my.freetime = 0
 my.freetime_sum = 0
 my.utilize = 0
-my.consump = norminv(rnd(),9360,int(rnd()*1000) + 500)
-my.potential = norminv(rnd(),14581,int(rnd()*1000) + 500)
-my.freetime = norminv(rnd(),300,int(rnd()*50)+50)
+// 
+my.consump = norminv(rnd(),9360,1500)
+my.potential = norminv(rnd(),14581,3000)
+my.freetime = norminv(rnd(),300,50)
 my.archivement = my.potential
-universe.averagearchive = universe.averagearchive + (my.archivement / 20)
+universe.averagearchive = universe.averagearchive + (my.archivement / 100)
 my.archive_sum = 0
 
 dim i as integer
@@ -542,12 +542,13 @@ Agt_Step{
 	Dim streetAgt As Agt
 	dim set as agtset
 	dim one as agt
+	dim two as agt
 	dim CNo as integer
 	dim freetimestd as double
 	dim movetimestd as double
 	dim consumpstd as double
 	dim i as integer
-
+universe.averagespeed = universe.averagespeed + (my.speed/countagt(universe.Map.Person))
 my.timecount = my.timecount + 1
 universe.numberofendagt = universe.numberofendagt + my.nowhome
 universe.day = universe.day + (my.daycount / countagt(universe.Map.Person))
@@ -567,7 +568,7 @@ if my.consump_sum <= 0 then
 	my.consump_sum = 0 
 end if
 freetimestd = (((my.freetime_sum / 4557.138))) 
-movetimestd = (((my.timecount_sum / 3032.69)))
+movetimestd = (((my.timecount_sum / 4200.69)))
 consumpstd = (((my.consump_sum  / 153435.9)))
 my.utilize = freetimestd ^ 0.33 + consumpstd ^ 0.33 - movetimestd ^ 0.33
 universe.averageutilize = universe.averageutilize + (my.utilize / 100)
@@ -599,29 +600,28 @@ if CNo >= 1 then
 	one = getagt(set,0)
 	
 	// 車間距離に応じたスピードの定義
-	if abs(one.direction - my.Direction) == 180 then // 反対車線にいる場合は平均速度(2)で
-		my.speed = 2
+	if abs(one.direction - my.Direction) == 180 then // 反対車線にいる場合は最高速度で
+	my.speed = 3
 	else
-		my.speed = 2*(tanh((one.dist-5)/3)+tanh(5/3)) //GithubのIssuesを参考に
+		my.speed = 2*(tanh((one.dist-5)/5)+tanh(5/5))/CNo //GithubのIssuesを参考に
 	end if
-elseif CNo == 0 then //誰もいないなら最高速度(60)で
-	my.speed = 4
+elseif CNo == 0 then //誰もいないなら最高速度(3.5)で
+	my.speed = 3
 end if
+if my.speed <= 0.3 then
+	my.speed = 0.3
+end if 
 
-//下限は0.2(10km/hのイメージ)
-if my.speed <= 0.2 then
-	my.speed = 0.2
-end if
 
 //ダイクストラ法に基づいて進む
 if  universe.daychange == TRUE  then
 	my.nowhome = 0
 	targetPointAgt = Universe.Map.Point(CInt(GetToken(My.RouteArray, My.RouteCount)))
 	my.daycount = my.daycount + 0.5
-	if universe.daymode == 0 then
-		shoproute(targetpointagt)
-	else
+	if universe.daymode == 1 then
 		jobroute(targetpointagt)
+	else
+		shoproute(targetpointagt)
 	end if
 end if
 	If my.nowhome == 1  Then
@@ -657,11 +657,11 @@ end if
 					// 店なら消費して効用を得る
 					if universe.Map.Point(my.goalpointid).site == 3 then
 					// 消費額と余暇時間は移動時間に応じて変化する
-						if my.timecount <= 80 then
+						if my.timecount <= 100 then
 							my.consump_sum = my.consump_sum + my.consump*2*9
 							my.money = my.money - my.consump*2*9
 							my.freetime_sum = my.freetime_sum + my.freetime*2*9
-						elseif my.timecount >= 120 then
+						elseif my.timecount >= 160 then
 							my.consump_sum = my.consump_sum + my.consump*0.5*9
 							my.money = my.money - my.consump*0.5*9
 							my.freetime_sum = my.freetime_sum + my.freetime*0.5*9
@@ -1017,7 +1017,6 @@ for each one in set
 		else
 			my.transport = my.transport + 0.000001 * 9
 		end if
-		one.speed = one.speed / countagtset(set)
 		one.check = 1
 	end if
 next one
@@ -1173,12 +1172,12 @@ Map_Output {
     Title = "Map";
     Disable = No;
     Background_Color = 255, 255, 255;
-    Position_x = 903;
-    Position_y = 6;
-    Size_x = 542;
-    Size_y = 470;
+    Position_x = 294;
+    Position_y = 27;
+    Size_x = 840;
+    Size_y = 712;
     Remarks = No;
-    Map_Cell_Size = 13;
+    Map_Cell_Size = 15;
     Legend_Pos = Top;
     Font_Name = "Dialog";
     Font_Char_Set = 81;
@@ -1538,15 +1537,15 @@ Time_Graph {
     Draw_Interval = 1;
     Graph_Name = "time";
     Title = "time";
-    Disable = Yes;
+    Disable = No;
     Background_Color = 255, 255, 255;
     Remarks = Yes;
     Legend_Pos = Top;
     FastDraw = No;
-    Position_x = 283;
-    Position_y = 274;
-    Size_x = 610;
-    Size_y = 280;
+    Position_x = 448;
+    Position_y = 239;
+    Size_x = 829;
+    Size_y = 598;
     Map_Cell_Size = -1;
     Axis_Label = "", "";
     Draw_By_JFree_Chart = Yes;
@@ -1572,16 +1571,6 @@ Time_Graph {
         Expression_Value_Display = No;
         Effective_Fraction_Figures = 0;
         Graph_Element_Color = (255, 153, 153);
-    }
-    Output {
-        Graph_Element_Name = "daycount";
-        Line_Color = 0, 255, 0;
-        Line_Width = 2;
-        Marker_Id = 0;
-        Output_Expression = "universe.daytimecount";
-        Expression_Value_Display = No;
-        Effective_Fraction_Figures = 0;
-        Graph_Element_Color = (0, 255, 0);
     }
 }
 
@@ -1751,10 +1740,10 @@ Time_Graph {
     Remarks = Yes;
     Legend_Pos = Top;
     FastDraw = No;
-    Position_x = 100;
-    Position_y = 99;
-    Size_x = 500;
-    Size_y = 300;
+    Position_x = 885;
+    Position_y = 205;
+    Size_x = 833;
+    Size_y = 495;
     Map_Cell_Size = -1;
     Axis_Label = "", "";
     Draw_By_JFree_Chart = Yes;
@@ -1770,16 +1759,6 @@ Time_Graph {
         Expression_Value_Display = No;
         Effective_Fraction_Figures = 0;
         Graph_Element_Color = (0, 255, 0);
-    }
-    Output {
-        Graph_Element_Name = "1utilize";
-        Line_Color = 0, 0, 255;
-        Line_Width = 2;
-        Marker_Id = 0;
-        Output_Expression = "universe.Map.Person(1).utilize";
-        Expression_Value_Display = No;
-        Effective_Fraction_Figures = 0;
-        Graph_Element_Color = (153, 0, 153);
     }
 }
 
@@ -1936,8 +1915,8 @@ Numeric_Output {
     Font_Style = 0;
     Font_Color = 0, 0, 0;
     Font_Background_Color = 255, 255, 255;
-    Position_x = 613;
-    Position_y = 6;
+    Position_x = 1067;
+    Position_y = 90;
     Size_x = 253;
     Size_y = 607;
     Map_Cell_Size = -1;
@@ -2113,6 +2092,12 @@ Numeric_Output {
         Format_Id = 0;
         Output_Expression = "universe.Map.bridgecore(10).strength";
     }
+    OUTPUT {
+        Output_Element_Name = "averagespeed";
+        Figures = 5;
+        Format_Id = 0;
+        Output_Expression = "universe.averagespeed";
+    }
 }
 
 
@@ -2159,10 +2144,94 @@ Time_Graph {
 
 
 //-------------------------------------------------------
+// Time Graph Output Definition Division
+//-------------------------------------------------------
+Time_Graph {
+    Font_Name = "Dialog";
+    Font_Char_Set = 81;
+    Font_Size = 12.0;
+    Font_Style = 0;
+    Font_Color = 0, 0, 0;
+    Font_Background_Color = 255, 255, 255;
+    Draw_Timing = Simulation_Step;
+    Draw_Interval = 1;
+    Graph_Name = "averagespeed";
+    Title = "averagespeed";
+    Disable = Yes;
+    Background_Color = 255, 255, 255;
+    Remarks = Yes;
+    Legend_Pos = Top;
+    FastDraw = No;
+    Position_x = 276;
+    Position_y = 320;
+    Size_x = 736;
+    Size_y = 620;
+    Map_Cell_Size = -1;
+    Axis_Label = "", "";
+    Draw_By_JFree_Chart = Yes;
+    Scale = 0, 0.0, 1000, 100.0, 100, 10.0;
+    ScaleAuto = Yes, Yes;
+    Output_Group_Name = "";
+    Output {
+        Graph_Element_Name = "speed";
+        Line_Color = 255, 255, 0;
+        Line_Width = 2;
+        Marker_Id = 0;
+        Output_Expression = "universe.averagespeed";
+        Expression_Value_Display = No;
+        Effective_Fraction_Figures = 0;
+        Graph_Element_Color = (102, 0, 255);
+    }
+}
+
+
+//-------------------------------------------------------
+// Time Graph Output Definition Division
+//-------------------------------------------------------
+Time_Graph {
+    Font_Name = "Dialog";
+    Font_Char_Set = 81;
+    Font_Size = 12.0;
+    Font_Style = 0;
+    Font_Color = 0, 0, 0;
+    Font_Background_Color = 255, 255, 255;
+    Draw_Timing = Simulation_Step;
+    Draw_Interval = 1;
+    Graph_Name = "averagemovetime";
+    Title = "averagemovetime";
+    Disable = Yes;
+    Background_Color = 255, 255, 255;
+    Remarks = Yes;
+    Legend_Pos = Top;
+    FastDraw = No;
+    Position_x = 907;
+    Position_y = 479;
+    Size_x = 669;
+    Size_y = 448;
+    Map_Cell_Size = -1;
+    Axis_Label = "", "";
+    Draw_By_JFree_Chart = Yes;
+    Scale = 0, 0.0, 1000, 100.0, 100, 10.0;
+    ScaleAuto = Yes, Yes;
+    Output_Group_Name = "";
+    Output {
+        Graph_Element_Name = "averagemovetime";
+        Line_Color = 128, 128, 128;
+        Line_Width = 2;
+        Marker_Id = 0;
+        Output_Expression = "universe.averagemovetime";
+        Expression_Value_Display = No;
+        Effective_Fraction_Figures = 0;
+        Graph_Element_Color = (0, 255, 0);
+    }
+}
+
+
+//-------------------------------------------------------
 // Control Panel Definition Division
 //-------------------------------------------------------
 Control_Panel {
-    Display_Area = 1655, 322, 265, 394;
+    Display_Area = 1014, 900, 805, 117;
     Panel_Item {
         Item_Type = Edit_Box;
         Item_Name = "simulationcode";
@@ -2174,7 +2243,7 @@ Control_Panel {
         Font_Color = 0, 0, 0;
         Font_Background_Color = 0, 0, 0;
         Var_Name = "Universe.simulationcode";
-        Text_Data = "2015/12/01littletestwarp4";
+        Text_Data = "2015/12/01delaytestwarp0";
     }
     Panel_Item {
         Item_Type = Slider;
@@ -2190,7 +2259,7 @@ Control_Panel {
         Slider_Range_Max = 99;
         Slider_Value_Min = 10.0;
         Slider_Value_Step = 10.0;
-        Slider_Value = "4";
+        Slider_Value = "9";
     }
     Panel_Item {
         Item_Type = Slider;
@@ -2206,7 +2275,7 @@ Control_Panel {
         Slider_Range_Max = 8;
         Slider_Value_Min = 0.1;
         Slider_Value_Step = 0.1;
-        Slider_Value = "7";
+        Slider_Value = "1";
     }
     Panel_Item {
         Item_Type = Edit_Box;
@@ -2255,14 +2324,14 @@ Others_Data {
     Debug_Position_y = 7;
     Debug_Size_x = 400;
     Debug_Size_y = 200;
-    Console_Position_x = 249;
-    Console_Position_y = 2;
+    Console_Position_x = 27;
+    Console_Position_y = 43;
     Console_Size_x = 358;
     Console_Size_y = 761;
-    Componen_Tree_Position_x = 3;
-    Componen_Tree_Position_y = 5;
-    Componen_Tree_Size_x = 250;
-    Componen_Tree_Size_y = 408;
+    Componen_Tree_Position_x = 407;
+    Componen_Tree_Position_y = 95;
+    Componen_Tree_Size_x = 540;
+    Componen_Tree_Size_y = 883;
     Console_Background_Color = 10066329;
     Console_Foreground_Color = 255;
     Console_DisplayLines_Max = 500;
@@ -2399,7 +2468,7 @@ Space_Map_Initial_Value {
 //-------------------------------------------------------
 Window_Rectangle {
     Window_Name = Main_Window, 0, 0, 1769, 956;
-    Window_Name = Output_Setting_Window, 644, 333, 480, 290;
+    Window_Name = Output_Setting_Window, 728, 383, 480, 290;
 }
 
 
