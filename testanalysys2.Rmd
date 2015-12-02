@@ -11,6 +11,7 @@ output: html_document
 12/1の4つについて
 
 ```{r}
+require(ggplot2)
 #PostgreSQLにつなぐためのコード
 require(RPostgreSQL)
 con <- dbConnect(PostgreSQL(),host="localhost",user="postgres",password="fukasawa1225",dbname="db_artisoc")
@@ -234,4 +235,42 @@ plot(ggo)
 
 demandがマイナスになっちゃうのをどうにかしないと、、、
 
-政府予算は
+政府予算について
+```{r}
+ggo<-ggplot(
+g1,
+aes(
+x = day,
+y = budget
+)
+)
+ggo<- ggo + geom_line()
+plot(ggo)
+ggo<-ggplot(
+g2,
+aes(
+x = day,
+y = budget
+)
+)
+ggo<- ggo + geom_line()
+plot(ggo)
+ggo<-ggplot(
+g3,
+aes(
+x = day,
+y = budget
+)
+)
+ggo<- ggo + geom_line()
+plot(ggo)
+ggo<-ggplot(
+g4,
+aes(
+x = day,
+y = budget
+)
+)
+ggo<- ggo + geom_line()
+plot(ggo)
+```
