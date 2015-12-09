@@ -62,8 +62,12 @@ UNIVERSE {
             Dim positiveline(0, 0) As Double = (0.0);
             Dim negativeline(0, 0) As Double = (0.0);
             Dim homeid(0, 0) As Integer = (0);
-            Dim halfend(0, 0) As Integer = ();
-            Dim bottleneck(0, 0) As Integer = ();
+            Dim halfend(0, 0) As Integer = (0);
+            Dim bottleneck(0, 0) As Integer = (0);
+            Dim jobroutepoint(0, 0)[6] As Integer = (6*0);
+            Dim shoproutepoint(0, 0)[6] As Integer = (6*0);
+            Dim jobhomeroutepoint(0, 0)[6] As Integer = (6*0);
+            Dim shophomeroutepoint(0, 0)[6] As Integer = (6*0);
         }
         AgtType government(0, 0)[1] {
             Dim ID(0, 0) As Integer = (0);
@@ -93,7 +97,7 @@ UNIVERSE {
             Dim endpointid(0, 0) As Integer = (0);
             Dim distance(0, 0) As Double = (0.0);
             Dim hasblock(0, 0) As Boolean = (0);
-            Dim bridgetime(0, 0) As Integer = (0);
+            Dim bridgetime(0, 0) As Long = (0);
             Dim bridgelink(0, 0) As Integer = (0);
             Dim length(0, 0) As Double = (0.0);
             Dim iron(0, 0) As Double = (0.0);
@@ -147,7 +151,7 @@ UNIVERSE {
     Dim daychange(0, 0) As Boolean = (0);
     Dim averagearchive(0, 0) As Double = (0.0);
     Dim averagefreetime(0, 0) As Double = (0.0);
-    Dim averagemovetime(0, 0) As Double = ();
+    Dim averagemovetime(0, 0) As Double = (0.0);
     Dim averageconsump(0, 0) As Double = (0.0);
     Dim averageutilize(0, 0) As Double = (0.0);
     Dim daytimecount(0, 0) As Integer = (0);
@@ -162,9 +166,9 @@ UNIVERSE {
     Dim daycalc(0, 0) As Integer = (0);
     Dim recalculate(0, 0) As Boolean = (0);
     Dim strengthlimit(0, 0) As Double = (0.0);
-    Dim numberofhalfendagt(0, 0) As Integer = ();
-    Dim halfdaychange(0, 0) As Boolean = ();
-    Dim steprecord(0, 0) <10>  As Integer = ();
+    Dim numberofhalfendagt(0, 0) As Integer = (0);
+    Dim halfdaychange(0, 0) As Boolean = (0);
+    Dim steprecord(0, 0) <10>  As Integer = (0);
 }
 
 
@@ -172,10 +176,10 @@ UNIVERSE {
 // Agent Variable Initial Data
 //-------------------------------------------------------
 Initial_Value {
-    UNIVERSE.SIMULATIONCODE = 1("2015/12/01littletestwarp4");
+    UNIVERSE.SIMULATIONCODE = 1("2015/12/05damagetest10");
     UNIVERSE.UNIVBUDGET = 1(50.0);
-    UNIVERSE.THRESHOLD = 1(0.8);
-    UNIVERSE.TESTNUMBER = 1(0);
+    UNIVERSE.THRESHOLD = 1(0.2);
+    UNIVERSE.TESTNUMBER = 1(10);
     UNIVERSE.STRENGTHLIMIT = 1(0.01);
     UNIVERSE.MAP.POINT.X = 114(44.99105546, 42.48658318, 43.20214669, 46.86940966, 45.16994633, 40.96601073, 43.82826476, 45.52772809, 48.21109123, 47.49552773
 , 42.03935599, 46.69051878, 41.77101968, 43.47048301, 46.60107335, 44.72271914, 41.94991055, 47.13774597, 49.28443649, 48.8372093
@@ -218,14 +222,14 @@ Initial_Value {
     UNIVERSE.MAP.BRIDGECORE.DIRECTION = 11(11*0.0);
     UNIVERSE.MAP.BRIDGECORE.DEMAND = 11(11*0);
     UNIVERSE.MAP.BRIDGECORE.STRENGTH = 11(11*0.0);
-    UNIVERSE.MAP.BRIDGECORE.BEGINPOINTID = 11(109, 42, 43, 104, 102, 48, 100, 52, 98, 54
-, 96);
-    UNIVERSE.MAP.BRIDGECORE.ENDPOINTID = 11(41, 107, 105, 45, 47, 101, 50, 99, 53, 97
+    UNIVERSE.MAP.BRIDGECORE.BEGINPOINTID = 11(41, 42, 43, 45, 47, 48, 50, 52, 53, 54
 , 55);
+    UNIVERSE.MAP.BRIDGECORE.ENDPOINTID = 11(109, 107, 105, 104, 102, 101, 100, 99, 98, 97
+, 96);
     UNIVERSE.MAP.BRIDGECORE.DISTANCE = 11(11*0.0);
     UNIVERSE.MAP.BRIDGECORE.HASBLOCK = 11(11*0);
-    UNIVERSE.MAP.BRIDGECORE.BRIDGETIME = 11(1831188, 1884841, 1882124, 1903035, 1903839, 1887778, 1710057, 1927965, 1827867, 1904743
-, 2085240);
+    UNIVERSE.MAP.BRIDGECORE.BRIDGETIME = 11(17487819, 18001092, 17974374, 18173479, 18181061, 18031370, 16331325, 18410622, 17455520, 18189583
+, 19913027);
     UNIVERSE.MAP.BRIDGECORE.BRIDGELINK = 11(11*0);
     UNIVERSE.MAP.BRIDGECORE.LENGTH = 11(16.63, 58.57, 18.51, 81.56, 42.11, 100.0, 71.87, 18.86, 39.56, 33.06
 , 17.48);
@@ -234,8 +238,10 @@ Initial_Value {
     UNIVERSE.MAP.BRIDGECORE.REPAIRCOST = 11(11*0.0);
     UNIVERSE.MAP.BRIDGECORE.COLLAPSE = 11(11*0);
     UNIVERSE.MAP.BRIDGECORE.COLLAPSEFLAG = 11(11*0);
+    UNIVERSE.MAP.BRIDGECORE.TRANSPORT = 11(11*0.0);
     UNIVERSE.MAP.BRIDGECORE.NEXTDAMAGE = 11(11*0.0);
     UNIVERSE.MAP.BRIDGECORE.SIGN = 11(11*"");
+    UNIVERSE.MAP.BRIDGECORE.TRANSPORTSUM = 11(11*0.0);
 }
 
 
@@ -272,7 +278,6 @@ universe.warpday = 0
 dim streetagtset as agtset
 dim streetagt as agt
 dim i as integer
-
 }
 
 Univ_Step_Begin{
@@ -299,10 +304,9 @@ universe.Map.bridgecore(10).sign
 if universe.recalculate == TRUE then
 	for k = 0 to 99
 				for i = 0 to 5
-				if querydb("SELECT personid,listnumber,status,jobroute,shoproute,jobhomeroute,shophomeroute FROM personroute WHERE personid="&k&" and listnumber = "&i&" and status  = "&universe.situation&";") >= 0 then
 					// open table
 					querydb("SELECT personid,listnumber,status,jobroute,shoproute,jobhomeroute,shophomeroute FROM personroute WHERE personid="&k&" and listnumber = "&i&" and status  = "&universe.situation&";")
-					nextdb()
+					if nextdb() == TRUE then
 					universe.Map.Person(k).jobrouteoption(i) = getvalueDB("jobroute")
 					universe.Map.Person(k).shoprouteoption(i) = getvalueDB("shoproute")
 					universe.Map.Person(k).jobhomerouteoption(i) = getvalueDB("jobhomeroute")
@@ -353,7 +357,6 @@ end if
 // 月々の処理を行うモード
 if Int(cdbl(round(gethistory(universe.warpday,1)*1000)/1000)) mod 30 == 21 and int(cdbl(round(universe.warpday*1000)/1000)) mod 30 == 0 then
 	universe.monthcheckmode = TRUE
-	// csv書き込み
 			openfilecsv("bridgetest"&universe.testnumber&".csv",2,3)
 			for i = 0 to 10
 writefilecsv(2,universe.simulationcode,false)
@@ -418,7 +421,7 @@ Univ_Step_End{
 if universe.daychange == TRUE then
 	universe.daytimecount = 1
 end if
-if universe.warpday == 360 then
+if universe.warpday >= 720 then
 	exitsimulation()
 end if
 
@@ -477,6 +480,7 @@ dim i as integer
 dim one as agt
 dim set1 as agtset
 dim set2 as agtset
+dim k as integer
 
 // siteが1なら家、2ならオフィス、3なら店
 if my.site == 0 then
@@ -495,8 +499,13 @@ for i = 0 to 10
 		// 目的地に向かう人々エージェントを捕まえる
 		makeoneagtsetaroundown(set1,1,universe.Map.Person,false)
 		for each one in set1
-			if one.action == 0 then
-				addagt(set2,one)
+			if one.action == 1 then
+			for k = 0 to 5 
+				if my.ID == one.jobroutepoint(k) or my.ID == one.shoproutepoint(k) then
+					addagt(set2,one)
+					Break
+				end if
+			next k
 			end if
 		next one
 		// 全員の速度を0にする
@@ -519,8 +528,13 @@ for i = 0 to 10
 		// 帰宅する人々エージェントを捕まえる
 		makeoneagtsetaroundown(set1,1,universe.Map.Person,false)
 		for each one in set1
-			if one.action == 1 then
-				addagt(set2,one)
+			if one.action == 0 then
+			for k = 0 to 5 
+				if my.ID == one.jobhomeroutepoint(k) or my.ID == one.shophomeroutepoint(k) then
+					addagt(set2,one)
+					Break
+				end if
+			next k
 			end if
 		next one
 		// 全員の速度を0にする
@@ -587,6 +601,7 @@ universe.averagearchive = universe.averagearchive + (my.archivement / 20)
 my.archive_sum = 0
 
 dim i as integer
+
 // Get the all route from database
 for i = 0 to 5
 	// open table
@@ -596,6 +611,20 @@ for i = 0 to 5
 	my.shoprouteoption(i) = getvalueDB("shoproute")
 	my.jobhomerouteoption(i) = getvalueDB("jobhomeroute")
 	my.shophomerouteoption(i) = getvalueDB("shophomeroute")
+	for k = 0 to 10
+		if instr(1,my.jobrouteoption(i),CStr(universe.Map.bridgecore(k).beginpointid)&","&CStr(universe.Map.bridgecore(k).endpointid)) >= 1 then
+			my.jobroutepoint(i) = universe.Map.bridgecore(k).beginpointid
+		end if
+		if instr(1,my.shoprouteoption(i),CStr(universe.Map.bridgecore(k).beginpointid)&","&CStr(universe.Map.bridgecore(k).endpointid)) >= 1 then
+			my.shoproutepoint(i) = universe.Map.bridgecore(k).beginpointid
+		end if
+		if instr(1,my.jobhomerouteoption(i),CStr(universe.Map.bridgecore(k).endpointid)&","&CStr(universe.Map.bridgecore(k).beginpointid)) >= 1 then
+			my.jobhomeroutepoint(i) = universe.Map.bridgecore(k).endpointid
+		end if
+		if instr(1,my.shophomerouteoption(i),CStr(universe.Map.bridgecore(k).endpointid)&","&CStr(universe.Map.bridgecore(k).beginpointid)) >= 1 then
+			my.shophomeroutepoint(i) = universe.Map.bridgecore(k).endpointid
+		end if
+	next k
 next i
 }
 
@@ -633,7 +662,7 @@ if my.consump_sum <= 0 then
 	my.consump_sum = 0 
 end if
 freetimestd = (((my.freetime_sum / 4557.138))) 
-movetimestd = (((my.timecount_sum / 3032.69)))
+movetimestd = (((my.timecount_sum / 30000)))
 consumpstd = (((my.consump_sum  / 153435.9)))
 my.utilize = freetimestd ^ 0.33 + consumpstd ^ 0.33 - movetimestd ^ 0.33
 universe.averageutilize = universe.averageutilize + (my.utilize / 100)
@@ -754,7 +783,11 @@ end if
 					my.action = 1
 					my.check = 0
 					my.nowhome = 1
-					my.timecount = my.timecount *(universe.daytimecount / 1000)
+					/*
+					if my.timecount >= 3000 then
+						my.timecount = 3000
+					end if
+					*/
 					// 平日or休日？
 					if universe.daymode == 1 then
 						my.timecount_sum = my.timecount_sum + my.timecount	*	21
@@ -1003,6 +1036,14 @@ if universe.checkmode == TRUE and my.bridgepeoplewatch == FALSE then
 		my.bridge_demand(i) = 0
 		my.bridge_averagedemand = 0
 	next i
+	if universe.warpday == 360 then
+	universe.Map.bridgecore(universe.testnumber).strength = 0
+	universe.Map.bridgecore(universe.testnumber).sign = 0
+	universe.Map.bridgecore(universe.testnumber).collapse = TRUE
+	universe.Map.bridgecore(universe.testnumber).collapseflag = FALSE
+	update_cost(universe.Map.bridgecore(universe.testnumber).beginpointid,	universe.Map.bridgecore(universe.testnumber).endpointid,1000000)
+	my.collapsebridge = 1
+end if
 		if my.collapsebridge == 1 then
 			universe.situation = universe.Map.bridgecore(0).sign&universe.Map.bridgecore(1).sign&universe.Map.bridgecore(2).sign&
 universe.Map.bridgecore(3).sign&universe.Map.bridgecore(4).sign&universe.Map.bridgecore(5).sign&universe.Map.bridgecore(6).sign&universe.Map.bridgecore(7).sign&universe.Map.bridgecore(8).sign&universe.Map.bridgecore(9).sign&universe.Map.bridgecore(10).sign
@@ -1037,7 +1078,7 @@ my.collapseflag = FALSE
 my.iron = 55 * exp(0.03 * my.length) * 0.01
 my.value = my.length * my.iron * 12 * 60 * 10000
 
-my.strength = (1-(1/(1+1000000*exp((-0.0011)*((my.bridgetime)/150)))))
+my.strength = (1-(1/(1+1000000*exp((-0.0005)*((my.bridgetime)/651)))))
 
 dim streetagt as agt
 dim streetagtset as agtset
@@ -1061,7 +1102,7 @@ dim blockagt as agt
 my.transport = 0
 
 // 平日or休日？
-if universe.daymode == 1then
+if universe.daymode == 1 then
 	my.bridgetime = my.bridgetime + 21
 elseif universe.daymode == 0 then
 	my.bridgetime = my.bridgetime +9
@@ -1069,9 +1110,9 @@ end if
 
 // 平日or休日？
 if universe.daymode == 1 then
-	my.nextdamage = (1-(1/(1+1000000*exp(-0.0011*((my.bridgetime)/150))))) - (1-(1/(1+1000000*exp(-0.0011*((my.bridgetime - 21)/150)))))
+	my.nextdamage = (1-(1/(1+1000000*exp(-0.0005*((my.bridgetime)/651))))) - (1-(1/(1+1000000*exp(-0.0005*((my.bridgetime - 21)/651)))))
 else
-	my.nextdamage = (1-(1/(1+1000000*exp(-0.0011*((my.bridgetime)/150))))) - (1-(1/(1+1000000*exp(-0.0011*((my.bridgetime - 9)/150)))))
+	my.nextdamage = (1-(1/(1+1000000*exp(-0.0005*((my.bridgetime)/651))))) - (1-(1/(1+1000000*exp(-0.0005*((my.bridgetime - 9)/651)))))
 end if
 // personが来たらdemand(寄与度)を増加させる
 makeoneagtsetaroundown(set,2,universe.Map.Person,false)
@@ -1085,12 +1126,11 @@ for each one in set
 		end if
 		// 平日or休日？
 		if universe.daymode == 1 then
-			my.transport = my.transport + 0.000001 * 21
+			my.transport = my.transport + 0.0000001 * 21
 		else
-			my.transport = my.transport + 0.000001 * 9
+			my.transport = my.transport + 0.0000001 * 9
 		end if
 		my.transportsum = my.transportsum + 1
-		one.speed = one.speed / countagtset(set)
 		one.check = 1
 	end if
 next one
@@ -1107,11 +1147,6 @@ if my.collapse == true then
 	my.strength = 0
 	my.collapseflag = FALSE
 end if
-
-openfilecsv("transport.csv",2,3)
-writefilecsv(2,my.ID,false)
-writefilecsv(2,my.transportsum,true)
-closefilecsv(2)
 }
 #end_rule UNIVERSE.MAP.BRIDGECORE
 
@@ -1251,12 +1286,12 @@ Map_Output {
     Title = "Map";
     Disable = No;
     Background_Color = 255, 255, 255;
-    Position_x = 298;
-    Position_y = 10;
+    Position_x = 291;
+    Position_y = 1;
     Size_x = 764;
     Size_y = 695;
     Remarks = No;
-    Map_Cell_Size = 13;
+    Map_Cell_Size = 12;
     Legend_Pos = Top;
     Font_Name = "Dialog";
     Font_Char_Set = 81;
@@ -1693,8 +1728,8 @@ Time_Graph {
     Remarks = Yes;
     Legend_Pos = Top;
     FastDraw = No;
-    Position_x = 278;
-    Position_y = 140;
+    Position_x = 758;
+    Position_y = 145;
     Size_x = 689;
     Size_y = 531;
     Map_Cell_Size = -1;
@@ -1750,7 +1785,7 @@ Time_Graph {
     Draw_Interval = 1;
     Graph_Name = "day";
     Title = "day";
-    Disable = No;
+    Disable = Yes;
     Background_Color = 255, 255, 255;
     Remarks = Yes;
     Legend_Pos = Top;
@@ -2034,8 +2069,8 @@ Numeric_Output {
     Font_Style = 0;
     Font_Color = 0, 0, 0;
     Font_Background_Color = 255, 255, 255;
-    Position_x = 1057;
-    Position_y = 11;
+    Position_x = 1054;
+    Position_y = -2;
     Size_x = 253;
     Size_y = 607;
     Map_Cell_Size = -1;
@@ -2153,61 +2188,61 @@ Numeric_Output {
     }
     OUTPUT {
         Output_Element_Name = "strength0";
-        Figures = 5;
+        Figures = 10;
         Format_Id = 0;
         Output_Expression = "universe.Map.bridgecore(0).strength";
     }
     OUTPUT {
         Output_Element_Name = "strength1";
-        Figures = 5;
+        Figures = 7;
         Format_Id = 0;
         Output_Expression = "universe.Map.bridgecore(1).strength";
     }
     OUTPUT {
         Output_Element_Name = "strength2";
-        Figures = 5;
+        Figures = 7;
         Format_Id = 0;
         Output_Expression = "universe.Map.bridgecore(2).strength";
     }
     OUTPUT {
         Output_Element_Name = "strength3";
-        Figures = 5;
+        Figures = 7;
         Format_Id = 0;
         Output_Expression = "universe.Map.bridgecore(3).strength";
     }
     OUTPUT {
         Output_Element_Name = "strength4";
-        Figures = 5;
+        Figures = 7;
         Format_Id = 0;
         Output_Expression = "universe.Map.bridgecore(4).strength";
     }
     OUTPUT {
         Output_Element_Name = "strength6";
-        Figures = 5;
+        Figures = 7;
         Format_Id = 0;
         Output_Expression = "universe.Map.bridgecore(6).strength";
     }
     OUTPUT {
         Output_Element_Name = "strength7";
-        Figures = 5;
+        Figures = 7;
         Format_Id = 0;
         Output_Expression = "universe.Map.bridgecore(7).strength";
     }
     OUTPUT {
         Output_Element_Name = "strength8";
-        Figures = 5;
+        Figures = 7;
         Format_Id = 0;
         Output_Expression = "universe.Map.bridgecore(8).strength";
     }
     OUTPUT {
         Output_Element_Name = "strength9";
-        Figures = 5;
+        Figures = 7;
         Format_Id = 0;
         Output_Expression = "universe.Map.bridgecore(9).strength";
     }
     OUTPUT {
         Output_Element_Name = "strength10";
-        Figures = 5;
+        Figures = 7;
         Format_Id = 0;
         Output_Expression = "universe.Map.bridgecore(10).strength";
     }
@@ -2288,7 +2323,7 @@ Numeric_Output {
 // Control Panel Definition Division
 //-------------------------------------------------------
 Control_Panel {
-    Display_Area = 1655, 322, 265, 394;
+    Display_Area = 23, 222, 265, 447;
     Panel_Item {
         Item_Type = Edit_Box;
         Item_Name = "simulationcode";
@@ -2300,7 +2335,7 @@ Control_Panel {
         Font_Color = 0, 0, 0;
         Font_Background_Color = 0, 0, 0;
         Var_Name = "Universe.simulationcode";
-        Text_Data = "2015/12/01littletestwarp4";
+        Text_Data = "2015/12/05damagetest10";
     }
     Panel_Item {
         Item_Type = Slider;
@@ -2332,7 +2367,7 @@ Control_Panel {
         Slider_Range_Max = 8;
         Slider_Value_Min = 0.1;
         Slider_Value_Step = 0.1;
-        Slider_Value = "7";
+        Slider_Value = "1";
     }
     Panel_Item {
         Item_Type = Edit_Box;
@@ -2345,7 +2380,7 @@ Control_Panel {
         Font_Color = 0, 0, 0;
         Font_Background_Color = 0, 0, 0;
         Var_Name = "Universe.testnumber";
-        Text_Data = "0";
+        Text_Data = "10";
     }
     Panel_Item {
         Item_Type = Edit_Box;
@@ -2381,13 +2416,13 @@ Others_Data {
     Debug_Position_y = 7;
     Debug_Size_x = 400;
     Debug_Size_y = 200;
-    Console_Position_x = 249;
-    Console_Position_y = 2;
+    Console_Position_x = 1308;
+    Console_Position_y = -3;
     Console_Size_x = 358;
     Console_Size_y = 761;
     Componen_Tree_Position_x = 3;
     Componen_Tree_Position_y = 5;
-    Componen_Tree_Size_x = 250;
+    Componen_Tree_Size_x = 249;
     Componen_Tree_Size_y = 408;
     Console_Background_Color = 10066329;
     Console_Foreground_Color = 255;
@@ -2524,8 +2559,8 @@ Space_Map_Initial_Value {
 // Window Location Definition Division
 //-------------------------------------------------------
 Window_Rectangle {
-    Window_Name = Main_Window, 175, 53, 1769, 956;
-    Window_Name = Output_Setting_Window, 644, 333, 480, 290;
+    Window_Name = Main_Window, 2358, 20, 800, 700;
+    Window_Name = Output_Setting_Window, 727, 375, 480, 290;
     Window_Name = Artisoc_Help_Window, 463, 21, 853, 405;
 }
 
