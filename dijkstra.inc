@@ -985,3 +985,178 @@ Sub update_cost(beginPointID As Integer, endPointID As Integer, newCost As Doubl
 		revStreetAgt.Cost = streetAgt.Cost
 	End If
 }
+
+// ダイクストラ法の計算：始点（startPointID）から複数の候補地（goalPointArray）までの最短経路を探索する
+// 更にコストと始点と終点、またどの橋を使うのかも出力できるようにする
+Function dijkstrav2(startPointID As Integer, goalPointArray As String) As String
+{
+	Dim startPointAgt As Agt
+	Dim countNearAgtSet As Integer
+	Dim startStreetAgt As Agt
+	Dim pointAgtSet As AgtSet
+	Dim pointAgt As Agt
+	Dim streetAgtSet As AgtSet
+	Dim streetAgt As Agt
+	Dim beginPointAgt As Agt
+	Dim endPointAgt As Agt
+	Dim targetAgt As Agt
+	Dim freeAgtSet As AgtSet
+	Dim d As Double
+	Dim dijkstraStreetAgt As Agt
+	Dim choiceAgt As Agt
+	Dim startAgt As Agt
+	Dim strStreetRoute As String
+	Dim goalArray As String
+	Dim minValue As Double
+	Dim minRoute As String
+	Dim minStreetRoute As String
+	Dim tmpValue As Double
+	Dim i As Integer
+    dim k as integer
+	dim returndijkstra as string
+    dim usingbridge as integer
+    dim modifiedroute as string
+
+	// 始点の位置とゴールの位置でStreetを分断する	
+	separate_street(CStr(startPointID) & "," & goalPointArray)
+
+	// 最短経路を求める
+	startPointAgt = GetUniqueID(Universe.Map.Point, startPointID)
+	countNearAgtSet = CountAgtSet(startPointAgt.NearAgtSet)
+
+	targetAgt = startPointAgt
+	MakeAgtSet(streetAgtSet, Universe.Street)
+	
+	// Streetの開始点のPointのみ、pointAgtSetに格納する
+	For Each streetAgt In streetAgtSet
+		beginPointAgt = get_begin_point(streetAgt)
+		If GetAgtEntry(pointAgtSet, beginPointAgt) == -1 Then
+			AddAgt(pointAgtSet, beginPointAgt)
+		End If
+	Next streetAgt
+	
+	// 変数の初期化処理
+	DuplicateAgtSet(freeAgtSet, pointAgtSet)
+	For Each pointAgt In pointAgtSet
+		pointAgt.DijkstraValue = 2147483647
+	Next pointAgt
+	targetAgt.DijkstraValue = 0
+
+	Do While(1)
+		// ダイクストラ法を用いて計算する
+		DelAgtSet2(freeAgtSet, targetAgt)
+		
+		If CountAgtSet(freeAgtSet) == 0 Then
+			Break
+		End If
+		
+		For Each streetAgt In streetAgtSet
+			beginPointAgt = get_begin_point(streetAgt) 
+		
+			If beginPointAgt.ID == targetAgt.ID Then
+				endPointAgt = get_end_point(streetAgt) 
+				If GetAgtEntry(freeAgtSet, endPointAgt) > -1 Then
+					d = targetAgt.DijkstraValue + streetAgt.Cost
+					If endPointAgt.DijkstraValue > d Then
+						endPointAgt.DijkstraValue = d
+						endPointAgt.ChoiceAgt = beginPointAgt
+					End If
+				End If
+			End If
+		Next streetAgt
+		
+		SortAgtSet(freeAgtSet, "DijkstraValue", True)
+		targetAgt = GetAgt(freeAgtSet, 0)
+	Loop
+	
+	// 最短経路を取得
+	DuplicateAgtSet(freeAgtSet, pointAgtSet)
+	startAgt = startPointAgt
+	DelAgtSet2(freeAgtSet, startAgt)
+	goalArray = ""
+
+	For i=0 To CountToken(goalPointArray) - 1
+		pointAgt = Universe.Map.Point(CInt(GetToken(goalPointArray, i)))
+		
+		dijkstraStreetAgt = CreateAgt(Universe.DijkstraStreet)
+		strStreetRoute = CStr(pointAgt.ID)
+		dijkstraStreetAgt.Value = pointAgt.DijkstraValue
+		
+		Do While(1)
+			If SpecifyAgtType(pointAgt) == 0 Then
+				// ルートがつながっていない
+				dijkstraStreetAgt.Value = 2147483647
+				dijkstraStreetAgt.StreetRoute = ""
+				dijkstraStreetAgt.Route = ""
+				Break
+			End If
+			
+			choiceAgt = pointAgt.ChoiceAgt
+			
+			If CInt(choiceAgt) == 0 Then
+				// 目的地までのネットワークがつながっていません
+				dijkstraStreetAgt.Value = 2147483647
+				dijkstraStreetAgt.StreetRoute = ""
+				dijkstraStreetAgt.Route = ""
+				Break
+			End If
+			
+			If choiceAgt.ID == startAgt.ID Then
+				// 最終地点に到着
+				dijkstraStreetAgt.StreetRoute = startAgt.ID & "," & strStreetRoute
+				dijkstraStreetAgt.Value = dijkstraStreetAgt.Value + startAgt.DijkstraValue
+				dijkstraStreetAgt.Route = get_route_from_street(dijkstraStreetAgt.StreetRoute)
+				Break
+			Else
+				// 次の接続点へ
+				pointAgt = choiceAgt
+				
+				strStreetRoute = Cstr(pointAgt.ID) & "," & strStreetRoute
+				dijkstraStreetAgt.Value = dijkstraStreetAgt.Value + pointAgt.DijkstraValue
+			End If
+		Loop
+		
+		// Value, Routeを格納
+		goalArray = goalArray & CInt(dijkstraStreetAgt.Value*100)/100 & "," & Replace(dijkstraStreetAgt.Route, "," ," ")  & ","
+	Next pointAgt
+	
+	goalArray = Left(goalArray, Len(goalArray) - 1)
+	
+	// 複数のルートのうち、最短経路を取得
+	minValue = CDbl(GetToken(goalArray, 0))
+	minRoute = GetToken(goalArray, 1)
+	If i > 1 Then
+		For i=1 To CountToken(goalPointArray) - 1
+			tmpValue = CDbl(GetToken(goalArray, 2*i))
+			If tmpValue < minValue Then
+				minValue = tmpValue
+				minRoute = GetToken(goalArray, 2*i + 1)
+			End If
+		Next i
+	End If
+	
+	// 分断したStreetを計算前の状態に戻す
+	restore_street()
+    
+    // カンマ区切りのものを別に用意しておく
+    modifiedroute = Replace(minRoute, " ", ",")
+    
+    // 初期化
+    usingbridge = 0
+    
+    // ルートでどの橋が使われるかを調べる
+    for k = 0 to 10
+        if instr(1,modifiedroute,CStr(universe.Map.bridgecore(k).beginpointid) &","& CStr(universe.Map.bridgecore(k).endpointid)) >= 1 then
+		usingbridge = k
+        	break
+	elseif instr(1,modifiedroute,CStr(universe.Map.bridgecore(k).endpointid) &","& CStr(universe.Map.bridgecore(k).beginpointid)) >= 1 then
+		usingbridge = k
+        	break
+	end if
+    next k
+	
+	// 返り値は、最短経路のPoint配列とそのコスト、始点と終点、そして使う橋のID
+    // ルートを使う前に，区切りにすることが必要
+    returndijkstra = minRoute&","&minvalue&","&gettoken(modifiedroute,0)&","&gettoken(modifiedroute,counttoken(modifiedroute)-1)&","&usingbridge
+	return(returndijkstra)
+}
