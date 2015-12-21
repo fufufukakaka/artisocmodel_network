@@ -52,6 +52,8 @@ y = demand,
 colour=factor(bridgeid)
 )
 )
+gbr1 <- gbr1 + geom_line()
+plot(gbr1)
 ggo<-ggplot(
 g1,
 aes(

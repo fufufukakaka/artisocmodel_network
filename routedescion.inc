@@ -14,12 +14,10 @@ function routegonyogonyo(selectsituation As Integer,listnumber as integer) as st
     dim eb as string
     dim ebn as integer
     dim tmproute as string
+	dim kk as integer
 
     // ebはenable bridgeだよ
     // ebnはenable bridge numberだよ
-        
-    // 累積確率を初期化
-    sumprobab = 0
     
     // 使える橋リストを初期化
     eb = "s"
@@ -30,7 +28,8 @@ function routegonyogonyo(selectsituation As Integer,listnumber as integer) as st
     // あらかじめ現在使うことができる橋を調べる
     situation = universe.situation
     for k = 0 to 10
-        if mid(situation,k+1,1) == "1" then
+        kk = k + 1
+        if mid(situation,kk,1) == "1" then
             eb = eb & "," & k
         end if
     next k
@@ -39,7 +38,6 @@ function routegonyogonyo(selectsituation As Integer,listnumber as integer) as st
     eb = replace(eb,"s,","")
     
     // ルーレットで選べる橋の数を配列に反映する
-    // 絶対にもっといい方法があるはず。。。
     ebn = counttoken(eb)
     
 	if selectsituation == 0 then
@@ -49,7 +47,6 @@ function routegonyogonyo(selectsituation As Integer,listnumber as integer) as st
                 route(i,k) = my.routecollectionjob(i,k,0)
                 cost(i,k) = Cdbl(my.routecollectionjob(i,k,1))
                 probab(i,k) = Cdbl(my.routecollectionjob(i,k,2))
-                ruiseki(i,k) = Cdbl(my.routecollectionjob(i,k,3))
             next k
         next i
     elseif selectsituation == 1 then
@@ -59,7 +56,6 @@ function routegonyogonyo(selectsituation As Integer,listnumber as integer) as st
                 route(i,k) = my.routecollectionshop(i,k,0)
                 cost(i,k) = Cdbl(my.routecollectionshop(i,k,1))
                 probab(i,k) = Cdbl(my.routecollectionshop(i,k,2))
-                ruiseki(i,k) = CDbl(my.routecollectionshop(i,k,3))
             next k
         next i
     elseif selectsituation == 2 then
@@ -69,7 +65,6 @@ function routegonyogonyo(selectsituation As Integer,listnumber as integer) as st
                 route(i,k) = my.routecollectionjobhome(i,k,0)
                 cost(i,k) = Cdbl(my.routecollectionjobhome(i,k,1))
                 probab(i,k) = Cdbl(my.routecollectionjobhome(i,k,2))
-                ruiseki(i,k) = Cdbl(my.routecollectionjobhome(i,k,3))
             next k
         next i
     elseif selectsituation == 3 then
@@ -79,7 +74,6 @@ function routegonyogonyo(selectsituation As Integer,listnumber as integer) as st
                 route(i,k) = my.routecollectionshophome(i,k,0)
                 cost(i,k) = Cdbl(my.routecollectionshophome(i,k,1))
                 probab(i,k) = Cdbl(my.routecollectionshophome(i,k,2))
-                ruiseki(i,k) = Cdbl(my.routecollectionshophome(i,k,3))
             next k
         next i
     end if
@@ -94,21 +88,21 @@ function routegonyogonyo(selectsituation As Integer,listnumber as integer) as st
     
     // コストを用いてルートを選ぶための確率を計算する
     for i = 0 to 5
+        sumprobab = 0
         for k = 0 to (ebn - 1)
-            sumprobab = sumprobab + cost(i,Cint(gettoken(eb,k)))
+sumprobab = sumprobab + exp(1 / cost(i,Cint(gettoken(eb,k))))
         next k
         for k = 0 to (ebn - 1)
-            probab(i,Cint(gettoken(eb,k))) = 1- (cost(i,Cint(gettoken(eb,k)))/sumprobab)
-        println(probab(i,Cint(gettoken(eb,k))))
+probab(i,Cint(gettoken(eb,k))) = (exp(1 / cost(i,Cint(gettoken(eb,k))))/sumprobab)
         next k
         for k = 0 to (ebn - 1)
             if k == 0 then
                 rouletteruiseki(i,0) = Cstr(probab(i,Cint(gettoken(eb,k))))
             else
-                rouletteruiseki(i,0) = rouletteruiseki(i,0) & "," & Cstr(probab(i,Cint(gettoken(eb,k))))
+                rouletteruiseki(i,0) = rouletteruiseki(i,0) & "," & Cstr(Cdbl(gettoken(rouletteruiseki(i,0),k-1)) + probab(i,Cint(gettoken(eb,k))))
             end if
-                rouletteruiseki(i,1) = eb
         next k
+        rouletteruiseki(i,1) = eb
     next i
 
     // 取り敢えず確率を返しておく
@@ -117,7 +111,6 @@ function routegonyogonyo(selectsituation As Integer,listnumber as integer) as st
         for i = 0 to 5
             for k = 0 to 10
                 my.routecollectionjob(i,k,2) = Cstr(probab(i,k))
-                my.routecollectionjob(i,k,3) = Cstr(ruiseki(i,k))
             next k
         next i
     elseif selectsituation == 1 then
@@ -125,7 +118,6 @@ function routegonyogonyo(selectsituation As Integer,listnumber as integer) as st
         for i = 0 to 5
             for k = 0 to 10
                 my.routecollectionshop(i,k,2) = Cstr(probab(i,k))
-                my.routecollectionshop(i,k,3) = Cstr(ruiseki(i,k))
             next k
         next i
     elseif selectsituation == 2 then
@@ -133,7 +125,6 @@ function routegonyogonyo(selectsituation As Integer,listnumber as integer) as st
         for i = 0 to 5
             for k = 0 to 10
                 my.routecollectionjobhome(i,k,2) = Cstr(probab(i,k))
-                my.routecollectionjobhome(i,k,3) = Cstr(ruiseki(i,k))
             next k
         next i
     elseif selectsituation == 3 then
@@ -141,7 +132,6 @@ function routegonyogonyo(selectsituation As Integer,listnumber as integer) as st
         for i = 0 to 5
             for k = 0 to 10
                 my.routecollectionshophome(i,k,2) = Cstr(probab(i,k))
-                my.routecollectionshophome(i,k,3) = Cstr(ruiseki(i,k))
             next k
         next i
     end if
@@ -163,12 +153,16 @@ function routegonyogonyo(selectsituation As Integer,listnumber as integer) as st
                 end if
             end if
         elseif k > 0 then
-                if roulettebari >= Cdbl(gettoken(rouletteruiseki(listnumber,0),k-1)) and roulettebari <= Cdbl(gettoken(rouletteruiseki(listnumber,0),k)) then
+                if roulettebari >= Cdbl(gettoken(rouletteruiseki(listnumber,0),k-1)) and roulettebari < Cdbl(gettoken(rouletteruiseki(listnumber,0),k)) then
                 	if selectsituation == 0 or selectsituation == 1 then
                         tmproute = route(listnumber,Cint(gettoken(rouletteruiseki(listnumber,1),k)))
+                        my.routebridgepoint(0) = universe.map.bridgecore(Cint(gettoken(rouletteruiseki(listnumber,1),k))).beginpointid
+                        my.routebridgepoint(1) = Cint(gettoken(rouletteruiseki(listnumber,1),k))
                         break
                 	else 
                         tmproute = route(listnumber,Cint(gettoken(rouletteruiseki(listnumber,1),k)))
+                        my.routebridgereturnpoint(0) = universe.map.bridgecore(Cint(gettoken(rouletteruiseki(listnumber,1),k))).endpointid
+                        my.routebridgereturnpoint(1) = Cint(gettoken(rouletteruiseki(listnumber,1),k))
                 		break
             		end if
         		end if
