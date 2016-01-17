@@ -1330,15 +1330,15 @@ for each one in set
 next one
 // •½“úor‹x“úH
 if universe.daymode == 1 then
-	my.bridgetime = my.bridgetime + 21 + (my.transport*20)
+	my.bridgetime = my.bridgetime + 21 + (my.transport*10)
 elseif universe.daymode == 0 then
-	my.bridgetime = my.bridgetime +9 + (my.transport*20)
+	my.bridgetime = my.bridgetime +9 + (my.transport*10)
 end if
 // •½“úor‹x“úH
 if universe.daymode == 1 then
-	my.nextdamage = (1-(1/(1+500000*exp(-0.0012*((my.bridgetime)/1360))))) - (1-(1/(1+500000*exp(-0.0012*((my.bridgetime - (21+my.transport*20))/1360)))))
+	my.nextdamage = (1-(1/(1+500000*exp(-0.0012*((my.bridgetime)/1360))))) - (1-(1/(1+500000*exp(-0.0012*((my.bridgetime - (21+my.transport*10))/1360)))))
 else
-	my.nextdamage = (1-(1/(1+500000*exp(-0.0012*((my.bridgetime)/1360))))) - (1-(1/(1+500000*exp(-0.0012*((my.bridgetime - (9+my.transport*20))/1360)))))
+	my.nextdamage = (1-(1/(1+500000*exp(-0.0012*((my.bridgetime)/1360))))) - (1-(1/(1+500000*exp(-0.0012*((my.bridgetime - (9+my.transport*10))/1360)))))
 end if
 my.strength = my.strength + my.nextdamage
 my.repaircost = my.value * (1 - my.strength)

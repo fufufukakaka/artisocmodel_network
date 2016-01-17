@@ -194,7 +194,7 @@ UNIVERSE {
 // Agent Variable Initial Data
 //-------------------------------------------------------
 Initial_Value {
-    UNIVERSE.SIMULATIONCODE = 1("2015/12/28pretest1");
+    UNIVERSE.SIMULATIONCODE = 1("20160118dispersionstrength");
     UNIVERSE.UNIVBUDGET = 1(50.0);
     UNIVERSE.THRESHOLD = 1(0.2);
     UNIVERSE.TESTNUMBER = 1(1);
@@ -1329,15 +1329,15 @@ for each one in set
 next one
 // ïΩì˙orãxì˙ÅH
 if universe.daymode == 1 then
-	my.bridgetime = my.bridgetime + 21 + (my.transport)
+	my.bridgetime = my.bridgetime + 21 + (my.transport*10)
 elseif universe.daymode == 0 then
-	my.bridgetime = my.bridgetime +9 + (my.transport)
+	my.bridgetime = my.bridgetime +9 + (my.transport*10)
 end if
 // ïΩì˙orãxì˙ÅH
 if universe.daymode == 1 then
-	my.nextdamage = (1-(1/(1+500000*exp(-0.0012*((my.bridgetime)/1360))))) - (1-(1/(1+500000*exp(-0.0012*((my.bridgetime - (21+my.transport))/1360)))))
+	my.nextdamage = (1-(1/(1+500000*exp(-0.0012*((my.bridgetime)/1360))))) - (1-(1/(1+500000*exp(-0.0012*((my.bridgetime - (21+my.transport*10))/1360)))))
 else
-	my.nextdamage = (1-(1/(1+500000*exp(-0.0012*((my.bridgetime)/1360))))) - (1-(1/(1+500000*exp(-0.0012*((my.bridgetime - (9+my.transport))/1360)))))
+	my.nextdamage = (1-(1/(1+500000*exp(-0.0012*((my.bridgetime)/1360))))) - (1-(1/(1+500000*exp(-0.0012*((my.bridgetime - (9+my.transport*10))/1360)))))
 end if
 my.strength = my.strength + my.nextdamage
 my.repaircost = my.value * (1 - my.strength)
@@ -1506,7 +1506,7 @@ Map_Output {
     Map_Space_Name = "Universe.Map";
     Map_Name = "Map";
     Title = "Map";
-    Disable = No;
+    Disable = Yes;
     Background_Color = 255, 255, 255;
     Position_x = 291;
     Position_y = 1;
@@ -2577,7 +2577,7 @@ Time_Graph {
 // Control Panel Definition Division
 //-------------------------------------------------------
 Control_Panel {
-    Display_Area = 88, 525, 249, 385;
+    Display_Area = 1285, 516, 249, 385;
     Panel_Item {
         Item_Type = Edit_Box;
         Item_Name = "simulationcode";
@@ -2589,7 +2589,7 @@ Control_Panel {
         Font_Color = 0, 0, 0;
         Font_Background_Color = 0, 0, 0;
         Var_Name = "Universe.simulationcode";
-        Text_Data = "2015/12/28pretest1";
+        Text_Data = "20160118dispersionstrength";
     }
     Panel_Item {
         Item_Type = Slider;
