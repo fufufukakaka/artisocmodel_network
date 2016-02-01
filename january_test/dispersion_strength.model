@@ -194,9 +194,9 @@ UNIVERSE {
 // Agent Variable Initial Data
 //-------------------------------------------------------
 Initial_Value {
-    UNIVERSE.SIMULATIONCODE = 1("20160118dispersionstrength");
+    UNIVERSE.SIMULATIONCODE = 1("20160128dispersionstrength");
     UNIVERSE.UNIVBUDGET = 1(50.0);
-    UNIVERSE.THRESHOLD = 1(0.2);
+    UNIVERSE.THRESHOLD = 1(0.4);
     UNIVERSE.TESTNUMBER = 1(1);
     UNIVERSE.STRENGTHLIMIT = 1(0.01);
     UNIVERSE.MAP.POINT.X = 114(44.99105546, 42.48658318, 43.20214669, 46.86940966, 45.16994633, 40.96601073, 43.82826476, 45.52772809, 48.21109123, 47.49552773
@@ -269,6 +269,7 @@ Initial_Value {
 //-------------------------------------------------------
 #begin_rule UNIVERSE
 include"dijkstra.inc"
+
 
 
 Univ_Init{
@@ -2577,7 +2578,7 @@ Time_Graph {
 // Control Panel Definition Division
 //-------------------------------------------------------
 Control_Panel {
-    Display_Area = 1285, 516, 249, 385;
+    Display_Area = 1332, 296, 249, 385;
     Panel_Item {
         Item_Type = Edit_Box;
         Item_Name = "simulationcode";
@@ -2589,7 +2590,7 @@ Control_Panel {
         Font_Color = 0, 0, 0;
         Font_Background_Color = 0, 0, 0;
         Var_Name = "Universe.simulationcode";
-        Text_Data = "20160118dispersionstrength";
+        Text_Data = "20160128dispersionstrength";
     }
     Panel_Item {
         Item_Type = Slider;
@@ -2621,7 +2622,7 @@ Control_Panel {
         Slider_Range_Max = 8;
         Slider_Value_Min = 0.1;
         Slider_Value_Step = 0.1;
-        Slider_Value = "1";
+        Slider_Value = "3";
     }
     Panel_Item {
         Item_Type = Edit_Box;

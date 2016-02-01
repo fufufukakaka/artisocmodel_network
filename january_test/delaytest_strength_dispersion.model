@@ -81,6 +81,7 @@ UNIVERSE {
             Dim gotime(0, 0) As Double = (0.0);
             Dim returntime(0, 0) As Double = (0.0);
             Dim reroutelimit(0, 0) As Integer = (0);
+            Dim delaytime(0, 0) As Integer = ();
         }
         AgtType government(0, 0)[1] {
             Dim ID(0, 0) As Integer = (0);
@@ -194,9 +195,9 @@ UNIVERSE {
 // Agent Variable Initial Data
 //-------------------------------------------------------
 Initial_Value {
-    UNIVERSE.SIMULATIONCODE = 1("20160126dispersionlimitdemand3");
+    UNIVERSE.SIMULATIONCODE = 1("delaytest");
     UNIVERSE.UNIVBUDGET = 1(25.0);
-    UNIVERSE.THRESHOLD = 1(0.8);
+    UNIVERSE.THRESHOLD = 1(0.2);
     UNIVERSE.TESTNUMBER = 1(1);
     UNIVERSE.STRENGTHLIMIT = 1(0.01);
     UNIVERSE.MAP.POINT.X = 114(44.99105546, 42.48658318, 43.20214669, 46.86940966, 45.16994633, 40.96601073, 43.82826476, 45.52772809, 48.21109123, 47.49552773
@@ -269,6 +270,7 @@ Initial_Value {
 //-------------------------------------------------------
 #begin_rule UNIVERSE
 include"dijkstra.inc"
+
 
 
 Univ_Init{
@@ -826,18 +828,23 @@ end if
 //ダイクストラ法に基づいて進む
 if universe.halfdaychange == TRUE then
 	my.halfend = 0
+	my.delaytime = my.delaytime + 1
 	targetPointAgt = Universe.Map.Point(CInt(GetToken(My.RouteArray, My.RouteCount)))
-	homeroute(targetpointagt)
+	if  my.delaytime >= 1 then
+		homeroute(targetpointagt)
+		my.delaytime = 0
+	end if
 end if
 if  universe.daychange == TRUE  then
 	my.nowhome = 0
 	targetPointAgt = Universe.Map.Point(CInt(GetToken(My.RouteArray, My.RouteCount)))
 	my.daycount = my.daycount + 0.5
-	if universe.daymode == 0 then
-		shoproute(targetpointagt)
-	elseif universe.daymode == 1 then
-		jobroute(targetpointagt)
-	end if
+		if universe.daymode == 0 then
+			shoproute(targetpointagt)
+		elseif universe.daymode == 1 then
+			jobroute(targetpointagt)
+		end if
+
 end if
 	If my.nowhome == 1  Then
 		// 立ち止まる
@@ -1147,7 +1154,6 @@ dim i as integer
 dim k as integer
 dim p as integer
 my.nowbridge = 0
-my.bridge_averagedemand = 0
 for i = 0 to 10 
 	if universe.Map.bridgecore(i).collapse == FALSE then
 		my.nowbridge = my.nowbridge + 1
@@ -1158,8 +1164,7 @@ for i = 0 to 10
 	my.bridge_status(i) = universe.Map.bridgecore(i).strength
 	my.bridge_demand(i) = universe.Map.bridgecore(i).demand
 	my.bridge_averagedemand = my.bridge_averagedemand + my.bridge_demand(i) / my.nowbridge
-
-		my.bridge_distance(i) = universe.Map.bridgecore(i).distance
+	my.bridge_distance(i) = universe.Map.bridgecore(i).distance
 next i
 
 // 1年ごとに橋を点検(universeで日付と同期)
@@ -1206,14 +1211,13 @@ if universe.checkmode == TRUE and my.bridgepeoplewatch == FALSE then
 		my.bridgecount = my.bridgecount + 1
 	end if
 	next i
-	// juyoudogatakai順に並び替える
-	sortagtset(repairbridge,"demand",false)
+	// 耐久値が低い順に並び替える
+	sortagtset(repairbridge,"strength",true)
 	if my.bridgecount > 0 then
 	for i = 0 to (my.bridgecount - 1)
-	one = getagt(repairbridg
-	e,i)
-// 危険域にある橋の需要値が(今は平均以上なら)なら橋の耐久値を全て回復し、橋内部の時間を0に戻す。予算が足りなくなった時点で修復を終了する。これは耐久値シナリオでは外す条件です
-			if my.budget >= one.repaircost and universe.Map.bridgecore(i).demand >= my.bridge_averagedemand then
+	one = getagt(repairbridge,i)
+// 危険域にある橋の需要値が(今は平均の半分以上なら)なら橋の耐久値を全て回復し、橋内部の時間を0に戻す。予算が足りなくなった時点で修復を終了する。これは耐久値シナリオでは外す条件です
+			if my.budget >= one.repaircost then
 				my.budget = my.budget - one.repaircost
 				my.outcome = my.outcome + one.repaircost
 				one.strength = 1
@@ -1509,7 +1513,7 @@ Map_Output {
     Map_Space_Name = "Universe.Map";
     Map_Name = "Map";
     Title = "Map";
-    Disable = Yes;
+    Disable = No;
     Background_Color = 255, 255, 255;
     Position_x = 291;
     Position_y = 1;
@@ -1699,8 +1703,8 @@ Time_Graph {
     FastDraw = No;
     Position_x = 9;
     Position_y = 8;
-    Size_x = 1038;
-    Size_y = 715;
+    Size_x = 485;
+    Size_y = 608;
     Map_Cell_Size = -1;
     Axis_Label = "", "";
     Draw_By_JFree_Chart = Yes;
@@ -1816,16 +1820,6 @@ Time_Graph {
         Expression_Value_Display = No;
         Effective_Fraction_Figures = 0;
         Graph_Element_Color = (51, 255, 255);
-    }
-    Output {
-        Graph_Element_Name = "average";
-        Line_Color = 0, 255, 0;
-        Line_Width = 4;
-        Marker_Id = 0;
-        Output_Expression = "universe.Map.government.bridge_averagedemand * 0.9";
-        Expression_Value_Display = No;
-        Effective_Fraction_Figures = 0;
-        Graph_Element_Color = (0, 0, 0);
     }
 }
 
@@ -2590,7 +2584,7 @@ Time_Graph {
 // Control Panel Definition Division
 //-------------------------------------------------------
 Control_Panel {
-    Display_Area = 1285, 516, 249, 385;
+    Display_Area = 1332, 296, 249, 385;
     Panel_Item {
         Item_Type = Edit_Box;
         Item_Name = "simulationcode";
@@ -2602,7 +2596,7 @@ Control_Panel {
         Font_Color = 0, 0, 0;
         Font_Background_Color = 0, 0, 0;
         Var_Name = "Universe.simulationcode";
-        Text_Data = "20160126dispersionlimitdemand3";
+        Text_Data = "delaytest";
     }
     Panel_Item {
         Item_Type = Slider;
@@ -2634,7 +2628,7 @@ Control_Panel {
         Slider_Range_Max = 8;
         Slider_Value_Min = 0.1;
         Slider_Value_Step = 0.1;
-        Slider_Value = "7";
+        Slider_Value = "1";
     }
     Panel_Item {
         Item_Type = Edit_Box;

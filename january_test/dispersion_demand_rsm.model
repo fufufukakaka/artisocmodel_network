@@ -187,6 +187,7 @@ UNIVERSE {
     Dim halfdaychange(0, 0) As Boolean = (0);
     Dim steprecord(0, 0) <10>  As Integer = (0);
     Dim tmp(0, 0) As Integer = (0);
+    Dim demandlimit(0, 0) As Double = (0.0);
 }
 
 
@@ -194,10 +195,10 @@ UNIVERSE {
 // Agent Variable Initial Data
 //-------------------------------------------------------
 Initial_Value {
-    UNIVERSE.SIMULATIONCODE = 1("20160126dispersionlimitdemand3");
-    UNIVERSE.UNIVBUDGET = 1(25.0);
-    UNIVERSE.THRESHOLD = 1(0.8);
-    UNIVERSE.TESTNUMBER = 1(1);
+    UNIVERSE.SIMULATIONCODE = 1("201601rsm");
+    UNIVERSE.UNIVBUDGET = 1(18.10793);
+    UNIVERSE.THRESHOLD = 1(0.6783811);
+    UNIVERSE.TESTNUMBER = 1(2);
     UNIVERSE.STRENGTHLIMIT = 1(0.01);
     UNIVERSE.MAP.POINT.X = 114(44.99105546, 42.48658318, 43.20214669, 46.86940966, 45.16994633, 40.96601073, 43.82826476, 45.52772809, 48.21109123, 47.49552773
 , 42.03935599, 46.69051878, 41.77101968, 43.47048301, 46.60107335, 44.72271914, 41.94991055, 47.13774597, 49.28443649, 48.8372093
@@ -299,6 +300,21 @@ dim streetagtset as agtset
 dim streetagt as agt
 dim i as integer
 
+// 応答曲面法のために
+dim count as integer
+dim demandarray as string
+dim strengtharray as string
+dim budgetarray as string
+demandarray = 
+"0.2026982,0.5,0.7973018,0.2026982,0.5,0.7973018,0.7973018,0.5,0.5,0.5,0.2026982,1,0.5,0.5,0.7973018,0.2026982,0"
+strengtharray = "0.6783811,0.2,0.3216189,0.6783811,0.5,0.6783811,0.3216189,0.5,0.5,0.8,0.3216189,0.5,0.5,0.5,0.6783811,0.3216189,0.5"
+budgetarray = 
+"18.10793,30,41.89207,41.89207,10,41.89207,18.10793,30,50,30,18.10793,30,30,30,18.10793,41.89207,30"
+count = getcountsimulationnumber()
+universe.simulationcode = "201601rsm" & count
+universe.demandlimit = cdbl(gettoken(demandarray,count-1))
+universe.strengthlimit = cdbl(gettoken(strengtharray,count-1))
+universe.univbudget = cdbl(gettoken(budgetarray,count-1))
 }
 
 Univ_Step_Begin{
@@ -1210,13 +1226,13 @@ if universe.checkmode == TRUE and my.bridgepeoplewatch == FALSE then
 	sortagtset(repairbridge,"demand",false)
 	if my.bridgecount > 0 then
 	for i = 0 to (my.bridgecount - 1)
-	one = getagt(repairbridg
-	e,i)
+	one = getagt(repairbridge,i)
 // 危険域にある橋の需要値が(今は平均以上なら)なら橋の耐久値を全て回復し、橋内部の時間を0に戻す。予算が足りなくなった時点で修復を終了する。これは耐久値シナリオでは外す条件です
-			if my.budget >= one.repaircost and universe.Map.bridgecore(i).demand >= my.bridge_averagedemand then
+			if my.budget >= one.repaircost and universe.Map.bridgecore(i).demand >= my.bridge_averagedemand * universe.demandlimit then
 				my.budget = my.budget - one.repaircost
 				my.outcome = my.outcome + one.repaircost
 				one.strength = 1
+				
 				one.bridgetime = 0
 				one.collapseflag = FALSE
 				update_cost(one.beginpointid,one.endpointid,one.distance)
@@ -1474,7 +1490,7 @@ Single_Simulation {
 Repeat_Simulation {
     Value_Change = None;
     Initial_Value_Change_None {
-        Repeat_Max = 1;
+        Repeat_Max = 3;
     }
     Initial_Value_Change_Linear {
         Variable_Name = "universe.tmp";
@@ -2307,7 +2323,7 @@ Numeric_Output {
     Position_x = 1054;
     Position_y = -2;
     Size_x = 253;
-    Size_y = 667;
+    Size_y = 712;
     Map_Cell_Size = -1;
     Numeric_Name = "day.etc";
     Title = "day.etc";
@@ -2499,6 +2515,36 @@ Numeric_Output {
         Format_Id = 0;
         Output_Expression = "universe.daymode";
     }
+    OUTPUT {
+        Output_Element_Name = "demandlimit";
+        Figures = 7;
+        Format_Id = 0;
+        Output_Expression = "universe.demandlimit";
+    }
+    OUTPUT {
+        Output_Element_Name = "strengthlimit";
+        Figures = 7;
+        Format_Id = 0;
+        Output_Expression = "universe.strengthlimit";
+    }
+    OUTPUT {
+        Output_Element_Name = "budget";
+        Figures = 7;
+        Format_Id = 0;
+        Output_Expression = "universe.univbudget";
+    }
+    OUTPUT {
+        Output_Element_Name = "simulationnumber";
+        Figures = 0;
+        Format_Id = 0;
+        Output_Expression = "getcountsimulationnumber()";
+    }
+    OUTPUT {
+        Output_Element_Name = "simulationcode";
+        Figures = 0;
+        Format_Id = 0;
+        Output_Expression = "universe.simulationcode";
+    }
 }
 
 
@@ -2590,52 +2636,7 @@ Time_Graph {
 // Control Panel Definition Division
 //-------------------------------------------------------
 Control_Panel {
-    Display_Area = 1285, 516, 249, 385;
-    Panel_Item {
-        Item_Type = Edit_Box;
-        Item_Name = "simulationcode";
-        Display_Area = 0, 0, 0, 0;
-        Font_Name = "";
-        Font_Char_Set = 0;
-        Font_Size = 0.0;
-        Font_Style = 0;
-        Font_Color = 0, 0, 0;
-        Font_Background_Color = 0, 0, 0;
-        Var_Name = "Universe.simulationcode";
-        Text_Data = "20160126dispersionlimitdemand3";
-    }
-    Panel_Item {
-        Item_Type = Slider;
-        Item_Name = "budget(1億)";
-        Display_Area = 0, 0, 0, 0;
-        Font_Name = "";
-        Font_Char_Set = 0;
-        Font_Size = 0.0;
-        Font_Style = 0;
-        Font_Color = 0, 0, 0;
-        Font_Background_Color = 0, 0, 0;
-        Var_Name = "Universe.univbudget";
-        Slider_Range_Max = 99;
-        Slider_Value_Min = 1.0;
-        Slider_Value_Step = 1.0;
-        Slider_Value = "24";
-    }
-    Panel_Item {
-        Item_Type = Slider;
-        Item_Name = "threshold";
-        Display_Area = 0, 0, 0, 0;
-        Font_Name = "";
-        Font_Char_Set = 0;
-        Font_Size = 0.0;
-        Font_Style = 0;
-        Font_Color = 0, 0, 0;
-        Font_Background_Color = 0, 0, 0;
-        Var_Name = "Universe.threshold";
-        Slider_Range_Max = 8;
-        Slider_Value_Min = 0.1;
-        Slider_Value_Step = 0.1;
-        Slider_Value = "7";
-    }
+    Display_Area = 1668, 78, 249, 385;
     Panel_Item {
         Item_Type = Edit_Box;
         Item_Name = "testnumber";
@@ -2647,20 +2648,7 @@ Control_Panel {
         Font_Color = 0, 0, 0;
         Font_Background_Color = 0, 0, 0;
         Var_Name = "Universe.testnumber";
-        Text_Data = "1";
-    }
-    Panel_Item {
-        Item_Type = Edit_Box;
-        Item_Name = "strengthlimit";
-        Display_Area = 0, 0, 0, 0;
-        Font_Name = "";
-        Font_Char_Set = 0;
-        Font_Size = 0.0;
-        Font_Style = 0;
-        Font_Color = 0, 0, 0;
-        Font_Background_Color = 0, 0, 0;
-        Var_Name = "Universe.strengthlimit";
-        Text_Data = "0.01";
+        Text_Data = "2";
     }
 }
 
