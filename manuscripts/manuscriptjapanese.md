@@ -53,13 +53,16 @@ Figure 1 本研究におけるモデル
 
 本モデルにおいて人々エージェントは移動する際に可変的な移動速度に基づいて移動を行う。移動速度の算出式はOptimal Velocity Modelを用いた。([6] Bando et al. 1994)
 
-**Optimal Velocity Modelがなぜあのような式になるのか、ちゃんと言葉で説明するのだ**
+**Optimal Velocity Modelがなぜあのような式になるのか、ちゃんと言葉で説明するのだ**<br>
 **参考資料...http://www.seto.nanzan-u.ac.jp/msie/ma-thesis/2011/KAWANO/m10mm040.pdf**
 
 Xn、Vnがn番目のエージェントの位置及び速度を表す。aは感応度であり各エージェントの反射神経に当たるパラメータである。このモデルにおいてエージェントの移動速度は前方のエージェントとの距離に応じて決定される。それに対して基準となるのが最適速度(Optimal Velocity)であり、現在の速度が最適速度より早ければブレーキをかけ、逆に遅ければ加速する。最適速度は次の式で定義される。 Voptは基準最適速度、Xcは標準距離、αは減速係数である。
-dxi/dt = vi
-dvi/dt = a [V(xi+1-xi)-vi]
-V(xi+1-xi)=Vopt/2((tanh(Δxn−xc/2)/α)+tanh((xc/2)/α)) 
+
+dxi/dt = vi<br>
+dvi/dt = a [V(xi+1-xi)-vi]<br>
+V(xi+1-xi)=Vopt((tanh((xi+1-xi)−xc)/α)+tanh(xc/α) 
+
+(xc/2はまとめてxcと呼ぶ。Vopt/2もVoptと呼ぶ。)
 
 Equation 3 Optimal Velocity Model-2
 
