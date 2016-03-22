@@ -198,7 +198,7 @@ Initial_Value {
     UNIVERSE.SIMULATIONCODE = 1("201601rsm");
     UNIVERSE.UNIVBUDGET = 1(18.10793);
     UNIVERSE.THRESHOLD = 1(0.6783811);
-    UNIVERSE.TESTNUMBER = 1(2);
+    UNIVERSE.TESTNUMBER = 1(1);
     UNIVERSE.STRENGTHLIMIT = 1(0.01);
     UNIVERSE.MAP.POINT.X = 114(44.99105546, 42.48658318, 43.20214669, 46.86940966, 45.16994633, 40.96601073, 43.82826476, 45.52772809, 48.21109123, 47.49552773
 , 42.03935599, 46.69051878, 41.77101968, 43.47048301, 46.60107335, 44.72271914, 41.94991055, 47.13774597, 49.28443649, 48.8372093
@@ -305,14 +305,14 @@ dim count as integer
 dim demandarray as string
 dim strengtharray as string
 dim budgetarray as string
-strengtharray = 
-"0.8,0.8,0.2,0.8,0.2,0.8,0.2,0.8,0.5,0.5,0.5,0.2,0.8,0.5,0.5,0.5,0.5"
-demandarray = "0.4729,0,1,1,0,0,1,1,0.5,0.5,0.5,0.5,0.5,0,1,0.5,0.5"
-budgetarray = "50,10,10,10,50,50,50,50,30,30,30,30,30,30,30,10,50"
+demandarray = 
+"0.2,0.8,0.2,0.8,0.2,0.8,0.2,0.8,0.5,0.5,0.5,0.2,0.8,0.5,0.5,0.5,0.5"
+strengtharray = "0.2,0.8,0.2,0.8,0.5,0.5,0.5,0.2,0.8,0.5,0.5"
+budgetarray = "10,10,50,50,30,30,30,30,30,10,50"
 count = getcountsimulationnumber()
-universe.simulationcode = "201602rsmv2demand" & count
+universe.simulationcode = "201602rsmv2strength" & count
 universe.demandlimit = cdbl(gettoken(demandarray,count-1))
-universe.threshold= cdbl(gettoken(strengtharray,count-1))
+universe.threshold = cdbl(gettoken(strengtharray,count-1))
 universe.univbudget = cdbl(gettoken(budgetarray,count-1))
 }
 
@@ -379,7 +379,7 @@ end if
 // 月々の処理を行うモード
 if Int(cdbl(round(gethistory(universe.warpday,1)*1000)/1000)) mod 30 == 21 and int(cdbl(round(universe.warpday*1000)/1000)) mod 30 == 0 then
 	universe.monthcheckmode = TRUE
-			/*openfilecsv("bridgetest"&universe.testnumber&".csv",2,3)
+			openfilecsv("bridgetest"&universe.testnumber&".csv",2,3)
 			for i = 0 to 10
 writefilecsv(2,universe.simulationcode,false)
 writefilecsv(2,universe.warpday,false)
@@ -413,7 +413,7 @@ writefilecsv(2,universe.averagemovetime,false)
 writefilecsv(2,universe.averagefreetime,false)
 writefilecsv(2,universe.Map.government.outcome,false)
 writefilecsv(2,universe.Map.government.income,true)
-closefilecsv(2)*/
+closefilecsv(2)
 else
 	universe.monthcheckmode = FALSE
 end if
@@ -1222,13 +1222,13 @@ if universe.checkmode == TRUE and my.bridgepeoplewatch == FALSE then
 	end if
 	next i
 	// 需要が高い順に並び替える
-	sortagtset(repairbridge,"demand",false)
+	sortagtset(repairbridge,"strength",true)
 	// 
 	if my.bridgecount > 0 then
 	for i = 0 to (my.bridgecount - 1)
 	one = getagt(repairbridge,i)
-// 危険域にある橋の需要値が(今は平均以上なら)なら橋の耐久値を全て回復し、橋内部の時間を0に戻す。予算が足りなくなった時点で修復を終了する。これは耐久値シナリオでは外す条件です
-			if my.nowbridge == 1 or my.budget >= one.repaircost and universe.Map.bridgecore(i).demand >= my.bridge_averagedemand * universe.demandlimit then
+// 危険域にある橋の耐久値を全て回復し、橋内部の時間を0に戻す。予算が足りなくなった時点で修復を終了する。
+			if my.nowbridge == 1 or my.budget >= one.repaircost then
 				my.budget = my.budget - one.repaircost
 				my.outcome = my.outcome + one.repaircost
 				one.strength = 1
@@ -1489,7 +1489,7 @@ Single_Simulation {
 Repeat_Simulation {
     Value_Change = None;
     Initial_Value_Change_None {
-        Repeat_Max = 1;
+        Repeat_Max = 11;
     }
     Initial_Value_Change_Linear {
         Variable_Name = "universe.tmp";
@@ -1524,14 +1524,14 @@ Map_Output {
     Map_Space_Name = "Universe.Map";
     Map_Name = "Map";
     Title = "Map";
-    Disable = No;
+    Disable = Yes;
     Background_Color = 255, 255, 255;
     Position_x = 291;
     Position_y = 1;
-    Size_x = 1191;
-    Size_y = 943;
+    Size_x = 764;
+    Size_y = 695;
     Remarks = No;
-    Map_Cell_Size = 17;
+    Map_Cell_Size = 12;
     Legend_Pos = Top;
     Font_Name = "Dialog";
     Font_Char_Set = 81;
@@ -1712,10 +1712,10 @@ Time_Graph {
     Remarks = Yes;
     Legend_Pos = Top;
     FastDraw = No;
-    Position_x = 282;
-    Position_y = 0;
-    Size_x = 1636;
-    Size_y = 491;
+    Position_x = 9;
+    Position_y = 8;
+    Size_x = 1038;
+    Size_y = 715;
     Map_Cell_Size = -1;
     Axis_Label = "", "";
     Draw_By_JFree_Chart = Yes;
@@ -1836,7 +1836,7 @@ Time_Graph {
         Graph_Element_Name = "average";
         Line_Color = 0, 255, 0;
         Line_Width = 4;
-        Marker_Id = 3;
+        Marker_Id = 0;
         Output_Expression = "universe.Map.government.bridge_averagedemand * 0.9";
         Expression_Value_Display = No;
         Effective_Fraction_Figures = 0;
@@ -2127,17 +2127,17 @@ Time_Graph {
     Font_Background_Color = 255, 255, 255;
     Draw_Timing = Simulation_Step;
     Draw_Interval = 1;
-    Graph_Name = "AverageUtility";
-    Title = "AverageUtility";
+    Graph_Name = "utilize";
+    Title = "utilize";
     Disable = Yes;
     Background_Color = 255, 255, 255;
     Remarks = Yes;
     Legend_Pos = Top;
     FastDraw = No;
-    Position_x = 284;
-    Position_y = 492;
-    Size_x = 664;
-    Size_y = 452;
+    Position_x = 100;
+    Position_y = 99;
+    Size_x = 500;
+    Size_y = 300;
     Map_Cell_Size = -1;
     Axis_Label = "", "";
     Draw_By_JFree_Chart = Yes;
@@ -2153,6 +2153,16 @@ Time_Graph {
         Expression_Value_Display = No;
         Effective_Fraction_Figures = 0;
         Graph_Element_Color = (0, 255, 0);
+    }
+    Output {
+        Graph_Element_Name = "1utilize";
+        Line_Color = 0, 0, 255;
+        Line_Width = 2;
+        Marker_Id = 0;
+        Output_Expression = "universe.Map.Person(1).utilize";
+        Expression_Value_Display = No;
+        Effective_Fraction_Figures = 0;
+        Graph_Element_Color = (153, 0, 153);
     }
 }
 
@@ -2309,10 +2319,10 @@ Numeric_Output {
     Font_Style = 0;
     Font_Color = 0, 0, 0;
     Font_Background_Color = 255, 255, 255;
-    Position_x = 11;
+    Position_x = 1054;
     Position_y = -2;
-    Size_x = 435;
-    Size_y = 939;
+    Size_x = 253;
+    Size_y = 712;
     Map_Cell_Size = -1;
     Numeric_Name = "day.etc";
     Title = "day.etc";
@@ -2622,52 +2632,10 @@ Time_Graph {
 
 
 //-------------------------------------------------------
-// Time Graph Output Definition Division
-//-------------------------------------------------------
-Time_Graph {
-    Font_Name = "Dialog";
-    Font_Char_Set = 81;
-    Font_Size = 12.0;
-    Font_Style = 0;
-    Font_Color = 0, 0, 0;
-    Font_Background_Color = 255, 255, 255;
-    Draw_Timing = Simulation_Step;
-    Draw_Interval = 1;
-    Graph_Name = "Budget";
-    Title = "Budget";
-    Disable = Yes;
-    Background_Color = 255, 255, 255;
-    Remarks = Yes;
-    Legend_Pos = Top;
-    FastDraw = No;
-    Position_x = 948;
-    Position_y = 492;
-    Size_x = 971;
-    Size_y = 452;
-    Map_Cell_Size = -1;
-    Axis_Label = "", "";
-    Draw_By_JFree_Chart = Yes;
-    Scale = 0, 0.0, 1000, 100.0, 100, 10.0;
-    ScaleAuto = Yes, Yes;
-    Output_Group_Name = "";
-    Output {
-        Graph_Element_Name = "budget";
-        Line_Color = 0, 0, 255;
-        Line_Width = 2;
-        Marker_Id = 0;
-        Output_Expression = "universe.Map.government.budget";
-        Expression_Value_Display = No;
-        Effective_Fraction_Figures = 0;
-        Graph_Element_Color = (0, 255, 0);
-    }
-}
-
-
-//-------------------------------------------------------
 // Control Panel Definition Division
 //-------------------------------------------------------
 Control_Panel {
-    Display_Area = 0, 886, 283, 151;
+    Display_Area = 1668, 81, 240, 385;
     Panel_Item {
         Item_Type = Edit_Box;
         Item_Name = "testnumber";
@@ -2679,7 +2647,7 @@ Control_Panel {
         Font_Color = 0, 0, 0;
         Font_Background_Color = 0, 0, 0;
         Var_Name = "Universe.testnumber";
-        Text_Data = "2";
+        Text_Data = "1";
     }
     Panel_Item {
         Item_Type = Edit_Box;
@@ -2715,14 +2683,14 @@ Others_Data {
     Debug_Position_y = 7;
     Debug_Size_x = 400;
     Debug_Size_y = 200;
-    Console_Position_x = 1481;
-    Console_Position_y = -4;
-    Console_Size_x = 235;
+    Console_Position_x = 1308;
+    Console_Position_y = -3;
+    Console_Size_x = 358;
     Console_Size_y = 761;
-    Componen_Tree_Position_x = 3;
-    Componen_Tree_Position_y = 3;
-    Componen_Tree_Size_x = 282;
-    Componen_Tree_Size_y = 400;
+    Componen_Tree_Position_x = 2;
+    Componen_Tree_Position_y = 2;
+    Componen_Tree_Size_x = 266;
+    Componen_Tree_Size_y = 716;
     Console_Background_Color = 10066329;
     Console_Foreground_Color = 255;
     Console_DisplayLines_Max = 500;
