@@ -13,12 +13,11 @@ PostgreSQLに研究室のMacからつなげられないもんかなあ
 require(RPostgreSQL)
 con <- dbConnect(PostgreSQL(),host="localhost",user="postgres",password="fukasawa1225",dbname="db_artisoc")
 bridge <- dbGetQuery(con,"SELECT * FROM bridgelog where simulationcode ='2015/11/19littletest'")
+govern <- dbGetQuery(con,"SELECT * FROM governmentlog where simulationcode ='2015/11/19littletest'")
 ```
 
 ```{r}
 require(ggplot2)
-bridge<-read.csv("bridgetest1.csv")
-bridge<-bridge[,c(-1,-2)]
 g<-ggplot(
   bridge,
   aes(
@@ -34,8 +33,6 @@ plot(g)
 橋が全く潰れていない模様
 
 ```{r}
-govern<-read.csv("governtest1.csv")
-govern<-govern[,c(-1,-2)]
 g<-ggplot(
   govern,
   aes(
@@ -166,4 +163,915 @@ gp <- gp + geom_line()
 plot(gp)
 ```
 
-橋の修繕費めちゃめちゃ高くしてみたらどうなるだろうか
+橋の修繕に費用が掛かっていなかったことが原因の模様
+
+ということで修正したのがコード"2015/11/20littletest"
+
+```{r}
+ br<- dbGetQuery(con,"SELECT * FROM bridgelog where simulationcode ='2015/11/20littletest'")
+ go<- dbGetQuery(con,"SELECT * FROM governmentlog where simulationcode ='2015/11/20littletest'")
+ pe<- dbGetQuery(con,"SELECT * FROM personlog where simulationcode ='2015/11/20littletest'")
+
+# PostgreSQLとリモートで繋げられるようになったらね
+
+gbr<-ggplot(
+br,
+aes(
+x = day,
+y = strength,
+colour=factor(bridgeid)
+)
+)
+gbr <- gbr + geom_line()
+plot(gbr)
+
+gbr1<-ggplot(
+br,
+aes(
+x = day,
+y = demand,
+colour=factor(bridgeid)
+)
+)
+gbr1 <- gbr1 + geom_line()
+plot(gbr1)
+```
+
+橋は4本だけ直されたようですな
+しかも5番さんが直されていない。。。
+あとdemandの処理を見直す必要がある
+一年ごとに0になるのと、耐久値が規定値以下になったら通れなくなって自分自身のdemandは常に0にしないとね
+
+通れなくなった橋はフラグ
+
+では続きまして政府予算です
+```{r}
+ggo<-ggplot(
+go,
+aes(
+x = day,
+y = budget
+)
+)
+ggo <- ggo + geom_line()
+plot(ggo)
+```
+
+ほうほうほうほうといったところ
+50億ではかなりきつそうだなあというところ　
+
+もっとがくんがくんとしてるのを想像したんだけどなあ
+ちゃんと人々は効用が落ちているのかを確認する
+```{r}
+gp<-ggplot(
+pe,
+aes(
+x = day,
+y = utilize,
+colour=factor(personid)
+)
+)
+gp <- gp + geom_line()
+plot(gp)
+
+# 全体だと意味がわからんのですが、、、
+gp<-ggplot(
+subset(pe,personid==0),
+aes(
+x = day,
+y = utilize
+)
+)
+gp <- gp + geom_line()
+plot(gp)
+```
+
+このあと個別に見たけど、そんなに効用や移動時間が大きく変化しているとは言い難い状況である。
+うーむ。
+
+フラグ立てたり、positivelineいれたり、余暇の取り扱いを替えたのが"2015/11/21littletest"
+
+```{r}
+ br<- dbGetQuery(con,"SELECT * FROM bridgelog where simulationcode ='2015/11/21littletest'")
+ go<- dbGetQuery(con,"SELECT * FROM governmentlog where simulationcode ='2015/11/21littletest'")
+ pe<- dbGetQuery(con,"SELECT * FROM personlog where simulationcode ='2015/11/21littletest'")
+
+# まずは橋から見てみる
+gbr<-ggplot(
+br,
+aes(
+x = day,
+y = strength,
+colour=factor(bridgeid)
+)
+)
+gbr <- gbr + geom_line()
+plot(gbr)
+
+gbr1<-ggplot(
+br,
+aes(
+x = day,
+y = demand,
+colour=factor(bridgeid)
+)
+)
+gbr1 <- gbr1 + geom_line()
+plot(gbr1)
+```
+
+いつも思うけど、人が通ったことによる耐久値の揺らぎが見られない気がしてならない
+多分直さないといけない部分
+
+demandは次の書き方で個別の橋について見てみたらちゃんと通れないようになっているのが分かった
+
+```{r}
+gbr1<-ggplot(
+subset(br,bridgeid==0),
+aes(
+x = day,
+y = demand,
+colour=factor(bridgeid)
+)
+)
+gbr1 <- gbr1 + geom_line()
+plot(gbr1)
+```
+
+0番が急に利用されているのが分かるのはいいもんだね
+collapseフラグで見るとはっきりわかるよ
+
+結局subsetで見たんですけどね
+壊れた橋は順番に
+6(7590日目),4(11910日目),9(13350日目),5(14430日目)
+これと合わせて政府予算を見てみるよ
+っていうか政府予算と各橋の修繕費用を比較してみないといけないから、費用が分かるようにしないと
+まあ後で価値を掛け算すればいいだけか
+
+```{r}
+goo<-ggplot(
+go,
+aes(
+x = day,
+y = budget
+)
+)
+goo <- goo + geom_line()
+plot(goo)
+```
+
+```{r}
+gp<-ggplot(
+pe,
+aes(
+x = day,
+y = utilize,
+colour=factor(personid)
+)
+)
+gp <- gp + geom_line()
+plot(gp)
+gp<-ggplot(
+pe,
+aes(
+x = day,
+y = freetime,
+colour=factor(personid)
+)
+)
+gp <- gp + geom_line()
+plot(gp)
+gp<-ggplot(
+pe,
+aes(
+x = day,
+y = movetime,
+colour=factor(personid)
+)
+)
+gp <- gp + geom_line()
+plot(gp)
+gp<-ggplot(
+pe,
+aes(
+x = day,
+y = consumtion,
+colour=factor(personid)
+)
+)
+gp <- gp + geom_line()
+plot(gp)
+gp<-ggplot(
+pe,
+aes(
+x = day,
+y = money,
+colour=factor(personid)
+)
+)
+gp <- gp + geom_line()
+plot(gp)
+```
+
+positivelineとnegativelineの出力も必要やなと
+
+ではここでconsumtionとfreetimeの平均と分散を出してみたいと思います
+```{r}
+summary(pe$freetime)
+summary(pe$consumtion)
+summary(pe$movetime)
+sd(pe$freetime)
+sd(pe$consumtion)
+sd(pe$movetime)
+```
+
+ということでこの標準偏差に更新し直します
+
+11/22は三回ほど計算を行いました
+まとめてみていきましょう
+```{r}
+b1<-dbGetQuery(con,"SELECT * FROM bridgelog where simulationcode ='2015/11/22bigtest'")
+b2<-dbGetQuery(con,"SELECT * FROM bridgelog where simulationcode ='2015/11/22littletesthyakuoku'")
+b3<-dbGetQuery(con,"SELECT * FROM bridgelog where simulationcode ='2015/11/22bigtesthyakuoku'")
+g1<-dbGetQuery(con,"SELECT * FROM governmentlog where simulationcode ='2015/11/22bigtest'")
+g2<-dbGetQuery(con,"SELECT * FROM governmentlog where simulationcode ='2015/11/22littletesthyakuoku'")
+g3<-dbGetQuery(con,"SELECT * FROM governmentlog where simulationcode ='2015/11/22bigtesthyakuoku'")
+p1<-dbGetQuery(con,"SELECT * FROM personlog where simulationcode ='2015/11/22bigtest'")
+p2<-dbGetQuery(con,"SELECT * FROM personlog where simulationcode ='2015/11/22littletesthyakuoku'")
+p3<-dbGetQuery(con,"SELECT * FROM personlog where simulationcode ='2015/11/22bigtesthyakuoku'")
+```
+
+2015/11/22bigtest
+```{r}
+# まずは橋から見てみる
+gbr<-ggplot(
+b1,
+aes(
+x = day,
+y = strength,
+colour=factor(bridgeid)
+)
+)
+gbr <- gbr + geom_line()
+plot(gbr)
+
+gbr1<-ggplot(
+b1,
+aes(
+x = day,
+y = demand,
+colour=factor(bridgeid)
+)
+)
+gbr1 <- gbr1 + geom_line()
+plot(gbr1)
+```
+
+な、なんで一つも橋が直されていないのだ。。。
+壊れたのは5番のみの模様
+修繕費用が政府予算を大きく上回っていたのか？
+```{r}
+ggo<-ggplot(
+g1,
+aes(
+x = day,
+y = budget
+)
+)
+ggo<- ggo + geom_line()
+plot(ggo)
+```
+
+政府予算とrepaicostを見比べてみても直されない理由が見つからない
+うーん？
+```{r}
+gp<-ggplot(
+p1,
+aes(
+x = day,
+y = utilize,
+colour=factor(personid)
+)
+)
+gp <- gp + geom_line()
+plot(gp)
+gp<-ggplot(
+p1,
+aes(
+x = day,
+y = freetime,
+colour=factor(personid)
+)
+)
+gp <- gp + geom_line()
+plot(gp)
+gp<-ggplot(
+p1,
+aes(
+x = day,
+y = movetime,
+colour=factor(personid)
+)
+)
+gp <- gp + geom_line()
+plot(gp)
+gp<-ggplot(
+p1,
+aes(
+x = day,
+y = consumtion,
+colour=factor(personid)
+)
+)
+gp <- gp + geom_line()
+plot(gp)
+gp<-ggplot(
+p1,
+aes(
+x = day,
+y = money,
+colour=factor(personid)
+)
+)
+gp <- gp + geom_line()
+plot(gp)
+```
+
+utilizeがマイナスになっているので、freetimeとかの標準偏差がおかしいことに気づく
+計算します
+```{r}
+pinfo<-matrix(c(1,1,1),nrow = 1)
+pinfo<-data.frame(pinfo)
+names(pinfo)<-c("f","m","c")
+for (i in 0:19){
+  temp<-subset(p1,personid==i)
+  f<-sd(temp$freetime)
+  m<-sd(temp$movetime)
+  c<-sd(temp$consumtion)
+  pinfo<-rbind(pinfo,c(f,m,c))
+}
+pinfo<-pinfo[-1,]
+mean(pinfo$f)
+mean(pinfo$m)
+mean(pinfo$c)
+```
+
+ということなので、1605.13,4.72,49905.17で更新し直します
+前回計算した標準偏差とかはdayとかidとかが一緒くただったことが原因で少しずれていたのかもしれない？
+とりあえず50億はこの世界にとってかつかつの予算なのかもしれない
+
+
+続いて同日のlittletesthyakuoku
+こちらは予算が百億
+一気に行きますぞ
+```{r}
+gbr<-ggplot(
+b2,
+aes(
+x = day,
+y = strength,
+colour=factor(bridgeid)
+)
+)
+gbr <- gbr + geom_line()
+plot(gbr)
+
+gbr1<-ggplot(
+b2,
+aes(
+x = day,
+y = demand,
+colour=factor(bridgeid)
+)
+)
+gbr1 <- gbr1 + geom_line()
+plot(gbr1)
+ggo<-ggplot(
+g2,
+aes(
+x = day,
+y = budget
+)
+)
+ggo<- ggo + geom_line()
+plot(ggo)
+gp<-ggplot(
+p2,
+aes(
+x = day,
+y = utilize,
+colour=factor(personid)
+)
+)
+gp <- gp + geom_line()
+plot(gp)
+gp<-ggplot(
+p2,
+aes(
+x = day,
+y = freetime,
+colour=factor(personid)
+)
+)
+gp <- gp + geom_line()
+plot(gp)
+gp<-ggplot(
+p2,
+aes(
+x = day,
+y = movetime,
+colour=factor(personid)
+)
+)
+gp <- gp + geom_line()
+plot(gp)
+gp<-ggplot(
+p2,
+aes(
+x = day,
+y = consumtion,
+colour=factor(personid)
+)
+)
+gp <- gp + geom_line()
+plot(gp)
+gp<-ggplot(
+p2,
+aes(
+x = day,
+y = money,
+colour=factor(personid)
+)
+)
+gp <- gp + geom_line()
+plot(gp)
+```
+
+問題として、橋が少なくなっても移動時間にあまり差が出ていないという
+それによって効用に与える変化量がなかなかつかめない
+
+行き先が固定化されていれば、いくらか影響が出て来やすくなるのかもしれない
+オフィスの行き先を固定化しよう
+
+最後に一応bigtesthyakuokuを確認する
+
+```{r}
+gbr<-ggplot(
+b3,
+aes(
+x = day,
+y = strength,
+colour=factor(bridgeid)
+)
+)
+gbr <- gbr + geom_line()
+plot(gbr)
+
+gbr1<-ggplot(
+b3,
+aes(
+x = day,
+y = demand,
+colour=factor(bridgeid)
+)
+)
+gbr1 <- gbr1 + geom_line()
+plot(gbr1)
+ggo<-ggplot(
+g3,
+aes(
+x = day,
+y = budget
+)
+)
+ggo<- ggo + geom_line()
+plot(ggo)
+gp<-ggplot(
+p3,
+aes(
+x = day,
+y = utilize,
+colour=factor(personid)
+)
+)
+gp <- gp + geom_line()
+plot(gp)
+gp<-ggplot(
+p3,
+aes(
+x = day,
+y = freetime,
+colour=factor(personid)
+)
+)
+gp <- gp + geom_line()
+plot(gp)
+gp<-ggplot(
+p3,
+aes(
+x = day,
+y = movetime,
+colour=factor(personid)
+)
+)
+gp <- gp + geom_line()
+plot(gp)
+gp<-ggplot(
+p3,
+aes(
+x = day,
+y = consumtion,
+colour=factor(personid)
+)
+)
+gp <- gp + geom_line()
+plot(gp)
+gp<-ggplot(
+p3,
+aes(
+x = day,
+y = money,
+colour=factor(personid)
+)
+)
+gp <- gp + geom_line()
+plot(gp)
+```
+
+これも5番しか壊れてない
+```{r}
+for (i in 0:19){
+  temp<-subset(p3,personid==i)
+  f<-sd(temp$freetime)
+  m<-sd(temp$movetime)
+  c<-sd(temp$consumtion)
+  pinfo<-rbind(pinfo,c(f,m,c))
+}
+pinfo<-pinfo[-1,]
+mean(pinfo$f)
+mean(pinfo$m)
+mean(pinfo$c)
+```
+
+
+いろいろ固定化したりしてみたのが23日
+
+```{r}
+b2<-dbGetQuery(con,"SELECT * FROM bridgelog where simulationcode ='2015/11/23bigtesthyakuoku'")
+b1<-dbGetQuery(con,"SELECT * FROM bridgelog where simulationcode ='2015/11/23littletesthyakuoku'")
+g2<-dbGetQuery(con,"SELECT * FROM governmentlog where simulationcode ='2015/11/23bigtesthyakuoku'")
+g1<-dbGetQuery(con,"SELECT * FROM governmentlog where simulationcode ='2015/11/23littletesthyakuoku'")
+p2<-dbGetQuery(con,"SELECT * FROM personlog where simulationcode ='2015/11/23bigtesthyakuoku'")
+p1<-dbGetQuery(con,"SELECT * FROM personlog where simulationcode ='2015/11/23littletesthyakuoku'")
+```
+
+littletesthyakuoku
+
+```{r}
+gbr<-ggplot(
+b1,
+aes(
+x = day,
+y = strength,
+colour=factor(bridgeid)
+)
+)
+gbr <- gbr + geom_line()
+plot(gbr)
+
+gbr1<-ggplot(
+b1,
+aes(
+x = day,
+y = demand,
+colour=factor(bridgeid)
+)
+)
+gbr1 <- gbr1 + geom_line()
+plot(gbr1)
+gp<-ggplot(
+p1,
+aes(
+x = day,
+y = utilize,
+colour=factor(personid)
+)
+)
+gp <- gp + geom_line()
+plot(gp)
+gp<-ggplot(
+p1,
+aes(
+x = day,
+y = freetime,
+colour=factor(personid)
+)
+)
+gp <- gp + geom_line()
+plot(gp)
+gp<-ggplot(
+p1,
+aes(
+x = day,
+y = movetime,
+colour=factor(personid)
+)
+)
+gp <- gp + geom_line()
+plot(gp)
+gp<-ggplot(
+p1,
+aes(
+x = day,
+y = consumtion,
+colour=factor(personid)
+)
+)
+gp <- gp + geom_line()
+plot(gp)
+gp<-ggplot(
+p1,
+aes(
+x = day,
+y = money,
+colour=factor(personid)
+)
+)
+gp <- gp + geom_line()
+plot(gp)
+```
+
+bigtesthyakuoku
+
+```{r}
+gbr<-ggplot(
+b2,
+aes(
+x = day,
+y = strength,
+colour=factor(bridgeid)
+)
+)
+gbr <- gbr + geom_line()
+plot(gbr)
+gbr1<-ggplot(
+b2,
+aes(
+x = day,
+y = demand,
+colour=factor(bridgeid)
+)
+)
+gbr1 <- gbr1 + geom_line()
+plot(gbr1)
+ggo<-ggplot(
+g2,
+aes(
+x = day,
+y = budget
+)
+)
+ggo<- ggo + geom_line()
+plot(ggo)
+gp<-ggplot(
+p2,
+aes(
+x = day,
+y = utilize,
+colour=factor(personid)
+)
+)
+gp <- gp + geom_line()
+plot(gp)
+gp<-ggplot(
+p2,
+aes(
+x = day,
+y = freetime,
+colour=factor(personid)
+)
+)
+gp <- gp + geom_line()
+plot(gp)
+gp<-ggplot(
+p2,
+aes(
+x = day,
+y = movetime,
+colour=factor(personid)
+)
+)
+gp <- gp + geom_line()
+plot(gp)
+gp<-ggplot(
+p2,
+aes(
+x = day,
+y = consumtion,
+colour=factor(personid)
+)
+)
+gp <- gp + geom_line()
+plot(gp)
+gp<-ggplot(
+p2,
+aes(
+x = day,
+y = money,
+colour=factor(personid)
+)
+)
+gp <- gp + geom_line()
+plot(gp)
+```
+
+＊costが100000にupdateされているなら、strengthを0にしてわかりやすくする
+＊bridgeid5の修繕費用がさすがに高すぎるので、長さを100mにする
+＊人々の効用が橋の数が少なくなったことを受けても一向に減らないので、もう少し下限を小さくする
+
+次は2015/11/24/little(big)testhyakuokummです
+```{r}
+b2<-dbGetQuery(con,"SELECT * FROM bridgelog where simulationcode ='2015/11/24bigtesthyakuokumm'")
+b1<-dbGetQuery(con,"SELECT * FROM bridgelog where simulationcode ='2015/11/24littletesthyakuokumm'")
+g2<-dbGetQuery(con,"SELECT * FROM governmentlog where simulationcode ='2015/11/24bigtesthyakuokumm'")
+g1<-dbGetQuery(con,"SELECT * FROM governmentlog where simulationcode ='2015/11/24littletesthyakuokumm'")
+p2<-dbGetQuery(con,"SELECT * FROM personlog where simulationcode ='2015/11/24bigtesthyakuokumm'")
+p1<-dbGetQuery(con,"SELECT * FROM personlog where simulationcode ='2015/11/24littletesthyakuokumm'")
+```
+
+littletesthyakuokumm
+
+```{r}
+gbr<-ggplot(
+b1,
+aes(
+x = day,
+y = strength,
+colour=factor(bridgeid)
+)
+)
+gbr <- gbr + geom_line()
+plot(gbr)
+
+gbr1<-ggplot(
+b1,
+aes(
+x = day,
+y = demand,
+colour=factor(bridgeid)
+)
+)
+ggo<-ggplot(
+g1,
+aes(
+x = day,
+y = budget
+)
+)
+ggo<- ggo + geom_line()
+plot(ggo)
+gbr1 <- gbr1 + geom_line()
+plot(gbr1)
+gp<-ggplot(
+p1,
+aes(
+x = day,
+y = utilize,
+colour=factor(personid)
+)
+)
+gp <- gp + geom_line()
+plot(gp)
+gp<-ggplot(
+p1,
+aes(
+x = day,
+y = freetime,
+colour=factor(personid)
+)
+)
+gp <- gp + geom_line()
+plot(gp)
+gp<-ggplot(
+p1,
+aes(
+x = day,
+y = movetime,
+colour=factor(personid)
+)
+)
+gp <- gp + geom_line()
+plot(gp)
+gp<-ggplot(
+p1,
+aes(
+x = day,
+y = consumtion,
+colour=factor(personid)
+)
+)
+gp <- gp + geom_line()
+plot(gp)
+gp<-ggplot(
+p1,
+aes(
+x = day,
+y = money,
+colour=factor(personid)
+)
+)
+gp <- gp + geom_line()
+plot(gp)
+```
+
+bigtesthyakuokumm
+
+```{r}
+gbr<-ggplot(
+b2,
+aes(
+x = day,
+y = strength,
+colour=factor(bridgeid)
+)
+)
+gbr <- gbr + geom_line()
+plot(gbr)
+gbr1<-ggplot(
+b2,
+aes(
+x = day,
+y = demand,
+colour=factor(bridgeid)
+)
+)
+gbr1 <- gbr1 + geom_line()
+plot(gbr1)
+ggo<-ggplot(
+g2,
+aes(
+x = day,
+y = budget
+)
+)
+ggo<- ggo + geom_line()
+plot(ggo)
+gp<-ggplot(
+p2,
+aes(
+x = day,
+y = utilize,
+colour=factor(personid)
+)
+)
+gp <- gp + geom_line()
+plot(gp)
+gp<-ggplot(
+p2,
+aes(
+x = day,
+y = freetime,
+colour=factor(personid)
+)
+)
+gp <- gp + geom_line()
+plot(gp)
+gp<-ggplot(
+p2,
+aes(
+x = day,
+y = movetime,
+colour=factor(personid)
+)
+)
+gp <- gp + geom_line()
+plot(gp)
+gp<-ggplot(
+p2,
+aes(
+x = day,
+y = consumtion,
+colour=factor(personid)
+)
+)
+gp <- gp + geom_line()
+plot(gp)
+gp<-ggplot(
+p2,
+aes(
+x = day,
+y = money,
+colour=factor(personid)
+)
+)
+gp <- gp + geom_line()
+plot(gp)
+```
+
+＊移動時間が一向に変化しないので、上限を大きく下限をさらに小さくする
+＊長さ変えたら予算100億で余裕になったっぽい？
+＊消費と余暇が移動時間に依存するようにすれば効用も減少するはず
+＊シナリオ変えてもなんら影響が出ない。橋の修繕費これで大丈夫か？
+＊averageutilize,movetime,consumptionを出さないとわけがわからん
+＊collapseフラグおかしいですよ
+＊そろそろワープするモデルでばしばし実験したいので、ブランチ切って作り始めます
