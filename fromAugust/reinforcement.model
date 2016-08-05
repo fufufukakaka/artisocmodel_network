@@ -14,26 +14,46 @@ Version = 3.5;
 UNIVERSE {
     Space map(0,0),Square_2D(50, 50, Loop, North, 1, !Map_3D){
         AgtType kyoka(0, 0)[0] {
-            Dim ID(0, 0) As Integer = ();
-            Dim X(0, 0) As Double = ();
-            Dim Y(0, 0) As Double = ();
-            Dim Layer(0, 0) As Integer = ();
-            Dim Direction(0, 0) As Double = ();
-            Dim routearray(0, 0) As String = ();
-            Dim routecount(0, 0) As Integer = ();
+            Dim ID(0, 0) As Integer = (0);
+            Dim X(0, 0) As Double = (0.0);
+            Dim Y(0, 0) As Double = (0.0);
+            Dim Layer(0, 0) As Integer = (0);
+            Dim Direction(0, 0) As Double = (0.0);
+            Dim routearray(0, 0) As String = ("");
+            Dim routecount(0, 0) As Integer = (0);
+            Dim goal(0, 0) As Integer = (0);
+            Dim qtable(0, 0)[4][4][4][4][4][4][4][4][4][4][4][4][4][4][4][4][4][4][4] As Double = ();
         }
-        AgtType points(0, 0)[18] {
-            Dim ID(0, 0) As Integer = ();
-            Dim X(0, 0) As Double = ();
-            Dim Y(0, 0) As Double = ();
-            Dim Layer(0, 0) As Integer = ();
-            Dim Direction(0, 0) As Double = ();
+        AgtType point(0, 0)[18] {
+            Dim ID(0, 0) As Integer = (0);
+            Dim X(0, 0) As Double = (0.0);
+            Dim Y(0, 0) As Double = (0.0);
+            Dim Layer(0, 0) As Integer = (0);
+            Dim Direction(0, 0) As Double = (0.0);
+            Dim nearagtset(0, 0) As AgtSet = ();
+            Dim choiceagt(0, 0) As Agt = (0);
+            Dim streetagt(0, 0) As Agt = (0);
         }
     }
-    AgtType links(0, 0)[34] {
-        Dim ID(0, 0) As Integer = ();
-        Dim Begin_Agt(0, 0) As Agt = ();
-        Dim End_Agt(0, 0) As Agt = ();
+    AgtType link(0, 0)[24] {
+        Dim ID(0, 0) As Integer = (0);
+        Dim Begin_Agt(0, 0) As Agt = (0);
+        Dim End_Agt(0, 0) As Agt = (0);
+        Dim streetagt(0, 0) As Agt = (0);
+        Dim reverselinkagt(0, 0) As Agt = (0);
+    }
+    AgtType street(0, 0)[0] {
+        Dim ID(0, 0) As Integer = (0);
+        Dim points(0, 0) As String = ("");
+        Dim cost(0, 0) As Double = (0.0);
+        Dim reversestreetagt(0, 0) As Agt = (0);
+    }
+    AgtType streetbackup(0, 0)[0] {
+        Dim ID(0, 0) As Integer = (0);
+        Dim streetagt(0, 0) As Agt = (0);
+        Dim points(0, 0) As String = ("");
+        Dim cost(0, 0) As Double = (0.0);
+        Dim reversestreetagt(0, 0) As Agt = (0);
     }
 }
 
@@ -42,11 +62,11 @@ UNIVERSE {
 // Agent Variable Initial Data
 //-------------------------------------------------------
 Initial_Value {
-    UNIVERSE.MAP.POINTS.X = 18(45.957249070631974, 31.644981412639403, 19.470260223048328, 7.57434944237918, 7.946096654275092, 8.317843866171003, 8.13197026022305, 18.076208178438662, 29.228624535315987, 39.07992565055762
-, 49.48884758364312, 46.514869888475836, 45.399628252788105, 32.10966542750929, 39.358736059479554, 28.020446096654275, 2*17.611524163568774);
-    UNIVERSE.MAP.POINTS.Y = 18(38.56877323420075, 38.940520446096656, 38.56877323420075, 38.47583643122677, 31.691449814126393, 24.256505576208177, 17.100371747211895, 2*17.007434944237914, 16.82156133828996, 16.728624535315987
-, 23.42007434944238, 33.64312267657993, 33.82899628252788, 23.141263940520446, 23.3271375464684, 24.1635687732342, 31.691449814126393);
-    UNIVERSE.MAP.POINTS.LAYER = 18(18*0);
+    UNIVERSE.MAP.POINT.X = 18(45.957249070631974, 31.644981412639403, 19.470260223048328, 7.57434944237918, 7.946096654275092, 8.317843866171003, 8.13197026022305, 18.076208178438662, 29.228624535315987, 49.48884758364312
+, 46.514869888475836, 45.399628252788105, 32.10966542750929, 28.020446096654275, 4*17.611524163568774);
+    UNIVERSE.MAP.POINT.Y = 18(38.56877323420075, 38.940520446096656, 38.56877323420075, 38.47583643122677, 31.691449814126393, 24.256505576208177, 17.100371747211895, 2*17.007434944237914, 16.728624535315987, 23.42007434944238
+, 33.64312267657993, 33.82899628252788, 23.3271375464684, 24.1635687732342, 31.691449814126393, 24.1635687732342, 31.691449814126393);
+    UNIVERSE.MAP.POINT.LAYER = 18(18*0);
 }
 
 
@@ -54,8 +74,10 @@ Initial_Value {
 // Agent Rule
 //-------------------------------------------------------
 #begin_rule UNIVERSE
-Univ_Init{
+include "init.inc"
 
+Univ_Init{
+	initialize_dijkstra()
 }
 
 Univ_Step_Begin{
@@ -69,6 +91,7 @@ Univ_Step_End{
 Univ_Finish{
 
 }
+
 #end_rule UNIVERSE
 
 
@@ -80,6 +103,7 @@ Univ_Finish{
 #begin_rule UNIVERSE.MAP.KYOKA
 Agt_Init{
 my.routecount = 1
+my.goal = 6
 }
 
 Agt_Step{
@@ -89,16 +113,18 @@ dim distance as double
 
 if my.routecount > 0 then
 	targetpointid = cint(gettoken(my.routearray, my.routecount))
-	targetpointagt = universe.map.points(targetpointid)
+	targetpointagt = universe.map.point(targetpointid)
 	distance = pursue(targetpointagt, 1)
+	
+	// –Ú“I’n‚É“’…Œã
 	if distance > 0 then
 		my.routecount = my.routecount + 1
-		if counttoken(my.routearray) <= my.routecount then
+		if targetpointid == my.goal then
 			my.routecount = -1
-			print("goal")
+			println("goal")
 		else
 			targetpointid = cint(gettoken(my.routearray, my.routecount))
-			targetpointagt = universe.map.points(targetpointid)
+			targetpointagt = universe.map.point(targetpointid)
 			pursue(targetpointagt, distance) 
 		end if
 	end if
@@ -112,21 +138,32 @@ end if
 //-------------------------------------------------------
 // Agent Rule
 //-------------------------------------------------------
-#begin_rule UNIVERSE.MAP.POINTS
+#begin_rule UNIVERSE.MAP.POINT
+
 Agt_Init{
 dim personagt as agt
+dim point as agt
+
 if my.ID == 0 then
 	personagt = createagt(universe.map.kyoka)
 	personagt.x = my.X
 	personagt.y = my.Y
 	personagt.routearray = "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17"
 end if
+
+
+if my.ID == 0 then
+	for each point in my.nearagtset
+		println(point.id)
+	next point
+end if
+
 }
 
 Agt_Step{
 
 }
-#end_rule UNIVERSE.MAP.POINTS
+#end_rule UNIVERSE.MAP.POINT
 
 
 
@@ -134,7 +171,7 @@ Agt_Step{
 //-------------------------------------------------------
 // Agent Rule
 //-------------------------------------------------------
-#begin_rule UNIVERSE.LINKS
+#begin_rule UNIVERSE.LINK
 Agt_Init{
 
 }
@@ -142,7 +179,39 @@ Agt_Init{
 Agt_Step{
 
 }
-#end_rule UNIVERSE.LINKS
+#end_rule UNIVERSE.LINK
+
+
+
+
+//-------------------------------------------------------
+// Agent Rule
+//-------------------------------------------------------
+#begin_rule UNIVERSE.STREET
+Agt_Init{
+
+}
+
+Agt_Step{
+
+}
+#end_rule UNIVERSE.STREET
+
+
+
+
+//-------------------------------------------------------
+// Agent Rule
+//-------------------------------------------------------
+#begin_rule UNIVERSE.STREETBACKUP
+Agt_Init{
+
+}
+
+Agt_Step{
+
+}
+#end_rule UNIVERSE.STREETBACKUP
 
 
 
@@ -184,8 +253,8 @@ Map_Output {
     Title = "map";
     Disable = No;
     Background_Color = 255, 255, 255;
-    Position_x = 577;
-    Position_y = 98;
+    Position_x = 728;
+    Position_y = 42;
     Size_x = 911;
     Size_y = 784;
     Remarks = Yes;
@@ -219,7 +288,7 @@ Map_Output {
     Output {
         Map_Element_Name = "points";
         Map_Element = Agent_Variable;
-        Output_Expression = "Universe.map.points";
+        Output_Expression = "Universe.map.point";
         Draw_Line = No;
         Collection_Name = "";
         Line_Type = 0;
@@ -244,10 +313,10 @@ Map_Output {
         Num_Var_Name = "";
         Agent_Image_Magnify_by_value = Yes;
         Agent_Image_Magnify_Value = 1.0;
-        Agent_Image_Magnify_Variable_Name = "Universe.map.points.ID";
+        Agent_Image_Magnify_Variable_Name = "Universe.map.point.ID";
         Agent_Image_Transparency_by_value = Yes;
         Agent_Image_Transparency_Value = 0.0;
-        Agent_Image_Transparency_Variable_Name = "Universe.map.points.ID";
+        Agent_Image_Transparency_Variable_Name = "Universe.map.point.ID";
     }
     Output {
         Map_Element_Name = "kyoka";
@@ -349,27 +418,25 @@ Space_Map_Initial_Value {
     Background_Image_File_Path_Name = "";
     Origin_Position = Left_Bottom;
     Position_Agent {
-        Agent_Name = Universe.map.points;
+        Agent_Name = Universe.map.point;
         Marker_Color = 255, 0, 0;
         Marker_Id = 1;
         Value = (45.957249070631974,38.56877323420075,0),(31.644981412639403,38.940520446096656,0),(19.470260223048328,38.56877323420075,0),(7.57434944237918,38.47583643122677,0),(7.946096654275092,31.691449814126393,0)
-               ,(8.317843866171003,24.256505576208177,0),(8.13197026022305,17.100371747211895,0),(18.076208178438662,17.007434944237914,0),(29.228624535315987,17.007434944237914,0),(39.07992565055762,16.82156133828996,0)
-               ,(49.48884758364312,16.728624535315987,0),(46.514869888475836,23.42007434944238,0),(45.399628252788105,33.64312267657993,0),(32.10966542750929,33.82899628252788,0),(39.358736059479554,23.141263940520446,0)
-               ,(28.020446096654275,23.3271375464684,0),(17.611524163568774,24.1635687732342,0),(17.611524163568774,31.691449814126393,0);
+               ,(8.317843866171003,24.256505576208177,0),(8.13197026022305,17.100371747211895,0),(18.076208178438662,17.007434944237914,0),(29.228624535315987,17.007434944237914,0),(49.48884758364312,16.728624535315987,0)
+               ,(46.514869888475836,23.42007434944238,0),(45.399628252788105,33.64312267657993,0),(32.10966542750929,33.82899628252788,0),(28.020446096654275,23.3271375464684,0),(17.611524163568774,24.1635687732342,0)
+               ,(17.611524163568774,31.691449814126393,0);
     }
     Link_Agent {
-        Agent_Name = Universe.links;
+        Agent_Name = Universe.link;
         Line_Color = 0, 255, 0;
         Line_Type = 1;
         Arrow_Type = 1;
-        Link_Id = "Universe.map.points/Universe.map.points";
+        Link_Id = "Universe.map.point/Universe.map.point";
         Link = (0,0,1),(0,1,2),(0,2,3),(0,3,4),(0,4,5)
-              ,(0,5,6),(0,6,7),(0,7,8),(0,8,9),(0,9,10)
-              ,(0,10,11),(0,11,12),(0,12,13),(0,13,14),(0,14,15)
-              ,(0,15,16),(0,16,17),(0,17,2),(0,0,12),(0,12,1)
-              ,(0,1,13),(0,13,17),(0,17,4),(0,4,16),(0,16,5)
-              ,(0,5,7),(0,7,15),(0,15,8),(0,8,14),(0,14,11)
-              ,(0,11,13),(0,13,15),(0,15,17),(0,17,3);
+              ,(0,5,6),(0,6,7),(0,7,8),(0,9,10),(0,10,11)
+              ,(0,11,12),(0,13,14),(0,14,15),(0,15,2),(0,0,11)
+              ,(0,1,12),(0,12,15),(0,15,4),(0,14,5),(0,13,8)
+              ,(0,12,13),(0,8,9),(0,13,10),(0,14,7);
     }
 }
 
