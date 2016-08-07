@@ -70,15 +70,14 @@ UNIVERSE {
 // Agent Variable Initial Data
 //-------------------------------------------------------
 Initial_Value {
+    UNIVERSE.MAP.QQ = 1(2500*0.0);
     UNIVERSE.MAP.KYOKA.X = 16(42.239776951672866, 29.04275092936803, 17.053903345724905, 5.1579925650557605, 5.529739776951672, 5.0650557620817835, 5.436802973977695, 16.682156133828997, 30.622676579925653, 42.611524163568774
 , 42.239776951672866, 42.51858736059479, 30.436802973977695, 31.180297397769518, 18.819702602230482, 17.797397769516728);
     UNIVERSE.MAP.KYOKA.Y = 16(42.37918215613383, 43.12267657992565, 43.30855018587361, 42.750929368029745, 35.78066914498142, 26.20817843866171, 18.49442379182156, 2*17.93680297397769, 16.91449814126394, 25.0
 , 35.22304832713755, 35.594795539033456, 26.765799256505577, 26.6728624535316, 35.687732342007436);
     UNIVERSE.MAP.KYOKA.LAYER = 16(16*0);
-    UNIVERSE.MAP.POINT.X = 18(40.28810408921933, 28.856877323420075, 12.778810408921933, 4.507434944237918, 5.0650557620817835, 5.901486988847584, 5.71561338289963, 14.91635687732342, 25.697026022304833, 40.10223048327138
-, 40.65985130111524, 40.19516728624535, 29.693308550185876, 27.83457249070632, 15.381040892193308, 15.288104089219331, 2*17.611524163568774);
-    UNIVERSE.MAP.POINT.Y = 18(41.72862453531599, 41.542750929368026, 42.007434944237914, 41.82156133828997, 29.275092936802974, 18.587360594795538, 12.45353159851301, 13.475836431226767, 12.45353159851301, 12.639405204460964
-, 21.28252788104089, 30.018587360594797, 31.598513011152416, 21.003717472118957, 21.933085501858734, 28.438661710037174, 24.1635687732342, 31.691449814126393);
+    UNIVERSE.MAP.POINT.X = 18(40.0, 28.0, 12.0, 4*5.0, 12.0, 28.0, 3*40.0, 2*28.0, 2*12.0, 2*17.611524163568774);
+    UNIVERSE.MAP.POINT.Y = 18(4*42.0, 29.0, 18.0, 4*13.0, 18.0, 2*29.0, 2*18.0, 29.0, 24.1635687732342, 31.691449814126393);
     UNIVERSE.MAP.POINT.LAYER = 18(18*0);
     UNIVERSE.MAP.POINT.DIRECTION = 15(15*0.0);
     UNIVERSE.MAP.POINT.REWARD = 15(15*0);
@@ -111,12 +110,33 @@ k = 0
 		k = k + 1
 	next one
 next i
-
-println(getcountsimulationnumber())
 }
 
 Univ_Step_Begin{
+dim k as integer
+dim i as integer
+dim qx as integer
+dim qy as integer
+dim dist as integer
 
+// Q値に応じて周りの色を変えたい
+for i = 0 to 15
+	for k = 0 to universe.qtable_count(i) - 1
+		dist = universe.qtable_dist(i,k)
+		if universe.map.point(dist).x < universe.map.point(i).X then
+			qx = universe.map.point(i).X - rnd() * 2
+		else
+			qx = universe.map.point(i).X + rnd() * 2
+		end if
+		
+		if universe.map.point(dist).y > universe.map.point(i).y then
+			qy = universe.map.point(i).y + rnd() * 2
+		else
+			qy = universe.map.point(i).y - rnd() * 2
+		end if
+		universe.map.qq(qx,qy,0) = universe.map.kyoka.qtable(i,k)
+	next k
+next i
 }
 
 Univ_Step_End{
@@ -235,7 +255,7 @@ if my.routecount > 0 then
 				end if
 			next k
 		else
-			k = int(rnd() * 4)
+			k = int(rnd() * universe.qtable_count(i))
 			my.q_k = k
 			maxdist = universe.qtable_dist(i,k)
 		end if
@@ -267,7 +287,7 @@ if my.routecount > 0 then
 		
 		if targetpointid == my.goal then
 			my.routecount = -1
-			exitsimulationmsgln("goal")
+			exitsimulationmsgln(cstr(getcountstep()))
 		else
 			targetpointid = cint(gettoken(my.routearray, my.routecount))
 			targetpointagt = universe.map.point(targetpointid)
@@ -307,13 +327,6 @@ end if
 }
 
 Agt_Step{
-// Q値に応じて周りの色を変えたい
-/*
-universe.map.qq(my.X-1,my.y,0) = universe.map.kyoka.qtable(my.ID,0)
-universe.map.qq(my.X,my.y-1,0) = universe.map.kyoka.qtable(my.ID,1)
-universe.map.qq(my.X+1,my.y,0) = universe.map.kyoka.qtable(my.ID,2)
-universe.map.qq(my.X,my.y+1,0) = universe.map.kyoka.qtable(my.ID,3)
-*/
 }
 #end_rule UNIVERSE.MAP.POINT
 
@@ -375,7 +388,7 @@ Single_Simulation {
     Step_Max = 0;
     Time_Max = 0;
     End_Condition = "";
-    Exec_Wait = 100;
+    Exec_Wait = 10;
     Exec_Order = Random;
     Exec_Order_Random_First_Step_Only = No;
     Random_Seed = 0;
@@ -391,7 +404,7 @@ Single_Simulation {
 Repeat_Simulation {
     Value_Change = None;
     Initial_Value_Change_None {
-        Repeat_Max = 10;
+        Repeat_Max = 100;
     }
 }
 
@@ -405,10 +418,10 @@ Map_Output {
     Title = "map";
     Disable = No;
     Background_Color = 255, 255, 255;
-    Position_x = 534;
-    Position_y = 6;
-    Size_x = 911;
-    Size_y = 784;
+    Position_x = 803;
+    Position_y = 12;
+    Size_x = 1099;
+    Size_y = 932;
     Remarks = Yes;
     Map_Cell_Size = 4;
     Legend_Pos = Top;
@@ -461,8 +474,8 @@ Map_Output {
         Icon_Transparent = No;
         Icon_Enlarg_Reduce = No;
         Icon_File_Name = "";
-        Num_Display = No;
-        Num_Var_Name = "";
+        Num_Display = Yes;
+        Num_Var_Name = "Universe.map.point.ID";
         Agent_Image_Magnify_by_value = Yes;
         Agent_Image_Magnify_Value = 1.0;
         Agent_Image_Magnify_Variable_Name = "Universe.map.point.ID";
@@ -508,9 +521,9 @@ Map_Output {
         Map_Element = Space_Variable;
         Output_Expression = "Universe.map.qq";
         Space_Color_Direct_RGB = No;
-        Space_Draw_Range = 0.0, 500.0;
+        Space_Draw_Range = 0.0, 200.0;
         Space_Color_Min = 255, 255, 255;
-        Space_Color_Max = 0, 0, 255;
+        Space_Color_Max = 0, 102, 204;
         Marker_Id = 2;
         Icon_Type = 0;
         Icon_Var_Name = "";
@@ -552,14 +565,14 @@ Others_Data {
     Debug_Position_y = 75;
     Debug_Size_x = 400;
     Debug_Size_y = 200;
-    Console_Position_x = 56;
-    Console_Position_y = 157;
-    Console_Size_x = 448;
-    Console_Size_y = 544;
+    Console_Position_x = 534;
+    Console_Position_y = 363;
+    Console_Size_x = 279;
+    Console_Size_y = 564;
     Componen_Tree_Position_x = 2;
     Componen_Tree_Position_y = 2;
     Componen_Tree_Size_x = 250;
-    Componen_Tree_Size_y = 400;
+    Componen_Tree_Size_y = 401;
     Console_Background_Color = 16777215;
     Console_Foreground_Color = 255;
     Console_DisplayLines_Max = 500;
@@ -625,8 +638,8 @@ Space_Map_Initial_Value {
 // Window Location Definition Division
 //-------------------------------------------------------
 Window_Rectangle {
-    Window_Name = Main_Window, 0, 0, 1366, 998;
-    Window_Name = Output_Setting_Window, 443, 354, 480, 290;
+    Window_Name = Main_Window, 1912, -8, 1936, 1056;
+    Window_Name = Output_Setting_Window, 728, 383, 480, 290;
     Window_Name = Artisoc_Help_Window, 100, 330, 752, 400;
 }
 
