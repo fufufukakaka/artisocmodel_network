@@ -22,13 +22,14 @@ UNIVERSE {
             Dim routearray(0, 0) As String = ("");
             Dim routecount(0, 0) As Integer = (0);
             Dim goal(0, 0) As Integer = (0);
-            Dim qtable(0, 0)[16][4] As Double = (64*0.0);
+            Dim qtable(0, 0)[100][4] As Double = (400*0.0);
             Dim learning_rate(0, 0) As Double = (0.0);
             Dim discount_rate(0, 0) As Double = (0.0);
             Dim ipusiron(0, 0) As Double = (0.0);
             Dim q_k(0, 0) As Integer = (0);
+            Dim start(0, 0) As Integer = (0);
         }
-        AgtType point(0, 0)[16] {
+        AgtType point(0, 0)[21] {
             Dim ID(0, 0) As Integer = (0);
             Dim X(0, 0) As Double = (0.0);
             Dim Y(0, 0) As Double = (0.0);
@@ -38,10 +39,11 @@ UNIVERSE {
             Dim choiceagt(0, 0) As Agt = (0);
             Dim streetagt(0, 0) As Agt = (0);
             Dim reward(0, 0) As Integer = (0);
+            Dim color(0, 0) As Integer = (0);
         }
         Dim qq(0, 0)[50][50][1] As Double = (2500*0.0);
     }
-    AgtType link(0, 0)[24] {
+    AgtType link(0, 0)[33] {
         Dim ID(0, 0) As Integer = (0);
         Dim Begin_Agt(0, 0) As Agt = (0);
         Dim End_Agt(0, 0) As Agt = (0);
@@ -61,8 +63,9 @@ UNIVERSE {
         Dim cost(0, 0) As Double = (0.0);
         Dim reversestreetagt(0, 0) As Agt = (0);
     }
-    Dim qtable_dist(0, 0)[16][4] As Integer = (64*0);
-    Dim qtable_count(0, 0)[18] As Integer = (18*0);
+    Dim qtable_dist(0, 0)[100][4] As Integer = (400*0);
+    Dim qtable_count(0, 0)[100] As Integer = (100*0);
+    Dim endsimulation(0, 0) As Integer = ();
 }
 
 
@@ -76,11 +79,15 @@ Initial_Value {
     UNIVERSE.MAP.KYOKA.Y = 16(42.37918215613383, 43.12267657992565, 43.30855018587361, 42.750929368029745, 35.78066914498142, 26.20817843866171, 18.49442379182156, 2*17.93680297397769, 16.91449814126394, 25.0
 , 35.22304832713755, 35.594795539033456, 26.765799256505577, 26.6728624535316, 35.687732342007436);
     UNIVERSE.MAP.KYOKA.LAYER = 16(16*0);
-    UNIVERSE.MAP.POINT.X = 18(40.0, 28.0, 12.0, 4*5.0, 12.0, 28.0, 3*40.0, 2*28.0, 2*12.0, 2*17.611524163568774);
-    UNIVERSE.MAP.POINT.Y = 18(4*42.0, 29.0, 18.0, 4*13.0, 18.0, 2*29.0, 2*18.0, 29.0, 24.1635687732342, 31.691449814126393);
-    UNIVERSE.MAP.POINT.LAYER = 18(18*0);
-    UNIVERSE.MAP.POINT.DIRECTION = 15(15*0.0);
-    UNIVERSE.MAP.POINT.REWARD = 15(15*0);
+    UNIVERSE.MAP.POINT.X = 21(40.28810408921933, 28.856877323420075, 12.778810408921933, 4.507434944237918, 5.0650557620817835, 5.901486988847584, 5.71561338289963, 14.91635687732342, 25.697026022304833, 40.10223048327138
+, 40.65985130111524, 40.19516728624535, 29.693308550185876, 27.83457249070632, 15.381040892193308, 15.288104089219331, 5.901486988847584, 15.75278810408922, 26.533457249070633, 40.10223048327138
+, 21.70074349442379);
+    UNIVERSE.MAP.POINT.Y = 21(41.72862453531599, 41.542750929368026, 42.007434944237914, 41.82156133828997, 29.275092936802974, 18.587360594795538, 12.45353159851301, 13.475836431226767, 12.45353159851301, 12.639405204460964
+, 21.28252788104089, 30.018587360594797, 31.598513011152416, 21.003717472118957, 21.933085501858734, 28.438661710037174, 6.040892193308551, 6.412639405204459, 6.505576208178439, 6.691449814126393
+, 3.903345724907062);
+    UNIVERSE.MAP.POINT.LAYER = 21(21*0);
+    UNIVERSE.MAP.POINT.DIRECTION = 20(20*0.0);
+    UNIVERSE.MAP.POINT.REWARD = 20(20*0);
 }
 
 
@@ -95,15 +102,16 @@ dim i as integer
 dim k as integer
 dim one as agt
 initialize_dijkstra()
+universe.endsimulation = 0
 
-for i = 0 to 15
+for i = 0 to countagt(universe.map.point)-1
 	universe.qtable_count(i) = 0
 	for each one in universe.map.point(i).nearagtset
 		universe.qtable_count(i) = universe.qtable_count(i) + 1
 	next one
 next i
 
-for i = 0 to 15
+for i = 0 to countagt(universe.map.point)-1
 k = 0
 	for each one in universe.map.point(i).nearagtset
 		universe.qtable_dist(i,k) = one.id
@@ -113,34 +121,13 @@ next i
 }
 
 Univ_Step_Begin{
-dim k as integer
-dim i as integer
-dim qx as integer
-dim qy as integer
-dim dist as integer
 
-// Q値に応じて周りの色を変えたい
-for i = 0 to 15
-	for k = 0 to universe.qtable_count(i) - 1
-		dist = universe.qtable_dist(i,k)
-		if universe.map.point(dist).x < universe.map.point(i).X then
-			qx = universe.map.point(i).X - rnd() * 2
-		else
-			qx = universe.map.point(i).X + rnd() * 2
-		end if
-		
-		if universe.map.point(dist).y > universe.map.point(i).y then
-			qy = universe.map.point(i).y + rnd() * 2
-		else
-			qy = universe.map.point(i).y - rnd() * 2
-		end if
-		universe.map.qq(qx,qy,0) = universe.map.kyoka.qtable(i,k)
-	next k
-next i
 }
 
 Univ_Step_End{
-
+if universe.endsimulation == countagt(universe.map.kyoka) then
+	exitsimulation()
+end if
 }
 
 Univ_Finish{
@@ -165,21 +152,22 @@ dim data_k as string
 dim data_q as string
 
 my.routecount = 1
-my.goal = 6
+my.goal = 20
 my.ipusiron = 0.3
 my.learning_rate = 0.1
 my.discount_rate = 0.9
 
 if getcountsimulationnumber() == 1 then
-	for i = 0 to 15
+	for i = 0 to countagt(universe.map.point)-1
+	
 		for k = 0 to universe.qtable_count(i)-1
 			my.qtable(i,k) = 100 * rnd()
 		next k
 	next i
 	
 	// 書き出し
-openfilecsv("qtable.csv",1,2)
-	for i = 0 to 15
+openfilecsv("qtable_"&my.ID&".csv",1,2)
+	for i = 0 to countagt(universe.map.point)-1
 		for k = 0 to universe.qtable_count(i) - 1
 			writefilecsv(1,i,false)
 			writefilecsv(1,k,false)
@@ -189,8 +177,8 @@ openfilecsv("qtable.csv",1,2)
 closefilecsv(1)
 else
 	//前回のQ表を読み込む
-openfilecsv("qtable.csv",1,1)
-	for i = 0 to 15
+openfilecsv("qtable_"&my.ID&".csv",1,1)
+	for i = 0 to countagt(universe.map.point)-1
 		for k = 0 to universe.qtable_count(i) - 1
 			data_i = cint(readfilecsv(1))
 			data_k = cint(readfilecsv(1))
@@ -203,7 +191,7 @@ end if
 
 // 最初のルートを決めよう
 i = my.ID
-maxdist = universe.qtable_dist(my.ID,0)
+maxdist = universe.qtable_dist(my.start,0)
 	for k = 0 to universe.qtable_count(i) - 1
 		if k == 0 then
 			maxq = my.qtable(i,k)
@@ -273,8 +261,8 @@ if my.routecount > 0 then
 		next k
 		//Q値を更新する	
 		my.qtable(i,my.q_k) = my.qtable(i,my.q_k) + my.learning_rate*(universe.map.point(maxdist).reward + my.discount_rate*(my.qtable(maxdist,nextmax)-my.qtable(i,my.q_k)))
-		openfilecsv("qtable.csv",1,2)
-		for i = 0 to 15
+		openfilecsv("qtable_"&my.ID&".csv",1,2)
+		for i = 0 to countagt(universe.map.point)-1
 			for k = 0 to universe.qtable_count(i) - 1
 				writefilecsv(1,i,false)
 				writefilecsv(1,k,false)
@@ -287,7 +275,7 @@ if my.routecount > 0 then
 		
 		if targetpointid == my.goal then
 			my.routecount = -1
-			exitsimulationmsgln(cstr(getcountstep()))
+			universe.endsimulation = universe.endsimulation + 1
 		else
 			targetpointid = cint(gettoken(my.routearray, my.routecount))
 			targetpointagt = universe.map.point(targetpointid)
@@ -313,20 +301,30 @@ dim i as integer
 dim k as integer
 dim one as agt
 
-if my.ID == 0 then
+if my.ID == 0 or my.ID == 1 or my.ID == 2 or my.ID == 3 then
 	personagt = createagt(universe.map.kyoka)
 	personagt.x = my.X
 	personagt.y = my.Y
+	personagt.start = my.id
 end if
 
-if my.ID == 6 then
+// 報酬の決定
+if my.ID == 20 then
 	my.reward = 100
 else
 	my.reward = -1
 end if
+
+//橋の入口ポイントは色を変える
+if my.ID == 8 or my.ID == 7 or my.ID == 13 or my.ID == 14 then
+	my.color = COLOR_YELLOW
+else
+	my.color = COLOR_CYAN
+end if
 }
 
 Agt_Step{
+// 橋の入口ポイントなら渋滞を起こし得る
 }
 #end_rule UNIVERSE.MAP.POINT
 
@@ -388,7 +386,7 @@ Single_Simulation {
     Step_Max = 0;
     Time_Max = 0;
     End_Condition = "";
-    Exec_Wait = 10;
+    Exec_Wait = 5;
     Exec_Order = Random;
     Exec_Order_Random_First_Step_Only = No;
     Random_Seed = 0;
@@ -418,8 +416,8 @@ Map_Output {
     Title = "map";
     Disable = No;
     Background_Color = 255, 255, 255;
-    Position_x = 803;
-    Position_y = 12;
+    Position_x = 816;
+    Position_y = -2;
     Size_x = 1099;
     Size_y = 932;
     Remarks = Yes;
@@ -464,7 +462,7 @@ Map_Output {
         Line_Arrow_Variable = "";
         Line_Width_Variable = "";
         Line_Color_Variable = "";
-        Agent_Color = 255,0,0;
+        Agent_Color = "Universe.map.point.color";
         Marker_Id = 1;
         Effective_Figures = 0;
         Format_Id = 0;
@@ -609,7 +607,8 @@ Space_Map_Initial_Value {
         Value = (40.28810408921933,41.72862453531599,0),(28.856877323420075,41.542750929368026,0),(12.778810408921933,42.007434944237914,0),(4.507434944237918,41.82156133828997,0),(5.0650557620817835,29.275092936802974,0)
                ,(5.901486988847584,18.587360594795538,0),(5.71561338289963,12.45353159851301,0),(14.91635687732342,13.475836431226767,0),(25.697026022304833,12.45353159851301,0),(40.10223048327138,12.639405204460964,0)
                ,(40.65985130111524,21.28252788104089,0),(40.19516728624535,30.018587360594797,0),(29.693308550185876,31.598513011152416,0),(27.83457249070632,21.003717472118957,0),(15.381040892193308,21.933085501858734,0)
-               ,(15.288104089219331,28.438661710037174,0);
+               ,(15.288104089219331,28.438661710037174,0),(5.901486988847584,6.040892193308551,0),(15.75278810408922,6.412639405204459,0),(26.533457249070633,6.505576208178439,0),(40.10223048327138,6.691449814126393,0)
+               ,(21.70074349442379,3.903345724907062,0);
     }
     Link_Agent {
         Agent_Name = Universe.link;
@@ -621,7 +620,9 @@ Space_Map_Initial_Value {
               ,(0,7,6),(0,6,5),(0,5,4),(0,4,3),(0,3,2)
               ,(0,2,1),(0,1,0),(0,15,12),(0,12,13),(0,13,14)
               ,(0,14,15),(0,15,2),(0,4,15),(0,1,12),(0,12,11)
-              ,(0,13,10),(0,5,14),(0,14,7),(0,13,8);
+              ,(0,13,10),(0,5,14),(0,14,7),(0,13,8),(0,16,17)
+              ,(0,17,18),(0,18,19),(0,19,9),(0,8,18),(0,7,17)
+              ,(0,6,16),(0,20,18),(0,20,17);
     }
     Space_Variable {
         Variable = Universe.map.qq,(2500*0.0);
@@ -638,9 +639,9 @@ Space_Map_Initial_Value {
 // Window Location Definition Division
 //-------------------------------------------------------
 Window_Rectangle {
-    Window_Name = Main_Window, 1912, -8, 1936, 1056;
+    Window_Name = Main_Window, -8, -8, 1936, 1056;
     Window_Name = Output_Setting_Window, 728, 383, 480, 290;
-    Window_Name = Artisoc_Help_Window, 100, 330, 752, 400;
+    Window_Name = Artisoc_Help_Window, 100, 333, 752, 400;
 }
 
 
