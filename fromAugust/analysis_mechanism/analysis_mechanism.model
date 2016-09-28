@@ -163,7 +163,7 @@ dim k as integer
 
 if universe.endsimulation == countagt(universe.map.kyoka) then
 	// edgevalue,utility‚ğ‘‚«o‚·
-	openfilecsv("result.csv",1,3)
+	openfilecsv("result_not_random.csv",1,3)
 	writefilecsv(1,getcountsimulationnumber(),false)
 	for i = 0 to 11
 		for k = 0 to 11
@@ -347,7 +347,9 @@ if getcountstep() == 1 then
 	my.start = universe.start_points(my.ID)
 	i = my.start
 	// ƒ‰ƒ“ƒ_ƒ€‚ÉÅ‰‚ğŒˆ’è
-	m = int(universe.qtable_count(i) * rnd())
+	//m = int(universe.qtable_count(i) * rnd())
+	m=int(2*rnd())
+	
 	maxdist = universe.qtable_dist(i,m)
 	my.routearray = cstr(my.start) & "," & cstr(maxdist)
 	my.routecount = 1
@@ -617,7 +619,7 @@ Single_Simulation {
 Repeat_Simulation {
     Value_Change = None;
     Initial_Value_Change_None {
-        Repeat_Max = 100000;
+        Repeat_Max = 5000;
     }
 }
 
@@ -808,8 +810,8 @@ Numeric_Output {
     Font_Style = 0;
     Font_Color = 0, 0, 0;
     Font_Background_Color = 255, 255, 255;
-    Position_x = 347;
-    Position_y = 103;
+    Position_x = 15;
+    Position_y = 165;
     Size_x = 632;
     Size_y = 596;
     Map_Cell_Size = -1;
