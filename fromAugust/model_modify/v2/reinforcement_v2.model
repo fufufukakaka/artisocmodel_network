@@ -275,7 +275,7 @@ include"dijkstra.inc"
 Univ_Init{
 initialize_dijkstra()
 // open database
-openDB("jdbc:postgresql:db_artisoc","org.postgresql.Driver","db_artisoc","postgres","fukasawa1225")
+// openDB("jdbc:postgresql:db_artisoc","org.postgresql.Driver","db_artisoc","postgres","fukasawa1225")
 
 universe.checkmode = FALSE
 universe.steprecord = 0
@@ -460,6 +460,11 @@ universe.numberofhalfendagt = 0
 }
 
 Univ_Step_End{
+// q-learningの時のみ
+if universe.daychange == TRUE then
+    exitsimulation()
+end if
+
 if universe.daychange == TRUE then
 	universe.daytimecount = 1
 end if
@@ -481,7 +486,7 @@ Univ_Finish{
 // Agent Rule
 //-------------------------------------------------------
 #begin_rule UNIVERSE.MAP.POINT
-include"dijkstra.inc"
+include"init.inc"
 
 Agt_Init{
 dim personAgt as agt
@@ -619,8 +624,7 @@ next i
 // Agent Rule
 //-------------------------------------------------------
 #begin_rule UNIVERSE.MAP.PERSON
-include"dijkstra.inc"
-include"routedescion.inc"
+include"init.inc"
 
 Agt_Init{
 dim k as integer
@@ -666,6 +670,7 @@ dim returnarray3 as string
 // Get the all route from database
 for i = 0 to 5
 /*
+// q-learning中はコメントアウト
 	returnarray = @dijkstrav2(my.homeid, CStr(universe.officelist(i)))
 	returnarray1 = @dijkstrav2(my.homeid, CStr(universe.shoplist(i)))
 	returnarray2 = @dijkstrav2(CStr(universe.officelist(i)),my.homeid)
@@ -708,7 +713,6 @@ for i = 0 to 5
 	my.shoprouteoption(i) = getvalueDB("shoproute")
 	my.jobhomerouteoption(i) = getvalueDB("jobhomeroute")
 	my.shophomerouteoption(i) = getvalueDB("shophomeroute")
-	*/
 	
 	// 各リストに対応した全ルートを取得する
 	for k = 0 to 10
@@ -743,6 +747,7 @@ for i = 0 to 5
 		// reroutepointはroutegonyogonyoで決定する
 	next k
 next i
+*/
 universe.situation = "11111111111"
 firstroute()
 }
@@ -763,6 +768,12 @@ Agt_Step{
 	dim returnarray1 as string
 	dim returnarray2 as string
 	dim returnarray3 as string
+    dim maxq as integer
+    dim maxdist as integer
+    dim nextmax as integer
+
+firstroute()
+
 
 if my.halfend == 0 then
 	my.timecount = my.timecount + 1
@@ -839,6 +850,7 @@ if my.speed <= 0.3 then
 end if
 end if
 //ダイクストラ法に基づいて進む
+// q-learningのため、書き換わっています
 if universe.halfdaychange == TRUE then
 	my.halfend = 0
 	targetPointAgt = Universe.Map.Point(CInt(GetToken(My.RouteArray, My.RouteCount)))
@@ -848,11 +860,13 @@ if  universe.daychange == TRUE  then
 	my.nowhome = 0
 	targetPointAgt = Universe.Map.Point(CInt(GetToken(My.RouteArray, My.RouteCount)))
 	my.daycount = my.daycount + 0.5
+    /*
 	if universe.daymode == 0 then
 		shoproute(targetpointagt)
 	elseif universe.daymode == 1 then
 		jobroute(targetpointagt)
 	end if
+    */ 
 end if
 	If my.nowhome == 1  Then
 		// 立ち止まる
@@ -1002,136 +1016,36 @@ Sub reroute(targetPointAgt As Agt)
 
 Sub firstroute()
 {
-	Dim startPointID As Integer
-	Dim goalPointID As Integer
-	Dim newRoute As String
-	Dim lastRouteArray As String
-	Dim i As Integer
-	dim m as integer
+dim maxq as integer
+dim maxdist as integer
+Dim i As Integer
+dim k as integer
 	
-	// 現在地点から経路を再探索する
-	// どのofficeに向かうかidによってあらかじめ決定される
-	// 予め計算してある値を使用(jobrouteoption)
-	if my.ID mod 6 == 0  then
-		my.nowroute = 0
-	elseif  my.ID mod 6 == 1 then
-		my.nowroute = 1
-	elseif  my.ID mod 6 == 2 then
-		my.nowroute = 2
-	elseif  my.ID mod 6 == 3 then
-		my.nowroute = 3
-	elseif my.ID mod 6 == 4 then
-		my.nowroute = 4
-	else
-		my.nowroute = 5
-	end if
-	my.goalpointid = universe.officelist(my.nowroute)
-	newRoute = routegonyogonyo(0,my.nowroute)
-	my.destination = 1
-	my.returnroute = routegonyogonyo(2,my.nowroute)
+	// first root
+    if getcountstep() == 1 then
+        my.start = universe.start_points(my.ID)
+        i = my.start
+        maxdist = universe.qtable_dist(i,0)
+        for k = 0 to universe.qtable_count(i) - 1
+            if k == 0 then
+                maxq = my.qtable(i,k)
+                maxdist = universe.qtable_dist(i,k)
+            else
+                if maxq < my.qtable(i,k) then
+				    maxq = my.qtable(i,k)
+				    maxdist = universe.qtable_dist(i,k)
+                end if
+            end if
+        next k
+        my.routearray = cstr(my.start) & "," & cstr(maxdist)
+        my.routecount = 1
+    end if
 
-	my.RouteArray = ""
-	My.Routecount = 0
-	
-	My.RouteArray = newRoute
 	// エージェントの色を変更する
 	My.Color = COLOR_GREEN
 }
 
-Sub homeroute(targetPointAgt As Agt)
-{
-	Dim startPointAgt As Agt
-	Dim goalPointID As Integer
-	Dim newRoute As String
-	Dim lastRouteArray As String
-	Dim i As Integer
-	
-	newRoute = my.returnroute
-		
-	my.RouteArray = ""
-	My.Routecount = 0
-	
-	My.RouteArray = newRoute
-	
-	// エージェントの色を変更する
-	My.Color = COLOR_BLUE
-}
 
-Sub jobroute(targetPointAgt As Agt)
-{
-	Dim startPointID As Integer
-	Dim goalPointID As Integer
-	Dim newRoute As String
-	Dim lastRouteArray As String
-	Dim i As Integer
-	dim m as integer
-	
-	// 現在地点から経路を再探索する
-	// どのofficeに向かうかidによってあらかじめ決定される
-	// 予め計算してある値を使用(jobrouteoption)
-	if my.ID mod 6 == 0  then
-		my.nowroute = 0
-	elseif  my.ID mod 6 == 1 then
-		my.nowroute = 1
-	elseif  my.ID mod 6 == 2 then
-		my.nowroute = 2
-	elseif  my.ID mod 6 == 3 then
-		my.nowroute = 3
-	elseif my.ID mod 6 == 4 then
-		my.nowroute = 4
-	else
-		my.nowroute = 5
-	end if
-	my.goalpointid = universe.officelist(my.nowroute)
-	newRoute = routegonyogonyo(0,my.nowroute)
-	my.destination = 1
-	my.returnroute = routegonyogonyo(2,my.nowroute)
-
-	my.RouteArray = ""
-	My.Routecount = 0
-	
-	My.RouteArray = newRoute
-	// エージェントの色を変更する
-	My.Color = COLOR_GREEN
-}
-
-Sub shoproute(targetPointAgt As Agt)
-{
-	Dim startPointID As Integer
-	Dim goalPointID As Integer
-	Dim newRoute As String
-	Dim lastRouteArray As String
-	Dim i As Integer
-	dim m as integer
-	
-	// 現在地点から経路を再探索する
-	// どのshopに向かうかをランダムに決める
-	// 予め計算してある値を使用(shoprouteoption)
-	if rnd() < 0.16 then
-		my.nowroute = 0
-	elseif rnd() < 0.32 then
-		my.nowroute = 1
-	elseif rnd() < 0.48 then
-		my.nowroute = 2
-	elseif rnd() < 0.64 then
-		my.nowroute = 3
-	elseif rnd() < 0.8 then
-		my.nowroute = 4
-	else
-		my.nowroute = 5
-	end if
-	my.goalpointid = universe.shoplist(my.nowroute)
-	newroute = routegonyogonyo(1,my.nowroute)
-	my.destination = 2
-	my.returnroute = routegonyogonyo(3,my.nowroute)
-
-	my.RouteArray = ""
-	My.Routecount = 0
-	
-	My.RouteArray = newRoute
-	// エージェントの色を変更する
-	My.Color = COLOR_CYAN
-}
 #end_rule UNIVERSE.MAP.PERSON
 
 
@@ -1141,7 +1055,7 @@ Sub shoproute(targetPointAgt As Agt)
 // Agent Rule
 //-------------------------------------------------------
 #begin_rule UNIVERSE.MAP.GOVERNMENT
-include "dijkstra.inc"
+include "init.inc"
 
 Agt_Init{
 my.X = 25
