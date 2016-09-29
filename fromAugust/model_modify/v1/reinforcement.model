@@ -170,14 +170,14 @@ for i = 0 to 3
 	end if
 next i
 
-// 報酬の決定
+// ???V?????
 if my.ID == 20 then
 	my.reward = 100
 else
 	my.reward = -1
 end if
 
-//橋の入口ポイントは色を変える
+//????????|?C???g??F???????
 if my.ID == 8 or my.ID == 7 or my.ID == 13 or my.ID == 14 then
 	my.bridgepoint = 1
 	my.color = COLOR_YELLOW
@@ -188,7 +188,7 @@ end if
 }
 
 Agt_Step{
-// 橋の入口ポイントなら渋滞を起こし得る
+// ????????|?C???g????a????N????????
 if my.bridgepoint == 1 then
 	
 end if
@@ -225,7 +225,7 @@ if getcountsimulationnumber() == 1 then
 		next k
 	next i
 	
-	// 書き出し
+	// ?????o??
 openfilecsv("qtable_"&my.ID&".csv",1,2)
 	for i = 0 to countagt(universe.map.point)-1
 		for k = 0 to universe.qtable_count(i) - 1
@@ -236,7 +236,7 @@ openfilecsv("qtable_"&my.ID&".csv",1,2)
 	next i
 closefilecsv(1)
 else
-	//前回のQ表を読み込む
+	//?O????Q?\????????
 openfilecsv("qtable_"&my.ID&".csv",1,1)
 	for i = 0 to countagt(universe.map.point)-1
 		for k = 0 to universe.qtable_count(i) - 1
@@ -284,7 +284,7 @@ my.routecount = 1
 end if
 
 // speed
-// 進む速度の定義
+// ?i????x????`
 makeoneagtsetaroundown(set,3,universe.map.kyoka,false)
 CNo = countagtset(set)
 if CNo >= 1 then
@@ -294,30 +294,34 @@ if CNo >= 1 then
 		end if
 	next one
 	
-	// 一番近い距離の
+	// ????????????
 	sortagtset(set,"dist",true)
 	one = getagt(set,0)
 	
-	// 車間距離に応じたスピードの定義
-	if abs(one.direction - my.Direction) == 180 then // 反対車線にいる場合は速度(2)で
+	// ??????????????X?s?[?h????`
+	if abs(one.direction - my.Direction) == 180 then // ?????????????????x(2)??
 		my.speed = 2
 	else
-		my.speed = 2*(tanh((one.dist-0.01)/1)+tanh(0.01/1)) //距離３で速度２に落ち着くように調整した
+		my.speed = 2*(tanh((one.dist-0.01)/1)+tanh(0.01/1)) //?????R????x?Q????????????????????
 	end if
-elseif CNo == 0 then //誰もいないなら速度(2)で
+elseif CNo == 0 then //?N???????????x(2)??
 	my.speed = 2
+end if
+
+if my.speed < 0.5 then
+	my.speed = 0.5
 end if
 
 if my.routecount > 0 then
 	targetpointid = cint(gettoken(my.routearray, my.routecount))
 	targetpointagt = universe.map.point(targetpointid)
-	distance = pursue(targetpointagt, 1)
+	distance = pursue(targetpointagt, my.speed)
 	
-	// 目的地に到着後
+	// ??I?n???????
 	if distance > 0 then
 	
-		// 次のルートを決める
-		// ε以下だったらランダムで、以上だったらQ値が一番高いところを選ぶ
+		// ??????[?g???????
+		// ?E?????????????_????A??ゾ??????Q?l?????????????????I??
 		i = targetpointid
 		
 		if rnd() > my.ipusiron then
@@ -339,7 +343,7 @@ if my.routecount > 0 then
 			my.q_k = k
 			maxdist = universe.qtable_dist(i,k)
 		end if
-		//次のポイントの最大のQ値になるkを求める
+		//????|?C???g??????Q?l????k???????
 		for k = 0 to universe.qtable_count(maxdist) - 1
 				if k == 0 then
 					maxq = my.qtable(maxdist,k)
@@ -351,7 +355,7 @@ if my.routecount > 0 then
 					end if
 				end if
 		next k
-		//Q値を更新する	
+		//Q?l???X?V????	
 		my.qtable(i,my.q_k) = (1-my.learning_rate)*my.qtable(i,my.q_k) + my.learning_rate*(universe.map.point(maxdist).reward + my.discount_rate*(my.qtable(maxdist,nextmax)-my.qtable(i,my.q_k)))
 		openfilecsv("qtable_"&my.ID&".csv",1,2)
 		for i = 0 to countagt(universe.map.point)-1
