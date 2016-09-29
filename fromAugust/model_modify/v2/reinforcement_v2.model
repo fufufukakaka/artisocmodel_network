@@ -296,24 +296,23 @@ universe.shoplist(4) = 67
 universe.shoplist(5) = 69
 universe.warpday = 0
 
-dim streetagtset as agtset
-dim streetagt as agt
-dim i as integer
+universe.endsimulation = 0
 
-// 応答曲面法のために
-dim count as integer
-dim demandarray as string
-dim strengtharray as string
-dim budgetarray as string
-demandarray = 
-"0.2,0.8,0.2,0.8,0.2,0.8,0.2,0.8,0.5,0.5,0.5,0.2,0.8,0.5,0.5,0.5,0.5"
-strengtharray = "0.2,0.8,0.2,0.8,0.5,0.5,0.5,0.2,0.8,0.5,0.5"
-budgetarray = "10,10,50,50,30,30,30,30,30,10,50"
-count = getcountsimulationnumber()
-universe.simulationcode = "201602rsmv2strength" & count
-universe.demandlimit = cdbl(gettoken(demandarray,count-1))
-universe.threshold = cdbl(gettoken(strengtharray,count-1))
-universe.univbudget = cdbl(gettoken(budgetarray,count-1))
+for i = 0 to countagt(universe.map.point)-1
+	universe.qtable_count(i) = 0
+	for each one in universe.map.point(i).nearagtset
+		universe.qtable_count(i) = universe.qtable_count(i) + 1
+	next one
+next i
+
+for i = 0 to countagt(universe.map.point)-1
+k = 0
+	for each one in universe.map.point(i).nearagtset
+		universe.qtable_dist(i,k) = one.id
+		k = k + 1
+	next one
+next i
+
 }
 
 Univ_Step_Begin{
@@ -351,107 +350,6 @@ universe.Map.bridgecore(8).sign&
 universe.Map.bridgecore(9).sign&
 universe.Map.bridgecore(10).sign
 	universe.recalculate = FALSE
-end if
-
-// 平日か休日か
-if Int(cdbl(round(universe.day*1000)/1000)) mod 2 == 1 then
-// 平日
-	universe.daymode = 1
-else
-// 休日
-	universe.daymode = 0
-end if
-
-universe.daytimecount = universe.daytimecount + 1
-if universe.daymode == 1 then
-	 universe.warpday = 15*((Int(cdbl(round(universe.day*1000)/1000))) - 1) + 21 
-elseif universe.daymode == 0 then
-	universe.warpday = 15*(Int(cdbl(round(universe.day*1000)/1000)))
-end if
-
-// 徴税や点検の処理に入るか否か
-if Int(cdbl(round(gethistory(universe.warpday,1)*1000)/1000)) mod 360 == 351 and Int(cdbl(round(universe.warpday*1000)/1000)) mod 360 == 0 then
-	universe.checkmode = TRUE
-else
-	universe.checkmode = FALSE
-	universe.Map.government.bridgepeoplewatch = FALSE
-end if
-// 月々の処理を行うモード
-if Int(cdbl(round(gethistory(universe.warpday,1)*1000)/1000)) mod 30 == 21 and int(cdbl(round(universe.warpday*1000)/1000)) mod 30 == 0 then
-	universe.monthcheckmode = TRUE
-			openfilecsv("bridgetest"&universe.testnumber&".csv",2,3)
-			for i = 0 to 10
-writefilecsv(2,universe.simulationcode,false)
-writefilecsv(2,universe.warpday,false)
-writefilecsv(2,universe.Map.bridgecore(i).strength,false)
-writefilecsv(2,universe.Map.bridgecore(i).demand,false)
-writefilecsv(2,universe.Map.bridgecore(i).ID,false)
-writefilecsv(2,universe.Map.bridgecore(i).collapse,false)
-writefilecsv(2,universe.Map.bridgecore(i).repaircost,true)
-	next i
-closefilecsv(2)
-openfilecsv("persontest"&universe.testnumber&".csv",2,3)
-			for i = 0 to 99
-writefilecsv(2,universe.simulationcode,false)
-writefilecsv(2,universe.Map.Person(i).ID,false)
-writefilecsv(2,universe.Map.Person(i).utilize,false)
-writefilecsv(2,universe.Map.Person(i).timecount_sum,false)
-writefilecsv(2,universe.Map.Person(i).freetime_sum,false)
-writefilecsv(2,universe.Map.Person(i).consump_sum,false)
-writefilecsv(2,universe.Map.Person(i).archivement,false)
-writefilecsv(2,universe.warpday,false)
-writefilecsv(2,universe.Map.Person(i).money,true)
-	next i
-closefilecsv(2)
-openfilecsv("governtest"&universe.testnumber&".csv",2,3)
-writefilecsv(2,universe.simulationcode,false)
-writefilecsv(2,universe.warpday,false)
-writefilecsv(2,universe.map.government.budget,false)
-writefilecsv(2,universe.averageutilize,false)
-writefilecsv(2,universe.averageconsump,false)
-writefilecsv(2,universe.averagemovetime,false)
-writefilecsv(2,universe.averagefreetime,false)
-writefilecsv(2,universe.Map.government.outcome,false)
-writefilecsv(2,universe.Map.government.income,true)
-closefilecsv(2)
-else
-	universe.monthcheckmode = FALSE
-end if
-universe.averagefreetime = 0
-universe.averagemovetime = 0
-universe.averageconsump = 0
-universe.averagearchive = 0
-universe.averageutilize = 0
-
-// 日付が変更されたか否か1
-if universe.numberofhalfendagt == 100 then
-	universe.halfdaychange = TRUE
-	for k = 0 to 10
-		if universe.Map.bridgecore(k).collapse == FALSE then
-			update_cost(universe.Map.bridgecore(k).beginpointid,	universe.Map.bridgecore(k).endpointid,universe.Map.bridgecore(k).distance)
-			universe.Map.bridgecore(k).color = COLOR_MAgenta
-		else
-			update_cost(universe.Map.bridgecore(k).beginpointid,	universe.Map.bridgecore(k).endpointid,100000)
-			universe.Map.bridgecore(k).color = COLOR_BLACK
-		end if
-	next k
-else
-	universe.halfdaychange = FALSE
-end if
-// 日付が変更されたか否か2
-if universe.numberofendagt == 100 then
-	universe.daychange = TRUE
-	for k = 0 to 10
-		if universe.Map.bridgecore(k).collapse == FALSE then
-			update_cost(universe.Map.bridgecore(k).beginpointid,	universe.Map.bridgecore(k).endpointid,universe.Map.bridgecore(k).distance)
-			universe.Map.bridgecore(k).color = COLOR_MAgenta
-		else
-			update_cost(universe.Map.bridgecore(k).beginpointid,	universe.Map.bridgecore(k).endpointid,100000)
-			universe.Map.bridgecore(k).color = COLOR_BLACK
-		end if
-	next k
-else
-	universe.daychange = FALSE
 end if
 
 universe.day = 0
@@ -662,97 +560,49 @@ my.archive_sum = 0
 
 dim i as integer
 dim m as integer
-dim returnarray as string
-dim returnarray1 as string
-dim returnarray2 as string
-dim returnarray3 as string
 
-// Get the all route from database
-for i = 0 to 5
-/*
-// q-learning中はコメントアウト
-	returnarray = @dijkstrav2(my.homeid, CStr(universe.officelist(i)))
-	returnarray1 = @dijkstrav2(my.homeid, CStr(universe.shoplist(i)))
-	returnarray2 = @dijkstrav2(CStr(universe.officelist(i)),my.homeid)
-	returnarray3 = @dijkstrav2(CStr(universe.shoplist(i)),my.homeid)
 
-	openfilecsv("jobroute.csv",2,3)
-	writefilecsv(2,my.id,false)
-	writefilecsv(2,i,false)
-	writefilecsv(2,gettoken(returnarray,4),false)
-	writefilecsv(2,replace(gettoken(returnarray,0)," ",","),false)
-	writefilecsv(2,gettoken(returnarray,1),true)
-	closefilecsv(2)
-	openfilecsv("shoproute.csv",2,3)
-	writefilecsv(2,my.id,false)
-	writefilecsv(2,i,false)
-	writefilecsv(2,gettoken(returnarray1,4),false)
-	writefilecsv(2,replace(gettoken(returnarray1,0)," ",","),false)
-	writefilecsv(2,gettoken(returnarray1,1),true)
-	closefilecsv(2)
-	openfilecsv("jobhomeroute.csv",2,3)
-	writefilecsv(2,my.id,false)
-	writefilecsv(2,i,false)
-	writefilecsv(2,gettoken(returnarray2,4),false)
-	writefilecsv(2,replace(gettoken(returnarray2,0)," ",","),false)
-	writefilecsv(2,gettoken(returnarray2,1),true)
-	closefilecsv(2)
-	openfilecsv("shophomroute.csv",2,3)
-	writefilecsv(2,my.id,false)
-	writefilecsv(2,i,false)
-	writefilecsv(2,gettoken(returnarray3,4),false)
-	writefilecsv(2,replace(gettoken(returnarray3,0)," ",","),false)
-	writefilecsv(2,gettoken(returnarray3,1),true)
-	closefilecsv(2)
-	*/
-	// open table
-	/*
-	querydb("SELECT personid,listnumber,status,jobroute,shoproute,jobhomeroute,shophomeroute FROM personroute WHERE personid="&my.ID&" and listnumber = "&i&" and status  = 11111111111;")
-	nextdb()
-	my.jobrouteoption(i) = getvalueDB("jobroute")
-	my.shoprouteoption(i) = getvalueDB("shoproute")
-	my.jobhomerouteoption(i) = getvalueDB("jobhomeroute")
-	my.shophomerouteoption(i) = getvalueDB("shophomeroute")
+// Q-learning
+my.goal = 113
+my.routecount = -1
+
+if getcountsimulationnumber() == 1 then
+	for i = 0 to countagt(universe.map.point)-1
+		for k = 0 to universe.qtable_count(i)-1
+			my.qtable(i,k) = 50 * rnd()
+		next k
+	next i
 	
-	// 各リストに対応した全ルートを取得する
-	for k = 0 to 10
-		querydb("SELECT * FROM jobroute WHERE personid="&my.ID&" and usebridge = "&k&" and listnumber = "&i&";")
-		nextdb()
-		my.routecollectionjob(i,k,0)=getvalueDB("route")
-		my.routecollectionjob(i,k,1)=getvalueDB("routecost")
-		// 確率は最初は0で後で計算していれる
-		my.routecollectionjob(i,k,2)=0
-		
-		querydb("SELECT * FROM shoproute WHERE personid="&my.ID&" and usebridge = "&k&" and listnumber = "&i&";")
-		nextdb()
-		my.routecollectionshop(i,k,0)=getvalueDB("route")
-		my.routecollectionshop(i,k,1)=getvalueDB("routecost")
-		// 確率は最初は0で後で計算していれる
-		my.routecollectionshop(i,k,2)=0
+	// 書き出し
+openfilecsv("qtable_"&my.ID&".csv",1,2)
+	for i = 0 to countagt(universe.map.point)-1
+		for k = 0 to universe.qtable_count(i) - 1
+			writefilecsv(1,i,false)
+			writefilecsv(1,k,false)
+			writefilecsv(1,my.qtable(i,k),true)
+		next k
+	next i
+closefilecsv(1)
+else
+	//前回のQ表を読み込む
+openfilecsv("qtable_"&my.ID&".csv",1,1)
+	for i = 0 to countagt(universe.map.point)-1
+		for k = 0 to universe.qtable_count(i) - 1
+			data_i = cint(readfilecsv(1))
+			data_k = cint(readfilecsv(1))
+			my.qtable(data_i,data_k) = cdbl(readfilecsv(1))
+			readfilecsv(1)
+		next k
+	next i
+closefilecsv(1)
+end if
 
-		querydb("SELECT * FROM jobhomeroute WHERE personid="&my.ID&" and usebridge = "&k&" and listnumber = "&i&";")
-		nextdb()
-		my.routecollectionjobhome(i,k,0)=getvalueDB("route")
-		my.routecollectionjobhome(i,k,1)=getvalueDB("routecost")
-		// 確率は最初は0で後で計算していれる
-		my.routecollectionjobhome(i,k,2)=0
-		
-		querydb("SELECT * FROM shophomeroute WHERE personid="&my.ID&" and usebridge = "&k&" and listnumber = "&i&";")
-		nextdb()
-		my.routecollectionshophome(i,k,0)=getvalueDB("route")
-		my.routecollectionshophome(i,k,1)=getvalueDB("routecost")
-		// 確率は最初は0で後で計算していれる
-		my.routecollectionshophome(i,k,2)=0
-		
-		// reroutepointはroutegonyogonyoで決定する
-	next k
-next i
-*/
 universe.situation = "11111111111"
-firstroute()
+
 }
 
 Agt_Step{
+dim targetpointid as integer
 	Dim targetPointAgt As Agt
 	Dim distance As Double
 	Dim lastTargetPointAgt As Agt
@@ -774,49 +624,12 @@ Agt_Step{
 
 firstroute()
 
-
 if my.halfend == 0 then
 	my.timecount = my.timecount + 1
 end if
 universe.numberofendagt = universe.numberofendagt + my.nowhome
 universe.numberofhalfendagt = universe.numberofhalfendagt + my.halfend
 universe.day = universe.day + (my.daycount / countagt(universe.Map.Person))
-universe.averagefreetime = universe.averagefreetime + (my.freetime_sum/ 100)
-universe.averagemovetime= universe.averagemovetime + (my.timecount_sum / 100)
-universe.averagearchive = universe.averagearchive + (my.archivement/ 100)
-universe.averageconsump = universe.averageconsump + (my.consump_sum / 100)
-// Calculate Utilize
-// 平均値で割ってみる
-if my.freetime_sum <= 0 then
-	my.freetime_sum = 0 
-end if
-if my.timecount_sum <= 0 then
-	my.timecount_sum = 0 
-end if
-if my.consump_sum <= 0 then
-	my.consump_sum = 0 
-end if
-freetimestd = (((my.freetime_sum / 4557.138))) 
-movetimestd = (((my.timecount_sum / 30000)))
-consumpstd = (((my.consump_sum  / 153435.9)))
-my.utilize = freetimestd ^ 0.33 + consumpstd ^ 0.33 - movetimestd ^ 0.33
-universe.averageutilize = universe.averageutilize + (my.utilize / 100)
-
-// 日数が30の倍数ならarchivementをmoneyに換算する
-// 所得税の計算用に記録する
-if universe.monthcheckmode == TRUE then
-	my.money = my.money + my.archivement
-	my.archive_sum = my.archive_sum + my.archivement
-	my.archivement = 0
-	my.freetime_sum = 0
-	my.consump_sum = 0
-	my.timecount_sum = 0
-elseif universe.warpday <= 0 then
-	my.archivement = 0
-	my.freetime_sum = 0
-	my.consump_sum = 0
-	my.timecount_sum = 0
-end if
 
 // 進む速度の定義
 makeoneagtsetaroundown(set,3,universe.Map.Person,false)
@@ -849,25 +662,6 @@ if my.speed <= 0.3 then
 	my.speed = 0.3
 end if
 end if
-//ダイクストラ法に基づいて進む
-// q-learningのため、書き換わっています
-if universe.halfdaychange == TRUE then
-	my.halfend = 0
-	targetPointAgt = Universe.Map.Point(CInt(GetToken(My.RouteArray, My.RouteCount)))
-	homeroute(targetpointagt)
-end if
-if  universe.daychange == TRUE  then
-	my.nowhome = 0
-	targetPointAgt = Universe.Map.Point(CInt(GetToken(My.RouteArray, My.RouteCount)))
-	my.daycount = my.daycount + 0.5
-    /*
-	if universe.daymode == 0 then
-		shoproute(targetpointagt)
-	elseif universe.daymode == 1 then
-		jobroute(targetpointagt)
-	end if
-    */ 
-end if
 	If my.nowhome == 1  Then
 		// 立ち止まる
 		My.Color = COLOR_WHITE
@@ -883,80 +677,70 @@ end if
 		distance = Pursue(targetPointAgt, my.speed)
 		
 		If distance > 0 Then
-			// 次のPointに到着したとき
-			lastTargetPointAgt = Universe.Map.Point(CInt(GetToken(My.RouteArray, My.RouteCount)))
-			My.RouteCount = My.RouteCount + 1
-			If CountToken(My.RouteArray) > My.RouteCount Then
-				targetPointAgt = Universe.Map.Point(CInt(GetToken(My.RouteArray, My.RouteCount)))
-				streetAgt = @get_street_from_points(lastTargetPointAgt.ID, targetPointAgt.ID)
-				If streetAgt.Cost >= 100000 and my.reroutelimit <= 3 Then
-					// StreetのCostが10000の場合は経路を再探索する
-					reroute(targetPointAgt)
-					my.reroutelimit = my.reroutelimit + 1
-				Else
-					// 余剰分、次のPointへ向かう
-					Pursue(targetPointAgt, distance)
-				End If
-			Else
-				// 目的地に到着
-				if my.action == 1 then
-					my.halfend = 1
-					my.gotime = my.timecount
-					my.reroutelimit = 0
-					// 店なら消費して効用を得る
-					if universe.Map.Point(my.goalpointid).site == 3 then
-					// 消費額と余暇時間は移動時間に応じて変化する
-						if my.timecount <= 280 then
-							my.consump_sum = my.consump_sum + my.consump*2*9
-							my.money = my.money - my.consump*2*9
-							my.freetime_sum = my.freetime_sum + my.freetime*2*9
-						elseif my.timecount >= 320 then
-							my.consump_sum = my.consump_sum + my.consump*0.5*9
-							my.money = my.money - my.consump*0.5*9
-							my.freetime_sum = my.freetime_sum + my.freetime*0.5*9
-						else 
-							my.consump_sum = my.consump_sum + my.consump*9
-							my.money = my.money - my.consump*9
-							my.freetime_sum = my.freetime_sum + my.freetime*9
-						end if
-						my.routecollectionshop(my.nowroute,my.routebridgepoint(1),1) = my.gotime
-					// オフィスなら将来受け取る成果を積み上げる
-					elseif universe.Map.Point(my.goalpointid).site == 2 then
-						my.archivement = my.archivement + my.potential*21
-						my.routecollectionjob(my.nowroute,my.routebridgepoint(1),1) = my.gotime
-					end if
-						my.action = 0
-						my.check = 0
-				// 帰宅し、明日に備える
-				elseif my.action == 0 then
-					my.returntime = my.timecount - my.gotime
-					// コストを更新する
-					if my.destination == 1 then
-						my.routecollectionjobhome(my.nowroute,my.routebridgepoint(1),1) = my.returntime
-					elseif my.destination == 2 then
-						my.routecollectionshophome(my.nowroute,my.routebridgepoint(1),1) = my.returntime
-					end if
-					my.action = 1
-					my.check = 0
-					my.nowhome = 1
-					my.reroutelimit = 0
-					/*
-					if my.timecount >= 3000 then
-						my.timecount = 3000
-					end if
-					*/
-					// 平日or休日？
-					if universe.daymode == 1 then
-						my.timecount_sum = my.timecount_sum + my.timecount	*	21
-					else
-						my.timecount_sum = my.timecount_sum * my.timecount * 9
-					end if
-					my.timecount = 0
-				end if
-			End If
+            q-routechoice()
+            if targetpointid == my.goal then
+                my.routecount = -1
+                universe.endsimulation = universe.endsimulation + 1
+            else
+                targetpointid = cint(gettoken(my.routearray, my.routecount))
+                targetpointagt = universe.map.point(targetpointid)
+                pursue(targetpointagt, distance) 
+            end if
 		End If
 	End If
 }
+Sub q-routechoice()
+{
+// 次のルートを決める
+		// ε以下だったらランダムで、以上だったらQ値が一番高いところを選ぶ
+		i = targetpointid
+		
+		if rnd() > my.ipusiron then
+			for k = 0 to universe.qtable_count(i) - 1
+				if k == 0 then
+					maxq = my.qtable(i,k)
+					maxdist = universe.qtable_dist(i,k)
+					my.q_k = k
+				else
+					if maxq < my.qtable(i,k) then
+						maxq = my.qtable(i,k)
+						maxdist = universe.qtable_dist(i,k)
+						my.q_k = k
+					end if
+				end if
+			next k
+		else
+			k = int(rnd() * universe.qtable_count(i))
+			my.q_k = k
+			maxdist = universe.qtable_dist(i,k)
+		end if
+		//次のポイントの最大のQ値になるkを求める
+		for k = 0 to universe.qtable_count(maxdist) - 1
+				if k == 0 then
+					maxq = my.qtable(maxdist,k)
+					nextmax= k
+				else
+					if maxq < my.qtable(maxdist,k) then
+						maxq = my.qtable(maxdist,k)
+						nextmax = k
+					end if
+				end if
+		next k
+		//Q値を更新する	
+		my.qtable(i,my.q_k) = (1-my.learning_rate)*my.qtable(i,my.q_k) + my.learning_rate*(universe.map.point(maxdist).reward + my.discount_rate*(my.qtable(maxdist,nextmax)-my.qtable(i,my.q_k)))
+		openfilecsv("qtable_"&my.ID&".csv",1,2)
+		for i = 0 to countagt(universe.map.point)-1
+			for k = 0 to universe.qtable_count(i) - 1
+				writefilecsv(1,i,false)
+				writefilecsv(1,k,false)
+				writefilecsv(1,my.qtable(i,k),true)
+			next k
+		next i
+		closefilecsv(1)
+		my.routearray = my.routearray & "," & cstr(maxdist)
+		my.routecount = my.routecount + 1
+}
+
 
 // 経路を再探索する
 Sub reroute(targetPointAgt As Agt)
@@ -1022,7 +806,7 @@ Dim i As Integer
 dim k as integer
 	
 	// first root
-    if getcountstep() == 1 then
+if getcountstep() == my.id + 5 then
         my.start = universe.start_points(my.ID)
         i = my.start
         maxdist = universe.qtable_dist(i,0)
