@@ -196,7 +196,7 @@ UNIVERSE {
     Dim steprecord(0, 0) <10>  As Integer = (0);
     Dim tmp(0, 0) As Integer = (0);
     Dim demandlimit(0, 0) As Double = (0.0);
-    Dim qtable_dist(0, 0)[200][1] As Integer = (200*0);
+    Dim qtable_dist(0, 0)[200][8] As Integer = ();
     Dim qtable_count(0, 0)[200] As Integer = (200*0);
     Dim endsimulation(0, 0) As Integer = (0);
     Dim start_points(0, 0)[200] As Integer = (200*0);
@@ -212,7 +212,6 @@ Initial_Value {
     UNIVERSE.THRESHOLD = 1(0.6783811);
     UNIVERSE.TESTNUMBER = 1(1);
     UNIVERSE.STRENGTHLIMIT = 1(0.01);
-    UNIVERSE.QTABLE_DIST = 1(200*0);
     UNIVERSE.MAP.POINT.X = 114(44.99105546, 42.48658318, 43.20214669, 46.86940966, 45.16994633, 40.96601073, 43.82826476, 45.52772809, 48.21109123, 47.49552773
 , 42.03935599, 46.69051878, 41.77101968, 43.47048301, 46.60107335, 44.72271914, 41.94991055, 47.13774597, 49.28443649, 48.8372093
 , 43.38103757, 37.20930233, 36.76207513, 38.46153846, 41.5921288, 37.47763864, 33.72093023, 35.33094812, 38.5509839, 39.80322004
@@ -321,6 +320,15 @@ for i = 0 to countagt(universe.map.point)-1
 	next one
 next i
 
+for i = 0 to countagt(universe.map.point)-1
+k = 0
+	for each one in universe.map.point(i).nearagtset
+		universe.qtable_dist(i,k) = one.id
+		k = k + 1
+	next one
+next i
+
+
 }
 
 Univ_Step_Begin{
@@ -328,20 +336,6 @@ dim k as integer
 dim i  as integer
 dim streetagtset as agtset
 dim streetagt as agt
-
-if getcountstep() == 2 then
-println("set value")
-for i = 0 to countagt(universe.map.point)-1
-k = 0
-	for each one in universe.map.point(i).nearagtset
-		universe.qtable_dist(i,k) = one.id
-		if i == 0 then
-			println(i&", "&k&","&one.id&","&universe.qtable_dist(i,k))
-		end if
-		k = k + 1
-	next one
-next i
-end if
 
 universe.steprecord = universe.steprecord + 1
 
@@ -380,36 +374,17 @@ universe.numberofhalfendagt = 0
 }
 
 Univ_Step_End{
-dim i as integer
-dim k as integer
-
-if getcountstep() == 2 then
-println("set value")
-for i = 0 to countagt(universe.map.point)-1
-k = 0
-	for each one in universe.map.point(i).nearagtset
-		universe.qtable_dist(i,k) = one.id
-		if i == 0 then
-			println(i&", "&k&","&one.id&","&universe.qtable_dist(i,k))
-		end if
-		k = k + 1
-	next one
-next i
-end if
-println(universe.qtable_dist(0,0))
-println(universe.qtable_dist(0,1))
-println(universe.qtable_dist(0,2))
 
 // q-learningの時のみ
 if universe.endsimulation == countagt(universe.Map.Person) then
-    exitsimulation()
+    exitsimulationmsgln(cstr(getcountstep()))
 end if
 
 if universe.daychange == TRUE then
 	universe.daytimecount = 1
 end if
 if universe.warpday == 18000 then
-	exitsimulation()
+	exitsimulationmsgln(cstr(getcountstep()))
 end if
 
 }
@@ -437,13 +412,13 @@ dim iid as integer
 iid = my.ID
 my.congestion = 0
 
-If My.id == 1 Then
-	//for i = 0 to 4
+If My.ID == 1 Then
+	for i = 0 to 4
 		personAgt = createagt(universe.Map.Person)
 		universe.start_points(personagt.id) = my.ID
 		personAgt.x = my.X
 		personAgt.y = my.Y
-	//next i
+	next i
 end if
 
 if my.ID == 113 then
@@ -474,6 +449,7 @@ elseif my.site == 3 then
 	my.color = COLOR_CYAN
 end if
 
+/*
 // ボトルネック渋滞
 for i = 0 to 10
 	if my.ID == universe.Map.bridgecore(i).beginpointid then
@@ -560,6 +536,7 @@ for i = 0 to 10
 		end if
 	end if
 next i
+*/
 }
 #end_rule UNIVERSE.MAP.POINT
 
@@ -616,6 +593,9 @@ dim data_q as string
 // Q-learning
 my.goal = 113
 my.routecount = -1
+my.ipusiron = 0.3
+my.learning_rate = 0.1
+my.discount_rate = 0.9
 
 if getcountsimulationnumber() == 1 then
 	for i = 0 to countagt(universe.map.point)-1
@@ -674,11 +654,11 @@ dim targetpointid as integer
     dim maxdist as integer
     dim nextmax as integer
     
-if getcountstep() == 3 then
+if getcountstep() == 1 then
 	firstroute()
 end if
 
-if getcountstep() == my.ID + 20 then
+if getcountstep() == (my.ID+1)*5  then
 	my.RouteCount = 1
 end if
 
@@ -814,16 +794,6 @@ dim k as integer
         my.start = universe.start_points(my.ID)
         i = my.start
         maxdist = universe.qtable_dist(i,0)
-        println("call")
-        for i = 0 to countagt(universe.map.point) - 1
-	k = 0
-	for each one in universe.map.point(i).nearagtset
-		if i == 0 then
-			println(i&", "&k&","&one.id&","&universe.qtable_dist(i,k))
-		end if
-		k = k + 1
-	next one
-next i
 
         for k = 0 to universe.qtable_count(i) - 1
             if k == 0 then
@@ -1182,7 +1152,7 @@ Single_Simulation {
     Step_Max = 0;
     Time_Max = 0;
     End_Condition = "";
-    Exec_Wait = 100;
+    Exec_Wait = 1;
     Exec_Order = Component;
     Exec_Order_Random_First_Step_Only = No;
     Random_Seed = 0;
@@ -1198,7 +1168,7 @@ Single_Simulation {
 Repeat_Simulation {
     Value_Change = None;
     Initial_Value_Change_None {
-        Repeat_Max = 11;
+        Repeat_Max = 1;
     }
     Initial_Value_Change_Linear {
         Variable_Name = "universe.tmp";
@@ -2341,53 +2311,29 @@ Time_Graph {
 
 
 //-------------------------------------------------------
-// Time Graph Output Definition Division
+// Numeric Data Window Output Definition Division
 //-------------------------------------------------------
-Time_Graph {
+Numeric_Output {
     Font_Name = "Dialog";
     Font_Char_Set = 81;
     Font_Size = 12.0;
     Font_Style = 0;
     Font_Color = 0, 0, 0;
     Font_Background_Color = 255, 255, 255;
-    Draw_Timing = Simulation_Step;
-    Draw_Interval = 1;
-    Graph_Name = "qdist";
-    Title = "qdist";
-    Disable = No;
-    Background_Color = 255, 255, 255;
-    Remarks = Yes;
-    Legend_Pos = Top;
-    FastDraw = No;
-    Position_x = 100;
-    Position_y = 100;
-    Size_x = 950;
-    Size_y = 805;
+    Position_x = 378;
+    Position_y = 707;
+    Size_x = 500;
+    Size_y = 115;
     Map_Cell_Size = -1;
-    Axis_Label = "", "";
-    Draw_By_JFree_Chart = Yes;
-    Scale = 0, 0.0, 1000, 100.0, 100, 10.0;
-    ScaleAuto = Yes, Yes;
+    Numeric_Name = "countagt";
+    Title = "count";
+    Disable = No;
     Output_Group_Name = "";
-    Output {
-        Graph_Element_Name = "qdist00";
-        Line_Color = 255, 0, 0;
-        Line_Width = 2;
-        Marker_Id = 0;
-        Output_Expression = "universe.qtable_dist(0,0)";
-        Expression_Value_Display = No;
-        Effective_Fraction_Figures = 0;
-        Graph_Element_Color = (0, 255, 0);
-    }
-    Output {
-        Graph_Element_Name = "qdist01";
-        Line_Color = 0, 0, 255;
-        Line_Width = 2;
-        Marker_Id = 0;
-        Output_Expression = "universe.qtable_dist(0,1)";
-        Expression_Value_Display = No;
-        Effective_Fraction_Figures = 0;
-        Graph_Element_Color = (51, 51, 255);
+    OUTPUT {
+        Output_Element_Name = "endperson";
+        Figures = 0;
+        Format_Id = 0;
+        Output_Expression = "universe.endsimulation";
     }
 }
 
