@@ -26,6 +26,7 @@ UNIVERSE {
             Dim site(0, 0) As Integer = (0);
             Dim color(0, 0) As Integer = (0);
             Dim congestion(0, 0) As Integer = (0);
+            Dim reward(0, 0) As Integer = (0);
         }
         AgtType Person(0, 0)[0] {
             Dim ID(0, 0) As Integer = (0);
@@ -81,6 +82,13 @@ UNIVERSE {
             Dim gotime(0, 0) As Double = (0.0);
             Dim returntime(0, 0) As Double = (0.0);
             Dim reroutelimit(0, 0) As Integer = (0);
+            Dim goal(0, 0) As Integer = (0);
+            Dim qtable(0, 0)[200][4] As Double = (800*0.0);
+            Dim learning_rate(0, 0) As Double = (0.0);
+            Dim discount_rate(0, 0) As Double = (0.0);
+            Dim ipusiron(0, 0) As Double = (0.0);
+            Dim q_k(0, 0) As Integer = (0);
+            Dim start(0, 0) As Integer = (0);
         }
         AgtType government(0, 0)[1] {
             Dim ID(0, 0) As Integer = (0);
@@ -188,6 +196,10 @@ UNIVERSE {
     Dim steprecord(0, 0) <10>  As Integer = (0);
     Dim tmp(0, 0) As Integer = (0);
     Dim demandlimit(0, 0) As Double = (0.0);
+    Dim qtable_dist(0, 0)[200][1] As Integer = (200*0);
+    Dim qtable_count(0, 0)[200] As Integer = (200*0);
+    Dim endsimulation(0, 0) As Integer = (0);
+    Dim start_points(0, 0)[200] As Integer = (200*0);
 }
 
 
@@ -200,6 +212,7 @@ Initial_Value {
     UNIVERSE.THRESHOLD = 1(0.6783811);
     UNIVERSE.TESTNUMBER = 1(1);
     UNIVERSE.STRENGTHLIMIT = 1(0.01);
+    UNIVERSE.QTABLE_DIST = 1(200*0);
     UNIVERSE.MAP.POINT.X = 114(44.99105546, 42.48658318, 43.20214669, 46.86940966, 45.16994633, 40.96601073, 43.82826476, 45.52772809, 48.21109123, 47.49552773
 , 42.03935599, 46.69051878, 41.77101968, 43.47048301, 46.60107335, 44.72271914, 41.94991055, 47.13774597, 49.28443649, 48.8372093
 , 43.38103757, 37.20930233, 36.76207513, 38.46153846, 41.5921288, 37.47763864, 33.72093023, 35.33094812, 38.5509839, 39.80322004
@@ -269,7 +282,7 @@ Initial_Value {
 // Agent Rule
 //-------------------------------------------------------
 #begin_rule UNIVERSE
-include"dijkstra.inc"
+include"init.inc"
 
 
 Univ_Init{
@@ -296,20 +309,15 @@ universe.shoplist(4) = 67
 universe.shoplist(5) = 69
 universe.warpday = 0
 
+dim i as integer
+dim k as integer
+
 universe.endsimulation = 0
 
 for i = 0 to countagt(universe.map.point)-1
 	universe.qtable_count(i) = 0
 	for each one in universe.map.point(i).nearagtset
 		universe.qtable_count(i) = universe.qtable_count(i) + 1
-	next one
-next i
-
-for i = 0 to countagt(universe.map.point)-1
-k = 0
-	for each one in universe.map.point(i).nearagtset
-		universe.qtable_dist(i,k) = one.id
-		k = k + 1
 	next one
 next i
 
@@ -320,6 +328,20 @@ dim k as integer
 dim i  as integer
 dim streetagtset as agtset
 dim streetagt as agt
+
+if getcountstep() == 2 then
+println("set value")
+for i = 0 to countagt(universe.map.point)-1
+k = 0
+	for each one in universe.map.point(i).nearagtset
+		universe.qtable_dist(i,k) = one.id
+		if i == 0 then
+			println(i&", "&k&","&one.id&","&universe.qtable_dist(i,k))
+		end if
+		k = k + 1
+	next one
+next i
+end if
 
 universe.steprecord = universe.steprecord + 1
 
@@ -358,8 +380,28 @@ universe.numberofhalfendagt = 0
 }
 
 Univ_Step_End{
+dim i as integer
+dim k as integer
+
+if getcountstep() == 2 then
+println("set value")
+for i = 0 to countagt(universe.map.point)-1
+k = 0
+	for each one in universe.map.point(i).nearagtset
+		universe.qtable_dist(i,k) = one.id
+		if i == 0 then
+			println(i&", "&k&","&one.id&","&universe.qtable_dist(i,k))
+		end if
+		k = k + 1
+	next one
+next i
+end if
+println(universe.qtable_dist(0,0))
+println(universe.qtable_dist(0,1))
+println(universe.qtable_dist(0,2))
+
 // q-learningの時のみ
-if universe.daychange == TRUE then
+if universe.endsimulation == countagt(universe.Map.Person) then
     exitsimulation()
 end if
 
@@ -384,7 +426,7 @@ Univ_Finish{
 // Agent Rule
 //-------------------------------------------------------
 #begin_rule UNIVERSE.MAP.POINT
-include"init.inc"
+include"dijkstra.inc"
 
 Agt_Init{
 dim personAgt as agt
@@ -395,13 +437,19 @@ dim iid as integer
 iid = my.ID
 my.congestion = 0
 
-If My.site == 1 Then
-	for i = 0 to 4
+If My.id == 1 Then
+	//for i = 0 to 4
 		personAgt = createagt(universe.Map.Person)
+		universe.start_points(personagt.id) = my.ID
 		personAgt.x = my.X
 		personAgt.y = my.Y
-		personAgt.RouteCount = 1
-	next i
+	//next i
+end if
+
+if my.ID == 113 then
+	my.reward = 100
+else 
+	my.reward = -1
 end if
 
 }
@@ -525,7 +573,9 @@ next i
 include"init.inc"
 
 Agt_Init{
+dim i as integer
 dim k as integer
+
 for k = 0 to 19
 	if my.ID >= 5*k and my.ID <= 5*(k+1) - 1 then
 		my.homeid = k
@@ -558,9 +608,10 @@ my.archivement = my.potential
 universe.averagearchive = universe.averagearchive + (my.archivement / 20)
 my.archive_sum = 0
 
-dim i as integer
 dim m as integer
-
+dim data_i as string
+dim data_k as string
+dim data_q as string
 
 // Q-learning
 my.goal = 113
@@ -614,6 +665,7 @@ dim targetpointid as integer
 	dim movetimestd as double
 	dim consumpstd as double
 	dim i as integer
+	dim k as integer
 	dim returnarray as string
 	dim returnarray1 as string
 	dim returnarray2 as string
@@ -621,8 +673,14 @@ dim targetpointid as integer
     dim maxq as integer
     dim maxdist as integer
     dim nextmax as integer
+    
+if getcountstep() == 3 then
+	firstroute()
+end if
 
-firstroute()
+if getcountstep() == my.ID + 20 then
+	my.RouteCount = 1
+end if
 
 if my.halfend == 0 then
 	my.timecount = my.timecount + 1
@@ -658,8 +716,8 @@ end if
 
 //下限は0.2(10km/hのイメージ)
 if my.bottleneck == 0 then
-if my.speed <= 0.3 then
-	my.speed = 0.3
+if my.speed <= 1 then
+	my.speed = 1
 end if
 end if
 	If my.nowhome == 1  Then
@@ -671,29 +729,15 @@ end if
 		my.timecount = 0
 		my.gotime = 0
 		my.returntime = 0
-	ElseIf my.bottleneck == 0 and my.halfend ==0 and my.nowhome == 0 and My.RouteCount < CountToken(My.RouteArray) Then
+	ElseIf my.bottleneck == 0 and my.halfend ==0 and my.nowhome == 0 and my.RouteCount > 0 and My.RouteCount < CountToken(My.RouteArray) Then
 		// 経路に沿って進む
-		targetPointAgt = Universe.Map.Point(CInt(GetToken(My.RouteArray, My.RouteCount)))
+		targetpointid = CInt(GetToken(My.RouteArray, My.RouteCount))
+		targetPointAgt = Universe.Map.Point(targetpointid)
 		distance = Pursue(targetPointAgt, my.speed)
 		
 		If distance > 0 Then
-            q-routechoice()
-            if targetpointid == my.goal then
-                my.routecount = -1
-                universe.endsimulation = universe.endsimulation + 1
-            else
-                targetpointid = cint(gettoken(my.routearray, my.routecount))
-                targetpointagt = universe.map.point(targetpointid)
-                pursue(targetpointagt, distance) 
-            end if
-		End If
-	End If
-}
-Sub q-routechoice()
-{
-// 次のルートを決める
-		// ε以下だったらランダムで、以上だったらQ値が一番高いところを選ぶ
-		i = targetpointid
+            //q_routechoice
+            i = targetpointid
 		
 		if rnd() > my.ipusiron then
 			for k = 0 to universe.qtable_count(i) - 1
@@ -739,63 +783,24 @@ Sub q-routechoice()
 		closefilecsv(1)
 		my.routearray = my.routearray & "," & cstr(maxdist)
 		my.routecount = my.routecount + 1
+		//q_routechoice
+            
+            if targetpointid == my.goal then
+                my.routecount = -1
+                universe.endsimulation = universe.endsimulation + 1
+            else
+                targetpointid = cint(gettoken(my.routearray, my.routecount))
+                targetpointagt = universe.map.point(targetpointid)
+                pursue(targetpointagt, distance) 
+            end if
+		End If
+	End If
 }
-
 
 // 経路を再探索する
 Sub reroute(targetPointAgt As Agt)
 {
-	Dim startPointAgt As Agt
-	Dim goalPointID As Integer
-	Dim newRoute As String
-	Dim lastRouteArray As String
-	Dim i As Integer
-	dim k as integer
 	
-	// 現在地点から経路を再探索する
-	startPointAgt = Universe.Map.Point(CInt(GetToken(My.RouteArray, My.RouteCount - 1)))
-	goalPointID = CInt(gettoken(my.RouteArray,counttoken(my.RouteArray)-1))
-	querydb("SELECT * FROM personreroute WHERE personid="&my.ID&" and startpointid = "&startpointagt.id&" and endpointid = "&goalpointid&" and situation  = "&universe.situation&";")
-	if nextdb() == TRUE then
-		newroute = getvalueDB("reroute")
-	else
-		newRoute = @dijkstra(startPointAgt.ID, CStr(goalPointID))
-		if universe.warpday >= 0 then
-			openfilecsv("routeofperson.csv",2,3)
-			writefilecsv(2,universe.situation,false)
-			writefilecsv(2,my.ID,false)
-			writefilecsv(2,startpointagt.id,false)
-			writefilecsv(2,goalpointid,false)
-			writefilecsv(2,newroute,true)
-			closefilecsv(2)
-		end if
-	end if
-	lastRouteArray = My.RouteArray
-	My.RouteArray = ""
-	
-	// これまでに通った経路を格納する
-	For i=0 To My.RouteCount - 2
-		My.RouteArray = My.RouteArray & GetToken(lastRouteArray, i) & ","
-	Next i
-	
-	// 新しい経路を追加する
-	My.RouteArray = My.RouteArray & newRoute
-	
-	// エージェントの色を変更する
-	My.Color = COLOR_MAGENTA
-	
-	// reroutepointの設定
-	for k = 0 to 10
-		if instr(1,my.RouteArray,CStr(universe.Map.bridgecore(k).beginpointid)&","&CStr(universe.Map.bridgecore(k).endpointid)) >= 1 then
-			my.reroutegopoint = universe.Map.bridgecore(k).beginpointid
-		end if
-		if instr(1,my.RouteArray,CStr(universe.Map.bridgecore(k).endpointid)&","&CStr(universe.Map.bridgecore(k).beginpointid)) >= 1 then
-			my.reroutehomepoint = universe.Map.bridgecore(k).endpointid
-		end if
-	next k
-	
-	my.bottleneck = 0
-	my.speed = 2
 }
 
 Sub firstroute()
@@ -806,10 +811,20 @@ Dim i As Integer
 dim k as integer
 	
 	// first root
-if getcountstep() == my.id + 5 then
         my.start = universe.start_points(my.ID)
         i = my.start
         maxdist = universe.qtable_dist(i,0)
+        println("call")
+        for i = 0 to countagt(universe.map.point) - 1
+	k = 0
+	for each one in universe.map.point(i).nearagtset
+		if i == 0 then
+			println(i&", "&k&","&one.id&","&universe.qtable_dist(i,k))
+		end if
+		k = k + 1
+	next one
+next i
+
         for k = 0 to universe.qtable_count(i) - 1
             if k == 0 then
                 maxq = my.qtable(i,k)
@@ -822,14 +837,10 @@ if getcountstep() == my.id + 5 then
             end if
         next k
         my.routearray = cstr(my.start) & "," & cstr(maxdist)
-        my.routecount = 1
-    end if
 
 	// エージェントの色を変更する
 	My.Color = COLOR_GREEN
 }
-
-
 #end_rule UNIVERSE.MAP.PERSON
 
 
@@ -839,7 +850,7 @@ if getcountstep() == my.id + 5 then
 // Agent Rule
 //-------------------------------------------------------
 #begin_rule UNIVERSE.MAP.GOVERNMENT
-include "init.inc"
+include "dijkstra.inc"
 
 Agt_Init{
 my.X = 25
@@ -1171,7 +1182,7 @@ Single_Simulation {
     Step_Max = 0;
     Time_Max = 0;
     End_Condition = "";
-    Exec_Wait = 1;
+    Exec_Wait = 100;
     Exec_Order = Component;
     Exec_Order_Random_First_Step_Only = No;
     Random_Seed = 0;
@@ -1222,7 +1233,7 @@ Map_Output {
     Map_Space_Name = "Universe.Map";
     Map_Name = "Map";
     Title = "Map";
-    Disable = Yes;
+    Disable = No;
     Background_Color = 255, 255, 255;
     Position_x = 291;
     Position_y = 1;
@@ -2024,7 +2035,7 @@ Numeric_Output {
     Map_Cell_Size = -1;
     Numeric_Name = "day.etc";
     Title = "day.etc";
-    Disable = No;
+    Disable = Yes;
     Output_Group_Name = "";
     OUTPUT {
         Output_Element_Name = "day";
@@ -2330,36 +2341,62 @@ Time_Graph {
 
 
 //-------------------------------------------------------
+// Time Graph Output Definition Division
+//-------------------------------------------------------
+Time_Graph {
+    Font_Name = "Dialog";
+    Font_Char_Set = 81;
+    Font_Size = 12.0;
+    Font_Style = 0;
+    Font_Color = 0, 0, 0;
+    Font_Background_Color = 255, 255, 255;
+    Draw_Timing = Simulation_Step;
+    Draw_Interval = 1;
+    Graph_Name = "qdist";
+    Title = "qdist";
+    Disable = No;
+    Background_Color = 255, 255, 255;
+    Remarks = Yes;
+    Legend_Pos = Top;
+    FastDraw = No;
+    Position_x = 100;
+    Position_y = 100;
+    Size_x = 950;
+    Size_y = 805;
+    Map_Cell_Size = -1;
+    Axis_Label = "", "";
+    Draw_By_JFree_Chart = Yes;
+    Scale = 0, 0.0, 1000, 100.0, 100, 10.0;
+    ScaleAuto = Yes, Yes;
+    Output_Group_Name = "";
+    Output {
+        Graph_Element_Name = "qdist00";
+        Line_Color = 255, 0, 0;
+        Line_Width = 2;
+        Marker_Id = 0;
+        Output_Expression = "universe.qtable_dist(0,0)";
+        Expression_Value_Display = No;
+        Effective_Fraction_Figures = 0;
+        Graph_Element_Color = (0, 255, 0);
+    }
+    Output {
+        Graph_Element_Name = "qdist01";
+        Line_Color = 0, 0, 255;
+        Line_Width = 2;
+        Marker_Id = 0;
+        Output_Expression = "universe.qtable_dist(0,1)";
+        Expression_Value_Display = No;
+        Effective_Fraction_Figures = 0;
+        Graph_Element_Color = (51, 51, 255);
+    }
+}
+
+
+//-------------------------------------------------------
 // Control Panel Definition Division
 //-------------------------------------------------------
 Control_Panel {
     Display_Area = 1369, 200, 240, 385;
-    Panel_Item {
-        Item_Type = Edit_Box;
-        Item_Name = "testnumber";
-        Display_Area = 0, 0, 0, 0;
-        Font_Name = "";
-        Font_Char_Set = 0;
-        Font_Size = 0.0;
-        Font_Style = 0;
-        Font_Color = 0, 0, 0;
-        Font_Background_Color = 0, 0, 0;
-        Var_Name = "Universe.testnumber";
-        Text_Data = "1";
-    }
-    Panel_Item {
-        Item_Type = Edit_Box;
-        Item_Name = "strengthlimit(橋がどこまで行ったら落ちるか)";
-        Display_Area = 0, 0, 0, 0;
-        Font_Name = "";
-        Font_Char_Set = 0;
-        Font_Size = 0.0;
-        Font_Style = 0;
-        Font_Color = 0, 0, 0;
-        Font_Background_Color = 0, 0, 0;
-        Var_Name = "Universe.strengthlimit";
-        Text_Data = "0.01";
-    }
 }
 
 
@@ -2381,8 +2418,8 @@ Others_Data {
     Debug_Position_y = 7;
     Debug_Size_x = 400;
     Debug_Size_y = 200;
-    Console_Position_x = 1308;
-    Console_Position_y = -3;
+    Console_Position_x = 1519;
+    Console_Position_y = 15;
     Console_Size_x = 358;
     Console_Size_y = 761;
     Componen_Tree_Position_x = 2;
@@ -2416,7 +2453,7 @@ Network_Info {
 //-------------------------------------------------------
 Space_Map_Initial_Value {
     Space_Path_Name = Universe.Map;
-    Background_Image_File_Path_Name = "../../febrarytest/..\Downloads\ph3.jpg";
+    Background_Image_File_Path_Name = "..\..\Downloads\ph3.jpg";
     Origin_Position = Left_Bottom;
     Position_Agent {
         Agent_Name = Universe.Map.Point;
@@ -2524,7 +2561,7 @@ Space_Map_Initial_Value {
 // Window Location Definition Division
 //-------------------------------------------------------
 Window_Rectangle {
-    Window_Name = Main_Window, 0, 23, 1885, 1057;
+    Window_Name = Main_Window, -8, -8, 1936, 1056;
     Window_Name = Output_Setting_Window, 728, 383, 480, 290;
     Window_Name = Artisoc_Help_Window, 381, 65, 853, 405;
 }
