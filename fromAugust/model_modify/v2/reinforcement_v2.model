@@ -89,6 +89,8 @@ UNIVERSE {
             Dim ipusiron(0, 0) As Double = (0.0);
             Dim q_k(0, 0) As Integer = (0);
             Dim start(0, 0) As Integer = (0);
+            Dim q_cost(0, 0) As Integer = (0);
+            Dim direction_reward(0, 0) As Integer = ();
         }
         AgtType government(0, 0)[1] {
             Dim ID(0, 0) As Integer = (0);
@@ -135,7 +137,7 @@ UNIVERSE {
             Dim color(0, 0) As Integer = (0);
         }
     }
-    AgtType Link(0, 0)[250] {
+    AgtType Link(0, 0)[249] {
         Dim ID(0, 0) As Integer = (0);
         Dim Begin_agt(0, 0) As Agt = (0);
         Dim End_Agt(0, 0) As Agt = (0);
@@ -196,7 +198,7 @@ UNIVERSE {
     Dim steprecord(0, 0) <10>  As Integer = (0);
     Dim tmp(0, 0) As Integer = (0);
     Dim demandlimit(0, 0) As Double = (0.0);
-    Dim qtable_dist(0, 0)[200][8] As Integer = ();
+    Dim qtable_dist(0, 0)[200][8] As Integer = (1600*0);
     Dim qtable_count(0, 0)[200] As Integer = (200*0);
     Dim endsimulation(0, 0) As Integer = (0);
     Dim start_points(0, 0)[200] As Integer = (200*0);
@@ -334,8 +336,23 @@ next i
 Univ_Step_Begin{
 dim k as integer
 dim i  as integer
+dim m as integer
 dim streetagtset as agtset
 dim streetagt as agt
+
+if getcountstep() == 2 then
+	for i = 0 to countagt(universe.map.point)-1
+		k = 0
+		for m = 0 to countagt(universe.Map.bridgecore) - 1
+			if i == universe.Map.bridgecore(m).endpointid then
+				for each one in universe.map.point(m).nearagtset
+					//println(i&","&k&","&universe.qtable_dist(i,k)&","&universe.Map.Person(0).qtable(i,k)&","&universe.qtable_count(i))
+					k = k + 1
+				next one
+			end if
+		next m
+	next i
+end if
 
 universe.steprecord = universe.steprecord + 1
 
@@ -377,7 +394,10 @@ Univ_Step_End{
 
 // q-learningの時のみ
 if universe.endsimulation == countagt(universe.Map.Person) then
-    exitsimulationmsgln(cstr(getcountstep()))
+	openfilecsv("steps.csv",1,3)
+   	writefilecsv(1,getcountstep(),true)
+   	closefilecsv(1)
+   	exitsimulationmsgln(cstr(getcountstep()))
 end if
 
 if universe.daychange == TRUE then
@@ -412,7 +432,7 @@ dim iid as integer
 iid = my.ID
 my.congestion = 0
 
-If My.ID == 1 Then
+If My.site == 1 Then
 	for i = 0 to 4
 		personAgt = createagt(universe.Map.Person)
 		universe.start_points(personagt.id) = my.ID
@@ -422,7 +442,7 @@ If My.ID == 1 Then
 end if
 
 if my.ID == 113 then
-	my.reward = 100
+	my.reward = 500
 else 
 	my.reward = -1
 end if
@@ -594,12 +614,13 @@ dim data_q as string
 my.goal = 113
 my.routecount = -1
 my.ipusiron = 0.3
-my.learning_rate = 0.1
+my.learning_rate = 0.05
 my.discount_rate = 0.9
+my.q_cost = 0
 
 if getcountsimulationnumber() == 1 then
-	for i = 0 to countagt(universe.map.point)-1
-		for k = 0 to universe.qtable_count(i)-1
+	for i = 0 to countagt(universe.map.point) - 1
+		for k = 0 to universe.qtable_count(i) - 1
 			my.qtable(i,k) = 50 * rnd()
 		next k
 	next i
@@ -646,6 +667,7 @@ dim targetpointid as integer
 	dim consumpstd as double
 	dim i as integer
 	dim k as integer
+	dim m as integer
 	dim returnarray as string
 	dim returnarray1 as string
 	dim returnarray2 as string
@@ -653,12 +675,16 @@ dim targetpointid as integer
     dim maxq as integer
     dim maxdist as integer
     dim nextmax as integer
-    
+    dim temp as integer
+    dim beforedistance as double
+    dim afterdistance as double
+
 if getcountstep() == 1 then
 	firstroute()
+	forbidden_reverse_bridge_start()
 end if
 
-if getcountstep() == (my.ID+1)*5  then
+if getcountstep() == (my.ID+1)*2  then
 	my.RouteCount = 1
 end if
 
@@ -714,30 +740,47 @@ end if
 		targetpointid = CInt(GetToken(My.RouteArray, My.RouteCount))
 		targetPointAgt = Universe.Map.Point(targetpointid)
 		distance = Pursue(targetPointAgt, my.speed)
+		my.q_cost = my.q_cost + 1
 		
 		If distance > 0 Then
-            //q_routechoice
-            i = targetpointid
-		
-		if rnd() > my.ipusiron then
-			for k = 0 to universe.qtable_count(i) - 1
-				if k == 0 then
-					maxq = my.qtable(i,k)
-					maxdist = universe.qtable_dist(i,k)
-					my.q_k = k
-				else
-					if maxq < my.qtable(i,k) then
+          //q_routechoice
+          i = targetpointid
+			if rnd() > my.ipusiron then
+				for k = 0 to universe.qtable_count(i) - 1
+					if k == 0 then
 						maxq = my.qtable(i,k)
 						maxdist = universe.qtable_dist(i,k)
 						my.q_k = k
+					else
+						if maxq < my.qtable(i,k) then
+							maxq = my.qtable(i,k)
+							maxdist = universe.qtable_dist(i,k)
+							my.q_k = k
+						end if
 					end if
-				end if
-			next k
-		else
-			k = int(rnd() * universe.qtable_count(i))
-			my.q_k = k
-			maxdist = universe.qtable_dist(i,k)
-		end if
+				next k
+			else
+				k = int(rnd() * universe.qtable_count(i))
+				my.q_k = k
+				maxdist = universe.qtable_dist(i,k)
+				// maxdistが橋を渡っての逆走だったら、永続ループする
+				for m = 0 to countagt(universe.Map.bridgecore) - 1
+					Do while maxdist == universe.Map.bridgecore(m).beginpointid
+						k = int(rnd() * universe.qtable_count(i))
+						my.q_k = k
+						maxdist = universe.qtable_dist(i,k)
+					loop
+				next m
+			end if
+			// 目的地から離れているかどうかに応じて、direction_rewardを設ける
+			beforedistance = measuredistance(universe.Map.Point(my.goal).x, universe.Map.Point(my.goal).y, universe.Map.Point(targetpointid).X, universe.Map.Point(targetpointid).Y,universe.Map)
+			afterdistance = measuredistance(universe.Map.Point(my.goal).x, universe.Map.Point(my.goal).y, universe.Map.Point(maxdist).X, universe.Map.Point(maxdist).Y,universe.Map)
+			if afterdistance - beforedistance < 0 then
+				my.direction_reward = 2
+			else
+				my.direction_reward = 0
+			end if
+			
 		//次のポイントの最大のQ値になるkを求める
 		for k = 0 to universe.qtable_count(maxdist) - 1
 				if k == 0 then
@@ -750,8 +793,15 @@ end if
 					end if
 				end if
 		next k
-		//Q値を更新する	
-		my.qtable(i,my.q_k) = (1-my.learning_rate)*my.qtable(i,my.q_k) + my.learning_rate*(universe.map.point(maxdist).reward + my.discount_rate*(my.qtable(maxdist,nextmax)-my.qtable(i,my.q_k)))
+		//Q値を更新する
+		// q_costはノード間を移動するのにかかった時間
+		// direction_rewardは進行方向に進んでいればプラス、そうでなければマイナス
+		my.qtable(i,my.q_k) = (1-my.learning_rate)*my.qtable(i,my.q_k) 
+		+ my.learning_rate*(
+		(universe.map.point(maxdist).reward + my.direction_reward) 
+		//(universe.map.point(maxdist).reward - my.q_cost)
+		+ my.discount_rate*(my.qtable(maxdist,nextmax)-my.qtable(i,my.q_k))
+		)
 		openfilecsv("qtable_"&my.ID&".csv",1,2)
 		for i = 0 to countagt(universe.map.point)-1
 			for k = 0 to universe.qtable_count(i) - 1
@@ -761,6 +811,7 @@ end if
 			next k
 		next i
 		closefilecsv(1)
+		my.q_cost = 0
 		my.routearray = my.routearray & "," & cstr(maxdist)
 		my.routecount = my.routecount + 1
 		//q_routechoice
@@ -781,6 +832,23 @@ end if
 Sub reroute(targetPointAgt As Agt)
 {
 	
+}
+
+Sub  forbidden_reverse_bridge_start()
+{
+dim i as integer
+dim k as integer
+dim m as integer
+	
+	for i = 0 to countagt(universe.map.point) - 1
+		for k = 0 to universe.qtable_count(i) - 1
+			for m = 0 to countagt(universe.Map.bridgecore) - 1
+				if i == universe.Map.bridgecore(m).endpointid and universe.qtable_dist(i,k) == universe.Map.bridgecore(m).beginpointid then
+					my.qtable(i,k) = 0
+				end if
+			next m
+		next k
+	next i
 }
 
 Sub firstroute()
@@ -1168,7 +1236,7 @@ Single_Simulation {
 Repeat_Simulation {
     Value_Change = None;
     Initial_Value_Change_None {
-        Repeat_Max = 1;
+        Repeat_Max = 5000;
     }
     Initial_Value_Change_Linear {
         Variable_Name = "universe.tmp";
@@ -2364,10 +2432,10 @@ Others_Data {
     Debug_Position_y = 7;
     Debug_Size_x = 400;
     Debug_Size_y = 200;
-    Console_Position_x = 1519;
-    Console_Position_y = 15;
-    Console_Size_x = 358;
-    Console_Size_y = 761;
+    Console_Position_x = 1258;
+    Console_Position_y = 0;
+    Console_Size_x = 619;
+    Console_Size_y = 941;
     Componen_Tree_Position_x = 2;
     Componen_Tree_Position_y = 2;
     Componen_Tree_Size_x = 266;
@@ -2462,43 +2530,43 @@ Space_Map_Initial_Value {
               ,(0,54,55),(0,109,108),(0,108,107),(0,107,106),(0,106,91)
               ,(0,91,105),(0,105,104),(0,104,103),(0,103,88),(0,88,102)
               ,(0,102,101),(0,101,100),(0,100,99),(0,99,98),(0,98,97)
-              ,(0,97,96),(0,96,76),(0,76,71),(0,71,70),(0,70,110)
-              ,(0,56,95),(0,95,94),(0,94,109),(0,55,34),(0,34,35)
-              ,(0,35,19),(0,1,20),(0,1,21),(0,2,1),(0,2,0)
-              ,(0,2,22),(0,22,21),(0,21,36),(0,36,37),(0,37,42)
-              ,(0,43,26),(0,26,22),(0,36,26),(0,44,26),(0,45,23)
-              ,(0,23,22),(0,22,24),(0,24,2),(0,2,3),(0,3,24)
-              ,(0,24,4),(0,4,5),(0,5,6),(0,6,8),(0,6,7)
-              ,(0,6,28),(0,28,7),(0,7,29),(0,29,28),(0,28,27)
-              ,(0,27,25),(0,25,23),(0,23,46),(0,46,25),(0,25,47)
-              ,(0,47,27),(0,27,48),(0,48,28),(0,28,5),(0,5,27)
-              ,(0,5,23),(0,23,24),(0,49,28),(0,49,29),(0,50,10)
-              ,(0,10,29),(0,29,50),(0,51,30),(0,30,10),(0,10,9)
-              ,(0,30,12),(0,12,11),(0,12,10),(0,12,13),(0,13,16)
-              ,(0,16,15),(0,15,17),(0,17,19),(0,17,18),(0,18,15)
-              ,(0,15,14),(0,14,13),(0,16,33),(0,33,54),(0,53,32)
-              ,(0,32,13),(0,52,31),(0,31,12),(0,30,52),(0,29,9)
-              ,(0,43,36),(0,38,21),(0,21,39),(0,33,34),(0,35,16)
-              ,(0,33,32),(0,32,31),(0,31,30),(0,45,26),(0,107,92)
-              ,(0,92,94),(0,94,93),(0,93,56),(0,93,57),(0,57,92)
-              ,(0,92,90),(0,90,113),(0,113,58),(0,58,112),(0,112,86)
-              ,(0,86,59),(0,59,60),(0,60,111),(0,60,61),(0,61,85)
-              ,(0,85,84),(0,84,88),(0,87,86),(0,58,86),(0,86,89)
-              ,(0,89,90),(0,90,58),(0,90,91),(0,91,92),(0,92,106)
-              ,(0,89,105),(0,87,104),(0,87,103),(0,111,62),(0,61,86)
-              ,(0,86,85),(0,85,87),(0,87,84),(0,84,103),(0,84,83)
-              ,(0,83,79),(0,79,78),(0,78,77),(0,77,76),(0,76,71)
-              ,(0,71,75),(0,75,72),(0,72,70),(0,70,69),(0,69,73)
-              ,(0,73,74),(0,74,78),(0,78,66),(0,66,65),(0,65,80)
-              ,(0,80,79),(0,83,82),(0,82,81),(0,81,62),(0,64,81)
-              ,(0,64,66),(0,81,65),(0,65,82),(0,82,61),(0,60,86)
-              ,(0,66,67),(0,67,74),(0,68,73),(0,69,72),(0,75,77)
-              ,(0,77,74),(0,74,75),(0,75,76),(0,76,97),(0,97,77)
-              ,(0,77,98),(0,98,78),(0,78,99),(0,99,79),(0,79,100)
-              ,(0,100,83),(0,83,101),(0,101,84),(0,88,101),(0,103,102)
-              ,(0,105,106),(0,106,108),(0,108,94),(0,58,89),(0,40,3)
-              ,(0,3,8),(0,8,9),(0,9,18),(0,18,17),(0,17,35)
-              ,(0,35,15),(0,33,55),(0,96,71),(0,71,110),(0,60,62);
+              ,(0,97,96),(0,96,76),(0,71,70),(0,70,110),(0,56,95)
+              ,(0,95,94),(0,94,109),(0,55,34),(0,34,35),(0,35,19)
+              ,(0,1,20),(0,1,21),(0,2,1),(0,2,0),(0,2,22)
+              ,(0,22,21),(0,21,36),(0,36,37),(0,37,42),(0,43,26)
+              ,(0,26,22),(0,36,26),(0,44,26),(0,45,23),(0,23,22)
+              ,(0,22,24),(0,24,2),(0,2,3),(0,3,24),(0,24,4)
+              ,(0,4,5),(0,5,6),(0,6,8),(0,6,7),(0,6,28)
+              ,(0,28,7),(0,7,29),(0,29,28),(0,28,27),(0,27,25)
+              ,(0,25,23),(0,23,46),(0,46,25),(0,25,47),(0,47,27)
+              ,(0,27,48),(0,48,28),(0,28,5),(0,5,27),(0,5,23)
+              ,(0,23,24),(0,49,28),(0,49,29),(0,50,10),(0,10,29)
+              ,(0,29,50),(0,51,30),(0,30,10),(0,10,9),(0,30,12)
+              ,(0,12,11),(0,12,10),(0,12,13),(0,13,16),(0,16,15)
+              ,(0,15,17),(0,17,19),(0,17,18),(0,18,15),(0,15,14)
+              ,(0,14,13),(0,16,33),(0,33,54),(0,53,32),(0,32,13)
+              ,(0,52,31),(0,31,12),(0,30,52),(0,29,9),(0,43,36)
+              ,(0,38,21),(0,21,39),(0,33,34),(0,35,16),(0,33,32)
+              ,(0,32,31),(0,31,30),(0,45,26),(0,107,92),(0,92,94)
+              ,(0,94,93),(0,93,56),(0,93,57),(0,57,92),(0,92,90)
+              ,(0,90,113),(0,113,58),(0,58,112),(0,112,86),(0,86,59)
+              ,(0,59,60),(0,60,111),(0,60,61),(0,61,85),(0,85,84)
+              ,(0,84,88),(0,87,86),(0,58,86),(0,86,89),(0,89,90)
+              ,(0,90,58),(0,90,91),(0,91,92),(0,92,106),(0,89,105)
+              ,(0,87,104),(0,87,103),(0,111,62),(0,61,86),(0,86,85)
+              ,(0,85,87),(0,87,84),(0,84,103),(0,84,83),(0,83,79)
+              ,(0,79,78),(0,78,77),(0,77,76),(0,76,71),(0,71,75)
+              ,(0,75,72),(0,72,70),(0,70,69),(0,69,73),(0,73,74)
+              ,(0,74,78),(0,78,66),(0,66,65),(0,65,80),(0,80,79)
+              ,(0,83,82),(0,82,81),(0,81,62),(0,64,81),(0,64,66)
+              ,(0,81,65),(0,65,82),(0,82,61),(0,60,86),(0,66,67)
+              ,(0,67,74),(0,68,73),(0,69,72),(0,75,77),(0,77,74)
+              ,(0,74,75),(0,75,76),(0,76,97),(0,97,77),(0,77,98)
+              ,(0,98,78),(0,78,99),(0,99,79),(0,79,100),(0,100,83)
+              ,(0,83,101),(0,101,84),(0,88,101),(0,103,102),(0,105,106)
+              ,(0,106,108),(0,108,94),(0,58,89),(0,40,3),(0,3,8)
+              ,(0,8,9),(0,9,18),(0,18,17),(0,17,35),(0,35,15)
+              ,(0,33,55),(0,96,71),(0,71,110),(0,60,62);
     }
 }
 
